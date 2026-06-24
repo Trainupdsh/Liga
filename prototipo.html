@@ -754,15 +754,18 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div id="admin-fixture" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Generar Fixture</h2></div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-      <div class="form-group"><label class="form-label">Formato</label><select class="form-input form-select"><option>Round Robin (todos vs todos)</option><option>Eliminación directa</option><option>Grupos + Playoffs</option></select></div>
-      <div class="form-group"><label class="form-label">Fecha inicio</label><input class="form-input" type="date" value="2025-03-01"></div>
-      <div class="form-group"><label class="form-label">Día de juego</label><select class="form-input form-select"><option>Sábados</option><option>Domingos</option><option>Sábados y Domingos</option></select></div>
       <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa:</div>
-        <div style="font-size:13px;font-weight:700">28 partidos · 7 fechas</div>
-        <div style="font-size:12px;color:var(--text2)">Inicio: 01 Mar · Fin: 12 Abr</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px">División seleccionada</div>
+        <div id="fixture-div-nombre" style="font-size:13px;font-weight:700;color:var(--accent)">Ninguna — entrá a Gestionar una división</div>
       </div>
-      <button class="btn btn-primary" onclick="showToast('¡Fixture generado! 28 partidos creados','success')">Generar Fixture Automático</button>
+      <div class="form-group"><label class="form-label">Formato</label><select class="form-input form-select" id="fixture-formato"><option value="roundrobin">Round Robin (todos vs todos)</option><option value="ida_vuelta">Ida y vuelta (2× round robin)</option></select></div>
+      <div class="form-group"><label class="form-label">Fecha de inicio</label><input class="form-input" type="date" id="fixture-fecha-inicio"></div>
+      <div class="form-group"><label class="form-label">Cancha / Sede por defecto (opcional)</label><input class="form-input" type="text" id="fixture-cancha" placeholder="Ej: Estadio Municipal"></div>
+      <div id="fixture-preview" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa</div>
+        <div style="font-size:13px;font-weight:700">—</div>
+      </div>
+      <button class="btn btn-primary" id="fixture-gen-btn" onclick="generarFixture()">Generar Fixture Automático</button>
     </div>
   </div>
   <!-- CLUBES LIST -->
@@ -827,8 +830,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <!-- TAB: PARTIDOS -->
     <div id="admin-div-partidos" style="display:none">
-      <div style="padding:12px 16px 8px;display:flex;justify-content:flex-end">
-        <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Agregar partido</button>
+      <div style="padding:12px 16px 8px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-secondary btn-sm" onclick="generarFixture()">🔄 Fixture</button>
+        <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Partido</button>
       </div>
       <div id="adminPartidosList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
     </div>
@@ -1041,22 +1045,22 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="rst">Cargar Resultado</div>
     <div class="rss" id="resultModalSub">Local vs Visitante</div>
     <div class="score-input-row">
-      <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" value="0" min="0"></div>
+      <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" id="result-score-local" value="0" min="0"></div>
       <div class="score-dash">-</div>
-      <div style="text-align:center"><div class="score-team-label" id="result-away-label">Visitante</div><input type="number" class="score-input" value="0" min="0"></div>
+      <div style="text-align:center"><div class="score-team-label" id="result-away-label">Visitante</div><input type="number" class="score-input" id="result-score-visita" value="0" min="0"></div>
     </div>
     <div class="scorers-section">
       <h4>⚽ Goleadores</h4>
       <div class="scorer-add-row">
-        <select class="form-input form-select" style="flex:0 0 110px;padding:10px 8px;font-size:13px" id="scorerTeamSel"><option>Local</option><option>Visitante</option></select>
-        <select class="form-input form-select" style="padding:10px 8px;font-size:13px" id="scorerPlayerSel"><option>García M.</option><option>López D.</option><option>Torres R.</option></select>
+        <select class="form-input form-select" style="flex:0 0 110px;padding:10px 8px;font-size:13px" id="scorerTeamSel" onchange="updateScorerPlayerOptions()"><option value="local">Local</option><option value="visita">Visitante</option></select>
+        <select class="form-input form-select" style="padding:10px 8px;font-size:13px" id="scorerPlayerSel"><option value="">—</option></select>
         <button class="btn btn-primary btn-sm" style="flex-shrink:0;padding:10px 14px" onclick="addScorer()">+</button>
       </div>
       <div class="scorers-tags" id="scorersTags"></div>
     </div>
     <div class="rsb">
       <button class="btn btn-secondary" onclick="closeModal('resultModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="showToast('Resultado guardado ✓','success');closeModal('resultModal')">Guardar</button>
+      <button class="btn btn-primary" onclick="saveAdminResult()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1117,6 +1121,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:32px">
+    <!-- SELECTOR DE PARTIDO -->
+    <div id="mesa-match-selector" style="padding:20px 16px;display:none">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">Seleccionar Partido</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Elegí el partido a controlar</div>
+      <div id="mesa-available-matches" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;color:var(--text3);padding:32px">⏳ Cargando partidos...</div>
+      </div>
+    </div>
     <div class="mesa-scoreboard">
       <div class="mesa-teams-row">
         <div class="mesa-team-name" id="mesa-home-name">Los Andes</div>
@@ -1168,6 +1180,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="text-align:right">
         <div style="font-size:10px;color:var(--text3);font-weight:700">DELEGADO</div>
         <div style="font-size:11px;color:var(--accent)" id="deleg-email-label">—</div>
+        <button class="btn btn-secondary btn-sm" onclick="openEditClub()" style="margin-top:4px;font-size:10px;padding:4px 10px">✏️ Editar</button>
       </div>
     </div>
     <!-- Tabs -->
@@ -1220,6 +1233,40 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeDelegJugador(null,true)">Cancelar</button>
         <button class="btn btn-primary" id="dj-save-btn" style="flex:1" onclick="saveDelegJugador()">Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR CLUB (delegado) -->
+<div class="modal-overlay" id="editClubModal" onclick="closeEditClub(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div id="ec-preview-icon" style="width:44px;height:44px;border-radius:12px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;flex-shrink:0">CL</div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Editar Club</div><div id="ec-preview-nombre" style="font-size:15px;font-weight:900">Club</div></div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del club</label>
+        <input class="form-input" id="ec-nombre" type="text" style="width:100%" oninput="ecUpdatePreview()"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Abreviación (3–4 letras)</label>
+        <input class="form-input" id="ec-abrev" type="text" maxlength="4" style="width:100%;text-transform:uppercase" oninput="ecUpdatePreview()"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Color del club</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ec-colores">
+          <div class="nl-color-btn selected" onclick="ecSelectColor(this,'#1a2150')" style="background:#1a2150"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#1a3d20')" style="background:#1a3d20"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#3d1a20')" style="background:#3d1a20"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#2d1a3d')" style="background:#2d1a3d"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#1a3a3d')" style="background:#1a3a3d"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#c0392b')" style="background:#c0392b"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#2c3e50')" style="background:#2c3e50"></div>
+          <div class="nl-color-btn" onclick="ecSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
+        </div>
+      </div>
+      <div id="ec-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeEditClub(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="ec-save-btn" style="flex:1" onclick="saveEditClub()">Guardar Cambios</button>
       </div>
     </div>
   </div>
@@ -1575,7 +1622,7 @@ function showAdminLogin(){
   document.getElementById('login-error').style.display='none';
   showView('view-login');
 }
-function doAdminLogin(){
+async function doAdminLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
   document.getElementById('login-error').style.display='none';
@@ -1786,44 +1833,126 @@ function filterMatches(el,filter){
   el.classList.add('active');currentFilter=filter;renderMatches();
 }
 function getTeam(id){return teamsData.find(t=>t.id===id);}
-function renderMatches(){
+
+async function renderMatches(){
+  document.getElementById('matchesList').innerHTML='<div class="empty-state">⏳ Cargando partidos...</div>';
+  try{
+    const {data,error}=await supa.from('partidos')
+      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,equipo_local_id,equipo_visita_id,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto)')
+      .eq('division_id',currentDivisionId)
+      .order('jornada',{ascending:false})
+      .order('fecha',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">Sin partidos en esta división</div>';return;}
+    const filtered=currentFilter==='todos'?data:data.filter(p=>{
+      if(currentFilter==='live')return p.estado==='en_curso';
+      if(currentFilter==='done')return p.estado==='finalizado';
+      if(currentFilter==='upcoming')return p.estado==='programado';
+      return true;
+    });
+    if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">Sin partidos con este filtro</div>';return;}
+    const byJornada={};
+    filtered.forEach(p=>{const j=p.jornada||1;if(!byJornada[j])byJornada[j]=[];byJornada[j].push(p);});
+    let html='';
+    const divName=document.getElementById('division-header-name').textContent||'División';
+    Object.entries(byJornada).sort((a,b)=>b[0]-a[0]).forEach(([jornada,ps])=>{
+      html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">⚽</span><span class="tournament-name">${divName.toUpperCase()}</span><span class="round-badge">FECHA ${jornada}</span></div>`;
+      ps.forEach(p=>{
+        const local=p.local,visita=p.visita;
+        const isDone=p.estado==='finalizado',isLive=p.estado==='en_curso';
+        const lName=local?.nombre||'Local',vName=visita?.nombre||'Visitante';
+        const lAbrev=escHtml(local?.abreviacion||lName.slice(0,2).toUpperCase());
+        const vAbrev=escHtml(visita?.abreviacion||vName.slice(0,2).toUpperCase());
+        const lColor=local?.color_principal||'#1a2150',vColor=visita?.color_principal||'#1a2150';
+        const lText=local?.color_texto||'#fff',vText=visita?.color_texto||'#fff';
+        const homeWon=isDone&&(p.goles_local||0)>(p.goles_visita||0);
+        const awayWon=isDone&&(p.goles_visita||0)>(p.goles_local||0);
+        const timeStr=isLive?'🔴':p.hora?p.hora.slice(0,5):'—';
+        html+=`<div class="match-item" onclick="openMatchDB(${p.id})">
+          <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div></div>
+          <div class="match-teams">
+            <div class="match-team-row"><div class="shield" style="background:${lColor};color:${lText}">${lAbrev}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(lName)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_local:(isLive?p.goles_local??0:'-')}</span></div>
+            <div class="match-team-row"><div class="shield" style="background:${vColor};color:${vText}">${vAbrev}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(vName)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_visita:(isLive?p.goles_visita??0:'-')}</span></div>
+          </div><span class="chevron">›</span></div>`;
+      });
+      html+='</div>';
+    });
+    document.getElementById('matchesList').innerHTML=html;
+  }catch(e){
+    console.warn('Error cargando partidos, fallback local',e);
+    renderMatchesLocal();
+  }
+}
+function renderMatchesLocal(){
   const divMs=matches.filter(m=>!m.divId||m.divId===currentDivisionId);
   const filtered=currentFilter==='todos'?divMs:divMs.filter(m=>m.status===currentFilter);
-  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos en esta división</div>';return;}
+  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos</div>';return;}
   const byRound={};
   filtered.forEach(m=>{if(!byRound[m.round])byRound[m.round]=[];byRound[m.round].push(m);});
   let html='';
   Object.entries(byRound).sort((a,b)=>b[0]-a[0]).forEach(([round,ms])=>{
-    const lname=document.getElementById('division-header-name').textContent||document.getElementById('league-header-name').textContent;
-    html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">${lname.toUpperCase()}</span><span class="round-badge">FECHA ${round}</span></div>`;
+    html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">LIGA LOCAL</span><span class="round-badge">FECHA ${round}</span></div>`;
     ms.forEach(m=>{
       const home=getTeam(m.home),away=getTeam(m.away),isDone=m.status==='done',isLive=m.status==='live';
       const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
       html+=`<div class="match-item" onclick="openMatch(${m.id})">
         <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
         <div class="match-teams">
-          <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'12':'-')}</span></div>
-          <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'10':'-')}</span></div>
+          <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'—':'-')}</span></div>
+          <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'—':'-')}</span></div>
         </div><span class="chevron">›</span></div>`;
     });
     html+='</div>';
   });
   document.getElementById('matchesList').innerHTML=html;
 }
+async function openMatchDB(id){
+  try{
+    const {data:p}=await supa.from('partidos')
+      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto)')
+      .eq('id',id).single();
+    if(!p)throw new Error('no data');
+    const local=p.local,visita=p.visita;
+    const isDone=p.estado==='finalizado',isLive=p.estado==='en_curso';
+    document.getElementById('modal-home-shield').textContent=local?.abreviacion||'?';
+    document.getElementById('modal-home-shield').style.cssText=`background:${local?.color_principal||'#1a2150'};color:${local?.color_texto||'#fff'}`;
+    document.getElementById('modal-home-name').textContent=local?.nombre||'Local';
+    document.getElementById('modal-away-shield').textContent=visita?.abreviacion||'?';
+    document.getElementById('modal-away-shield').style.cssText=`background:${visita?.color_principal||'#1a2150'};color:${visita?.color_texto||'#fff'}`;
+    document.getElementById('modal-away-name').textContent=visita?.nombre||'Visitante';
+    document.getElementById('modal-score').textContent=isDone?`${p.goles_local} - ${p.goles_visita}`:isLive?`${p.goles_local??0} - ${p.goles_visita??0}`:'- - -';
+    const st=document.getElementById('modal-status-tag');
+    st.textContent=isDone?'FINALIZADO':isLive?'EN VIVO':'PROGRAMADO';
+    st.className='modal-status-tag'+(isLive?' live':'');
+    document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent} · Fecha ${p.jornada||'—'}`;
+    document.getElementById('matchModal').classList.add('open');
+    switchModalTab('info',document.querySelectorAll('.modal-tab')[1]);
+    // Fill info tab
+    document.querySelector('#pane-info').innerHTML=`
+      <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">${p.jornada?'Fecha '+p.jornada:'—'}</span></div>
+      <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${p.cancha||'—'}</span></div>
+      <div class="info-row"><span class="info-label">Hora</span><span class="info-value">${p.hora?p.hora.slice(0,5):'—'}</span></div>
+      <div class="info-row"><span class="info-label">Fecha calendario</span><span class="info-value">${p.fecha?formatFecha(p.fecha):'—'}</span></div>
+      <div class="info-row"><span class="info-label">Estado</span><span class="info-value">${isDone?'✓ Finalizado':isLive?'🟢 En vivo':'⏳ Programado'}</span></div>`;
+  }catch(e){
+    const m=matches.find(x=>x.id===id);
+    if(m)openMatch(id);
+  }
+}
 function openMatch(id){
-  const m=matches.find(x=>x.id===id),home=getTeam(m.home),away=getTeam(m.away);
+  const m=matches.find(x=>x.id===id),home=getTeam(m?.home),away=getTeam(m?.away);
+  if(!m||!home||!away)return;
   document.getElementById('modal-home-shield').textContent=home.short;
   document.getElementById('modal-home-shield').style.cssText=`background:${home.color};color:${home.text}`;
   document.getElementById('modal-home-name').textContent=home.name;
   document.getElementById('modal-away-shield').textContent=away.short;
   document.getElementById('modal-away-shield').style.cssText=`background:${away.color};color:${away.text}`;
   document.getElementById('modal-away-name').textContent=away.name;
-  document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?'12 - 10':'- - -';
+  document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?'— - —':'- - -';
   const st=document.getElementById('modal-status-tag');
   st.textContent=m.status==='done'?'FINALIZADO':m.status==='live'?'EN VIVO':'PROGRAMADO';
   st.className='modal-status-tag'+(m.status==='live'?' live':'');
-  const divName=document.getElementById('division-header-name').textContent||document.getElementById('league-header-name').textContent;
-  document.getElementById('modal-tournament').textContent=`${divName} · Fecha ${m.round}`;
+  document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent||'División'} · Fecha ${m.round}`;
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
 }
@@ -1833,46 +1962,125 @@ function switchModalTab(tab,el){
   document.querySelectorAll('.modal-pane').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');document.getElementById('pane-'+tab).classList.add('active');
 }
-function renderStandings(){
+
+async function renderStandings(){
+  document.getElementById('standingsList').innerHTML='<div style="padding:16px;text-align:center;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('partidos')
+      .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto)')
+      .eq('division_id',currentDivisionId).eq('estado','finalizado');
+    if(error)throw error;
+    if(!data||!data.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin partidos finalizados</div>';return;}
+    const table={};
+    data.forEach(p=>{
+      const lId=p.equipo_local_id,vId=p.equipo_visita_id;
+      if(!table[lId])table[lId]={id:lId,info:p.local,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};
+      if(!table[vId])table[vId]={id:vId,info:p.visita,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};
+      const gl=p.goles_local||0,gv=p.goles_visita||0;
+      table[lId].pj++;table[vId].pj++;
+      table[lId].gf+=gl;table[lId].gc+=gv;
+      table[vId].gf+=gv;table[vId].gc+=gl;
+      if(gl>gv){table[lId].pg++;table[lId].pts+=3;table[vId].pp++;}
+      else if(gl<gv){table[vId].pg++;table[vId].pts+=3;table[lId].pp++;}
+      else{table[lId].pe++;table[lId].pts++;table[vId].pe++;table[vId].pts++;}
+    });
+    const sorted=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
+    const badges=['gold','silver','bronze'];
+    document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
+      const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
+      const dif=row.gf-row.gc;
+      return `<div class="standing-row"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div>
+        <div class="col-team-cell"><div class="shield" style="background:${t.color_principal||'#1a2150'};color:${t.color_texto||'#fff'};width:22px;height:22px;font-size:9px">${escHtml(t.abreviacion||'?')}</div><span class="col-team-name">${escHtml(t.nombre||'?')}</span></div>
+        <span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span>
+        <span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
+    }).join('');
+  }catch(e){renderStandingsLocal();}
+}
+function renderStandingsLocal(){
   const divSt=standings.filter(s=>!s.divId||s.divId===currentDivisionId);
-  if(!divSt.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin datos de posiciones</div>';return;}
+  if(!divSt.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin datos</div>';return;}
   const sorted=[...divSt].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
   document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
-    const t=getTeam(row.teamId),dif=row.gf-row.gc,badge=i<3?badges[i]:'normal';
-    return `<div class="standing-row"><div class="pos-badge ${badge}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
+    const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff'},dif=row.gf-row.gc;
+    return `<div class="standing-row"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
   }).join('');
 }
-function renderScorers(){
+
+async function renderScorers(){
+  document.getElementById('scorersList').innerHTML='<div class="empty-state">⏳ Cargando...</div>';
+  try{
+    const {data:equipos}=await supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto').eq('division_id',currentDivisionId);
+    if(!equipos||!equipos.length){document.getElementById('scorersList').innerHTML='<div class="empty-state">Sin equipos en esta división</div>';return;}
+    const equipoIds=equipos.map(e=>e.id);
+    const equipoMap=Object.fromEntries(equipos.map(e=>[e.id,e]));
+    const {data:jugadores}=await supa.from('jugadores')
+      .select('id,nombre,numero,equipo_id,goles').in('equipo_id',equipoIds)
+      .order('goles',{ascending:false}).limit(30);
+    const list=(jugadores||[]).filter(j=>(j.goles||0)>0);
+    if(!list.length){document.getElementById('scorersList').innerHTML='<div class="empty-state">Sin goleadores registrados aún</div>';return;}
+    const medals=['🥇','🥈','🥉'];
+    document.getElementById('scorersList').innerHTML=list.map((j,i)=>{
+      const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
+      const initials=(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div>
+        <div class="scorer-avatar" style="background:${t.color_principal||'#1a2150'};color:#fff;border-color:${t.color_principal||'#1a2150'}">${initials}</div>
+        <div class="scorer-info"><div class="scorer-name">${escHtml(j.nombre)}</div><div class="scorer-team">${escHtml(t.nombre)} · #${j.numero||'—'}</div></div>
+        <div class="scorer-goals"><div class="goals-num">${j.goles||0}</div><div class="goals-label">goles</div></div></div>`;
+    }).join('');
+  }catch(e){renderScorersLocal();}
+}
+function renderScorersLocal(){
   const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
-    const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    const card=playerCards.find(x=>x.id===p.id)||{};
-    const statusDot=card.suspended?'<span style="font-size:9px;color:var(--red);font-weight:700;margin-left:4px">SUSP.</span>':'';
-    return `<div class="scorer-card" onclick="openCred(${p.id})" style="cursor:pointer"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}${statusDot}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
+    const t=getTeam(p.team)||{emoji:'?',name:'?',jersey:0},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+    return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
   }).join('');
 }
+
 let st2;
-function searchPlayers(q){
+async function searchPlayers(q){
   clearTimeout(st2);
-  st2=setTimeout(()=>{
-    const results=document.getElementById('searchResults');
-    if(!q.trim()){results.innerHTML='<div class="empty-state">Escribí un nombre para buscar</div>';return;}
-    const found=players.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
-    results.innerHTML=found.length?found.map(p=>{
-      const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-      const card=playerCards.find(x=>x.id===p.id)||{};
-      return `<div class="player-card" onclick="openCred(${p.id})" style="cursor:pointer"><div class="player-avatar" style="color:${t.text};border:2px solid ${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}${card.suspended?'<span style="font-size:9px;color:var(--red);font-weight:700;margin-left:6px">SUSP.</span>':''}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
-    }).join(''):'<div class="empty-state">No se encontraron jugadores</div>';
+  const results=document.getElementById('searchResults');
+  if(!q.trim()){results.innerHTML='<div class="empty-state">Escribí un nombre para buscar</div>';return;}
+  results.innerHTML='<div class="empty-state">⏳ Buscando...</div>';
+  st2=setTimeout(async()=>{
+    try{
+      const {data:equipos}=await supa.from('equipos').select('id,nombre,color_principal,color_texto,abreviacion').eq('division_id',currentDivisionId);
+      if(!equipos||!equipos.length){results.innerHTML='<div class="empty-state">Sin equipos en esta división</div>';return;}
+      const equipoIds=equipos.map(e=>e.id);
+      const equipoMap=Object.fromEntries(equipos.map(e=>[e.id,e]));
+      const {data:found}=await supa.from('jugadores').select('id,nombre,numero,equipo_id,goles').in('equipo_id',equipoIds).ilike('nombre','%'+q+'%').order('nombre').limit(20);
+      if(!found||!found.length){results.innerHTML='<div class="empty-state">No se encontraron jugadores</div>';return;}
+      results.innerHTML=found.map(j=>{
+        const t=equipoMap[j.equipo_id]||{nombre:'?',color_principal:'#1a2150',color_texto:'#fff'};
+        const initials=(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+        return `<div class="player-card"><div class="player-avatar" style="color:${t.color_texto||'#fff'};border:2px solid ${t.color_principal||'#1a2150'};background:${t.color_principal||'#1a2150'}">${initials}</div><div class="player-info"><div class="player-name">${escHtml(j.nombre)}</div><div class="player-meta">${escHtml(t.nombre)} · ${j.goles||0} goles</div></div><div class="jersey-badge">#${j.numero||'—'}</div></div>`;
+      }).join('');
+    }catch(e){
+      const found=players.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
+      results.innerHTML=found.length?found.map(p=>{const t=getTeam(p.team)||{emoji:'',name:'?',text:'#fff',color:'#1a2150'},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);return `<div class="player-card"><div class="player-avatar" style="color:${t.text};border:2px solid ${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;}).join(''):'<div class="empty-state">No se encontraron jugadores</div>';
+    }
   },300);
 }
 function goAdmin(page){
   document.querySelectorAll('.admin-screen').forEach(s=>s.style.display='none');
-  document.getElementById('admin-'+page).style.display='';
+  const el=document.getElementById('admin-'+page);
+  if(!el)return;
+  el.style.display='';
   if(page==='teams')renderAdminTeams();
   if(page==='players')renderAdminPlayers();
   if(page==='matches')renderAdminMatches();
   if(page==='torneos')loadAdminTorneos();
   if(page==='clubes')loadAdminClubes();
+  if(page==='fixture'){
+    const divEl=document.getElementById('fixture-div-nombre');
+    if(divEl){
+      const div=currentAdminDivisionId?adminDivEquipos.length+' equipos en la división actual':'Ninguna — entrá a Gestionar una división';
+      divEl.textContent=div;
+    }
+    const fi=document.getElementById('fixture-fecha-inicio');
+    if(fi&&!fi.value)fi.value=new Date().toISOString().split('T')[0];
+  }
 }
 function renderAdminTeams(){
   document.getElementById('teamsList').innerHTML=teamsData.map(t=>`
@@ -1900,15 +2108,21 @@ function renderAdminMatches(){
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 let scorers=[];
-function openResultModal(id){
-  const m=matches.find(x=>x.id===id);
-  document.getElementById('resultModalSub').textContent=`${getTeam(m.home).name} vs ${getTeam(m.away).name}`;
-  scorers=[];renderScorerTags();
-  document.getElementById('resultModal').classList.add('open');
+let scorersWithId=[];
+function openResultModal(id){openAdminResultModal(id);}
+function addScorer(){
+  const teamSel=document.getElementById('scorerTeamSel');
+  const playerSel=document.getElementById('scorerPlayerSel');
+  const jugadorId=parseInt(playerSel.value)||null;
+  const jugadorNombre=playerSel.options[playerSel.selectedIndex]?.text||'Jugador';
+  if(!jugadorId)return;
+  const equipo=teamSel.value;
+  scorersWithId.push({jugador_id:jugadorId,nombre:jugadorNombre,equipo});
+  scorers.push({team:equipo,player:jugadorNombre});
+  renderScorerTags();
 }
-function addScorer(){scorers.push({team:document.getElementById('scorerTeamSel').value,player:document.getElementById('scorerPlayerSel').value});renderScorerTags();}
-function removeScorer(i){scorers.splice(i,1);renderScorerTags();}
-function renderScorerTags(){document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');}
+function removeScorer(i){scorers.splice(i,1);scorersWithId.splice(i,1);renderScorerTags();}
+function renderScorerTags(){document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${escHtml(s.player)} <span style="font-size:10px;opacity:.7">(${s.team==='local'?'Local':'Visita'})</span> <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');}
 // ═══ CREDENCIAL ═══
 const playerCards=[
   {id:1,yellows:1,reds:0,suspended:false},
@@ -1981,10 +2195,10 @@ function generateQR(seed){
 function showArbitroView(user){
   showView('view-arbitro');
   document.getElementById('arb-name').textContent=user.name;
-  renderArbitroMatches();
+  loadArbitroPartidos(user);
   showToast('Bienvenido, '+user.name,'success');
 }
-function renderArbitroMatches(){
+function renderArbitroMatchesLocal(){
   const todayMs=[matches[1],matches[2]];
   document.getElementById('arbitro-matches').innerHTML=todayMs.map(m=>{
     const home=getTeam(m.home),away=getTeam(m.away);
@@ -2003,16 +2217,7 @@ function renderArbitroMatches(){
       </div>
     </div>`;
   }).join('');
-  document.getElementById('arbitro-next').innerHTML=`<div class="arbitro-match">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="arb-status pending"></div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:800">Los Andes <span style="color:var(--text3)">vs</span> Unión FC</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">Fecha 6 · Polideportivo Baires · Sáb 28 Jun 10:00</div>
-      </div>
-      <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">PENDIENTE</div>
-    </div>
-  </div>`;
+  document.getElementById('arbitro-next').innerHTML='';
 }
 function openPlanilla(matchId){
   const m=matches.find(x=>x.id===matchId);
@@ -2048,13 +2253,11 @@ function renderPlanillaPlayers(homeId,awayId){
 
 // ═══ MESA DE CONTROL ═══
 let mesaScoreHome=0,mesaScoreAway=0,mesaSecs=0,mesaRunning=false,mesaTimerInterval=null,mesaPeriod=1;
+let mesaCurrentUser=null;
 function showMesaView(user){
+  mesaCurrentUser=user;
   showView('view-mesa');
-  document.getElementById('mesa-subtitle').textContent=user.league+' · Fecha 5';
-  const m=matches.find(x=>x.status==='live')||matches[1];
-  const home=getTeam(m.home),away=getTeam(m.away);
-  document.getElementById('mesa-home-name').textContent=home.name;
-  document.getElementById('mesa-away-name').textContent=away.name;
+  document.getElementById('mesa-subtitle').textContent=user.league||'Liga';
   mesaScoreHome=0;mesaScoreAway=0;mesaSecs=0;mesaRunning=false;mesaPeriod=1;
   if(mesaTimerInterval)clearInterval(mesaTimerInterval);
   document.getElementById('mesa-score-home').textContent='0';
@@ -2064,8 +2267,11 @@ function showMesaView(user){
   document.getElementById('mesa-timer-btn').textContent='▶ INICIAR';
   document.getElementById('mesa-timer-btn').disabled=false;
   document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
-  subscribeToMatchEvents(mesaMatchId);
-  showToast('Mesa de Control activada — LIVE','success');
+  document.getElementById('mesa-match-selector').style.display='';
+  document.querySelector('#view-mesa .mesa-scoreboard').style.display='none';
+  document.querySelector('#view-mesa .mesa-btns').style.display='none';
+  document.querySelector('#view-mesa .mesa-log').style.display='none';
+  loadMesaAvailableMatches();
 }
 function toggleTimer(){
   mesaRunning=!mesaRunning;
@@ -2724,7 +2930,8 @@ async function loadAdminPartidos(){
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:11px;color:var(--text2)">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''}</span>
           <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:11px;color:var(--text3)">${estadoLabel[p.estado]||p.estado||''}</span>
+            <span style="font-size:11px;color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||p.estado||''}</span>
+            ${p.estado!=='finalizado'?`<button class="btn btn-sm" style="background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:2px 7px;font-size:10px" onclick="openAdminResultModal(${p.id})">Res.</button>`:''}
             <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:2px 7px" onclick="confirmarEliminarPartido(${p.id})">✕</button>
           </div>
         </div>
@@ -2881,6 +3088,320 @@ async function saveNuevaDivision(){
     errEl.textContent='Error: '+e.message;errEl.style.display='';
     btn.disabled=false;btn.textContent='Crear División';
   }
+}
+
+// ═══ MESA: SELECTOR DE PARTIDO ═══
+async function loadMesaAvailableMatches(){
+  const el=document.getElementById('mesa-available-matches');
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">⏳ Cargando partidos...</div>';
+  try{
+    const {data,error}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .in('estado',['programado','en_curso'])
+      .order('fecha').order('hora');
+    if(error)throw error;
+    if(!data||!data.length){
+      el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px;font-size:14px">Sin partidos programados disponibles.</div>';
+      return;
+    }
+    el.innerHTML=data.map(p=>{
+      const isLive=p.estado==='en_curso';
+      return `<div onclick="selectMesaMatch(${p.id})" style="background:var(--card);border:2px solid ${isLive?'var(--green)':'var(--border)'};border-radius:14px;padding:14px;cursor:pointer;transition:all .2s;margin-bottom:2px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;color:${isLive?'var(--green)':'var(--text2)'};font-weight:700">${isLive?'🟢 EN CURSO':'⏳ PROGRAMADO'}${p.jornada?' · Fecha '+p.jornada:''}</span>
+          <span style="font-size:11px;color:var(--text3)">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1;text-align:right">
+            <div style="width:36px;height:36px;border-radius:50%;background:${p.local?.color_principal||'#1a2150'};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff">${escHtml(p.local?.abreviacion||'?')}</div>
+            <div style="font-size:13px;font-weight:700;margin-top:4px">${escHtml(p.local?.nombre||'Local')}</div>
+          </div>
+          <div style="font-size:18px;font-weight:900;color:var(--text3)">vs</div>
+          <div style="flex:1">
+            <div style="width:36px;height:36px;border-radius:50%;background:${p.visita?.color_principal||'#1a2150'};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff">${escHtml(p.visita?.abreviacion||'?')}</div>
+            <div style="font-size:13px;font-weight:700;margin-top:4px">${escHtml(p.visita?.nombre||'Visitante')}</div>
+          </div>
+        </div>
+        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px">📍 ${escHtml(p.cancha)}</div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Error al cargar. Revisá la conexión.</div>';}
+}
+async function selectMesaMatch(id){
+  const el=document.getElementById('mesa-available-matches');
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">⏳ Iniciando partido...</div>';
+  try{
+    const {data:p,error}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .eq('id',id).single();
+    if(error)throw error;
+    mesaMatchId=id;
+    mesaScoreHome=p.goles_local||0;mesaScoreAway=p.goles_visita||0;
+    mesaSecs=0;mesaRunning=false;mesaPeriod=1;
+    if(mesaTimerInterval)clearInterval(mesaTimerInterval);
+    document.getElementById('mesa-home-name').textContent=p.local?.nombre||'Local';
+    document.getElementById('mesa-away-name').textContent=p.visita?.nombre||'Visitante';
+    document.getElementById('mesa-score-home').textContent=mesaScoreHome;
+    document.getElementById('mesa-score-away').textContent=mesaScoreAway;
+    document.getElementById('mesa-timer').textContent='00:00';
+    document.getElementById('mesa-period').textContent='1° TIEMPO';
+    document.getElementById('mesa-timer-btn').textContent='▶ INICIAR';
+    document.getElementById('mesa-timer-btn').disabled=false;
+    document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
+    document.getElementById('mesa-subtitle').textContent=(mesaCurrentUser?.league||'Liga')+(p.jornada?' · Fecha '+p.jornada:'');
+    if(p.estado==='programado'){try{await supa.from('partidos').update({estado:'en_curso'}).eq('id',id);}catch(e2){}}
+    document.getElementById('mesa-match-selector').style.display='none';
+    document.querySelector('#view-mesa .mesa-scoreboard').style.display='';
+    document.querySelector('#view-mesa .mesa-btns').style.display='';
+    document.querySelector('#view-mesa .mesa-log').style.display='';
+    subscribeToMatchEvents(id);
+    showToast('Mesa de Control activada — LIVE','success');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Error al cargar partido</div>';
+    showToast('Error al cargar partido','error');
+  }
+}
+
+// ═══ ADMIN RESULTADO (con DB) ═══
+let adminResultMatchId=null;
+let adminResultLocalPlayers=[];
+let adminResultVisitaPlayers=[];
+
+async function openAdminResultModal(id){
+  adminResultMatchId=id;
+  scorersWithId=[];scorers=[];
+  try{
+    const {data:p,error}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
+      .eq('id',id).single();
+    if(error)throw error;
+    document.getElementById('resultModalSub').textContent=`${p.local?.nombre||'Local'} vs ${p.visita?.nombre||'Visitante'}`;
+    document.getElementById('result-home-label').textContent=p.local?.nombre||'Local';
+    document.getElementById('result-away-label').textContent=p.visita?.nombre||'Visitante';
+    document.getElementById('result-score-local').value=p.goles_local??0;
+    document.getElementById('result-score-visita').value=p.goles_visita??0;
+    adminResultLocalPlayers=[];adminResultVisitaPlayers=[];
+    const [resL,resV]=await Promise.all([
+      p.local?.id?supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.local.id).order('numero'):Promise.resolve({data:[]}),
+      p.visita?.id?supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.visita.id).order('numero'):Promise.resolve({data:[]}),
+    ]);
+    adminResultLocalPlayers=resL.data||[];
+    adminResultVisitaPlayers=resV.data||[];
+    document.getElementById('scorerTeamSel').value='local';
+    updateScorerPlayerOptions();
+    renderScorerTags();
+    document.getElementById('resultModal').classList.add('open');
+  }catch(e){showToast('Error al cargar partido','error');}
+}
+function updateScorerPlayerOptions(){
+  const teamSel=document.getElementById('scorerTeamSel');
+  const playerSel=document.getElementById('scorerPlayerSel');
+  const list=teamSel.value==='local'?adminResultLocalPlayers:adminResultVisitaPlayers;
+  if(!list.length){
+    playerSel.innerHTML='<option value="">Sin jugadores registrados</option>';
+  }else{
+    playerSel.innerHTML=list.map(j=>`<option value="${j.id}">${escHtml(j.nombre)}${j.numero?' #'+j.numero:''}</option>`).join('');
+  }
+}
+async function saveAdminResult(){
+  const gLocal=parseInt(document.getElementById('result-score-local').value)||0;
+  const gVisita=parseInt(document.getElementById('result-score-visita').value)||0;
+  const btn=document.querySelector('#resultModal .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Guardando…';}
+  try{
+    await supa.from('partidos').update({goles_local:gLocal,goles_visita:gVisita,estado:'finalizado'}).eq('id',adminResultMatchId);
+    for(const sc of scorersWithId){
+      if(sc.jugador_id){
+        const {data:j}=await supa.from('jugadores').select('goles').eq('id',sc.jugador_id).single();
+        await supa.from('jugadores').update({goles:(j?.goles||0)+1}).eq('id',sc.jugador_id);
+      }
+    }
+    closeModal('resultModal');
+    showToast('Resultado guardado ✓','success');
+    await loadAdminPartidos();
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+    if(btn){btn.disabled=false;btn.textContent='Guardar';}
+  }
+}
+
+// ═══ ÁRBITRO: CARGA DESDE SUPABASE ═══
+let arbitroCurrentUser=null;
+async function loadArbitroPartidos(user){
+  arbitroCurrentUser=user;
+  const el=document.getElementById('arbitro-matches');
+  const nextEl=document.getElementById('arbitro-next');
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">⏳ Cargando...</div>';
+  nextEl.innerHTML='';
+  try{
+    let q=supa.from('partidos')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .order('fecha').order('hora');
+    if(user?.email)q=q.eq('arbitro_email',user.email);
+    const {data,error}=await q;
+    if(error)throw error;
+    const list=data||[];
+    const activos=list.filter(p=>p.estado!=='finalizado');
+    const pasados=list.filter(p=>p.estado==='finalizado').slice(0,3);
+    const renderP=(p)=>{
+      const isLive=p.estado==='en_curso',isDone=p.estado==='finalizado';
+      const label=isLive?'EN VIVO':isDone?'FINALIZADO':'PROGRAMADO';
+      const bg=isLive?'rgba(34,197,94,0.15)':isDone?'var(--card2)':'var(--accent-dim)';
+      const fg=isLive?'var(--green)':isDone?'var(--text3)':'var(--accent)';
+      return `<div class="arbitro-match" onclick="openPlanillaDB(${p.id})">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="arb-status ${isLive?'live':isDone?'done':'pending'}"></div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:800">${escHtml(p.local?.nombre||'Local')} <span style="color:var(--text3)">vs</span> ${escHtml(p.visita?.nombre||'Visitante')}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${p.jornada?'Fecha '+p.jornada+' · ':''}${p.cancha?escHtml(p.cancha)+' · ':''}${p.fecha?formatFecha(p.fecha)+' ':''}${p.hora?p.hora.slice(0,5):''}</div>
+          </div>
+          <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:${bg};color:${fg}">${label}</div>
+        </div>
+        ${isDone?`<div style="text-align:center;font-size:16px;font-weight:900;padding:4px 0 0">${p.goles_local??0} - ${p.goles_visita??0}</div>`:''}
+      </div>`;
+    };
+    el.innerHTML=activos.length?activos.map(renderP).join(''):'<div style="text-align:center;color:var(--text3);padding:32px;font-size:14px">Sin partidos próximos asignados.</div>';
+    nextEl.innerHTML=pasados.length?`<div style="padding:4px 16px 4px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">RECIENTES</div>`+pasados.map(renderP).join(''):'';
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Sin conexión a Supabase.</div>';
+    renderArbitroMatchesLocal();
+  }
+}
+async function openPlanillaDB(id){
+  try{
+    const {data:p}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
+      .eq('id',id).single();
+    document.getElementById('planilla-round').textContent=p.jornada?'Fecha '+p.jornada:'Partido';
+    document.getElementById('planilla-home').textContent=p.local?.nombre||'Local';
+    document.getElementById('planilla-away').textContent=p.visita?.nombre||'Visitante';
+    document.getElementById('plan-home-title').textContent='LOCAL — '+(p.local?.nombre||'').toUpperCase();
+    document.getElementById('plan-away-title').textContent='VISITANTE — '+(p.visita?.nombre||'').toUpperCase();
+    const [resL,resV]=await Promise.all([
+      p.local?.id?supa.from('jugadores').select('id,nombre,numero,posicion').eq('equipo_id',p.local.id).order('numero'):Promise.resolve({data:[]}),
+      p.visita?.id?supa.from('jugadores').select('id,nombre,numero,posicion').eq('equipo_id',p.visita.id).order('numero'):Promise.resolve({data:[]}),
+    ]);
+    const renderList=(list,elId)=>{
+      const el=document.getElementById(elId);
+      if(!list||!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px">Sin jugadores registrados.</div>';return;}
+      el.innerHTML=list.map(j=>`<div class="plan-player-row">
+        <div style="width:26px;height:26px;border-radius:8px;background:var(--card2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">#${j.numero||'—'}</div>
+        <div style="flex:1;font-size:13px;font-weight:600">${escHtml(j.nombre)}</div>
+        <div class="plan-badge ok">HABILITADO</div>
+      </div>`).join('');
+    };
+    renderList(resL.data,'plan-home-players');
+    renderList(resV.data,'plan-away-players');
+    document.getElementById('planillaModal').classList.add('open');
+  }catch(e){openPlanilla(id);}
+}
+
+// ═══ FIXTURE AUTOMÁTICO (ROUND-ROBIN) ═══
+async function generarFixture(){
+  const btn=document.getElementById('fixture-gen-btn');
+  if(!currentAdminDivisionId){showToast('Primero seleccioná una división','error');return;}
+  if(!adminDivEquipos.length)await loadAdminEquipos();
+  if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 equipos','error');return;}
+  const formato=document.getElementById('fixture-formato')?.value||'roundrobin';
+  const fechaInicio=document.getElementById('fixture-fecha-inicio')?.value||new Date().toISOString().split('T')[0];
+  const cancha=document.getElementById('fixture-cancha')?.value.trim()||null;
+  const preview=document.getElementById('fixture-preview');
+  const nombre=document.getElementById('fixture-div-nombre');
+  if(nombre)nombre.textContent=adminDivEquipos.length+' equipos';
+  if(btn){btn.disabled=true;btn.textContent='Generando…';}
+  const equipos=[...adminDivEquipos];
+  if(equipos.length%2!==0)equipos.push({id:null,nombre:'LIBRE'});
+  const n=equipos.length,rondas=n-1;
+  const ids=equipos.map(e=>e.id);
+  const pivot=ids[0];
+  let rot=ids.slice(1);
+  const partidos=[];
+  for(let r=0;r<rondas;r++){
+    const jornada=r+1;
+    const d=new Date(fechaInicio);d.setDate(d.getDate()+r*7);
+    const fechaStr=d.toISOString().split('T')[0];
+    const row=[pivot,...rot];
+    const mitad=row.length/2;
+    for(let i=0;i<mitad;i++){
+      const l=row[i],v=row[row.length-1-i];
+      if(l&&v)partidos.push({division_id:currentAdminDivisionId,equipo_local_id:l,equipo_visita_id:v,jornada,fecha:fechaStr,hora:'16:00',cancha,estado:'programado',goles_local:0,goles_visita:0});
+    }
+    rot=[rot[rot.length-1],...rot.slice(0,-1)];
+  }
+  if(formato==='ida_vuelta'){
+    const vuelta=partidos.map(p=>{
+      const d=new Date(fechaInicio);d.setDate(d.getDate()+(p.jornada+rondas-1)*7);
+      return {...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:d.toISOString().split('T')[0]};
+    });
+    partidos.push(...vuelta);
+  }
+  if(preview){
+    const totalF=formato==='ida_vuelta'?rondas*2:rondas;
+    preview.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa del fixture</div>
+      <div style="font-size:14px;font-weight:700">${adminDivEquipos.length} equipos · ${partidos.length} partidos · ${totalF} fechas</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Inicia ${formatFecha(fechaInicio)} · ${formato==='ida_vuelta'?'Ida y vuelta':'Round Robin (todos contra todos)'}</div>`;
+  }
+  try{
+    const {error}=await supa.from('partidos').insert(partidos);
+    if(error)throw error;
+    showToast('Fixture generado: '+partidos.length+' partidos ✓','success');
+    goAdmin('division');
+    await loadAdminPartidos();
+  }catch(e){showToast('Error: '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent='Generar Fixture Automático';}}
+}
+
+// ═══ EDITAR CLUB (delegado) ═══
+let ecColor='#1a2150';
+function openEditClub(){
+  if(!delegadoClub)return;
+  ecColor=delegadoClub.color_principal||'#1a2150';
+  document.getElementById('ec-nombre').value=delegadoClub.nombre||delegadoClub.name||'';
+  document.getElementById('ec-abrev').value=delegadoClub.abreviacion||'';
+  document.getElementById('ec-error').style.display='none';
+  document.querySelectorAll('#ec-colores .nl-color-btn').forEach(b=>{
+    const bc=b.style.backgroundColor||b.style.background||'';
+    b.classList.toggle('selected',bc===ecColor||b.getAttribute('onclick')?.includes("'"+ecColor+"'"));
+  });
+  document.getElementById('ec-save-btn').disabled=false;
+  document.getElementById('ec-save-btn').textContent='Guardar Cambios';
+  ecUpdatePreview();
+  document.getElementById('editClubModal').classList.add('open');
+}
+function closeEditClub(e,force){
+  if(force||e?.target===document.getElementById('editClubModal'))
+    document.getElementById('editClubModal').classList.remove('open');
+}
+function ecSelectColor(el,color){
+  ecColor=color;
+  document.querySelectorAll('#ec-colores .nl-color-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  ecUpdatePreview();
+}
+function ecUpdatePreview(){
+  const n=document.getElementById('ec-nombre').value.trim();
+  const a=document.getElementById('ec-abrev').value.trim().toUpperCase();
+  document.getElementById('ec-preview-nombre').textContent=n||'Club';
+  document.getElementById('ec-preview-icon').textContent=a||(n?n.slice(0,2).toUpperCase():'CL');
+  document.getElementById('ec-preview-icon').style.background=ecColor;
+}
+async function saveEditClub(){
+  const nombre=document.getElementById('ec-nombre').value.trim();
+  const abreviacion=document.getElementById('ec-abrev').value.trim().toUpperCase();
+  const errEl=document.getElementById('ec-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(abreviacion&&(abreviacion.length<2||abreviacion.length>4)){errEl.textContent='La abreviación debe tener 2–4 letras';errEl.style.display='';return;}
+  const btn=document.getElementById('ec-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    await supa.from('clubes').update({nombre,abreviacion:abreviacion||null,color_principal:ecColor}).eq('id',delegadoClub.id);
+    delegadoClub.nombre=nombre;
+    delegadoClub.abreviacion=abreviacion||null;
+    delegadoClub.color_principal=ecColor;
+    closeEditClub(null,true);
+    showDelegadoView(delegadoClub);
+    showToast('Club actualizado ✓','success');
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar Cambios';}
 }
 
 function showToast(msg,type=''){
