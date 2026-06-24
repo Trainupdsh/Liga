@@ -256,6 +256,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
+/* ANULACIÓN */
+.motivo-btn{padding:11px 14px;border-radius:12px;background:var(--card2);border:2px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.motivo-btn.selected{border-color:var(--red);background:rgba(239,68,68,0.08);color:var(--red);}
+.mesa-event.anulado{opacity:.5;}
+.mesa-event.anulado .mesa-event-gol{text-decoration:line-through;}
+.mesa-event-anulado-tag{font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;background:rgba(239,68,68,0.15);color:var(--red);margin-left:4px;vertical-align:middle;}
 /* TORNEO / DIVISIÓN */
 .torneo-banner{margin:16px;border-radius:16px;padding:18px 20px;border:1px solid rgba(255,255,255,0.08);}
 .torneo-banner-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:4px;}
@@ -855,6 +861,31 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="deleg-menu-icon">🩹</div>
         <div class="deleg-menu-label">Lesiones</div>
         <div class="deleg-menu-sub">1 jugador lesionado</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANULAR GOL MODAL -->
+<div class="modal-overlay" id="anularModal" onclick="closeAnular(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;background:rgba(239,68,68,0.1);border-bottom:1px solid rgba(239,68,68,0.2)">
+      <div style="font-size:12px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:2px">Anular Gol</div>
+      <div style="font-size:15px;font-weight:900" id="anular-desc">GOL — Los Andes</div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px">Motivo de anulación</div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="anular-motivos">
+        <div class="motivo-btn" onclick="selectMotivo(this,'Fuera de tiempo')">⏱ Fuera de tiempo</div>
+        <div class="motivo-btn" onclick="selectMotivo(this,'Infracción previa')">🚫 Infracción previa</div>
+        <div class="motivo-btn" onclick="selectMotivo(this,'Error de registro')">✏️ Error de registro</div>
+        <div class="motivo-btn" onclick="selectMotivo(this,'Otro')">💬 Otro</div>
+      </div>
+      <input type="text" class="form-input" id="anular-otro" placeholder="Especificar motivo..." style="display:none;margin-top:8px">
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-secondary" onclick="closeAnular(null,true)">Cancelar</button>
+        <button class="btn" id="anular-confirm-btn" style="flex:1;background:var(--red);color:#fff;opacity:.4;pointer-events:none" onclick="confirmAnular()">Confirmar anulación</button>
       </div>
     </div>
   </div>
@@ -1562,16 +1593,86 @@ function toggleTimer(){
   }
 }
 const evtLabels={gol:'⚽ GOL',amarilla:'🟡 AMARILLA',roja:'🔴 ROJA',exclusion:"🚫 EXCLUSIÓN 2'",timeout:'⏱ T. MUERTO',sust:'🔄 SUSTITUCIÓN',fin:'🏁 FIN DE TIEMPO'};
-function addEventToLog(type,side,min){
+function addEventToLog(type,side,min,isAnulado,motivo,dbId){
   const homeName=document.getElementById('mesa-home-name').textContent;
   const awayName=document.getElementById('mesa-away-name').textContent;
   const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
   const el=document.getElementById('mesa-events');
   if(el.firstChild&&el.firstChild.textContent&&el.firstChild.textContent.includes('Sin eventos'))el.innerHTML='';
   const entry=document.createElement('div');
-  entry.className='mesa-event';
-  entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span>${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
+  const isGol=type==='gol';
+  entry.className='mesa-event'+(isAnulado?' anulado':'');
+  if(dbId)entry.dataset.id=dbId;
+  if(isAnulado){
+    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="mesa-event-gol" style="text-decoration:line-through">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}<span class="mesa-event-anulado-tag">ANULADO</span>${motivo?`<span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${motivo}</span>`:''}`;
+  } else {
+    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="${isGol?'mesa-event-gol':''}">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
+    if(isGol)entry.onclick=()=>openAnular(entry,type,side,min);
+  }
   el.prepend(entry);
+}
+
+// ─── ANULAR GOL ───
+let anularTarget=null,anularMotivoSel='';
+function openAnular(entryEl,type,side,min){
+  anularTarget={el:entryEl,type,side,min,dbId:entryEl.dataset.id};
+  anularMotivoSel='';
+  document.querySelectorAll('.motivo-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('anular-otro').style.display='none';
+  document.getElementById('anular-otro').value='';
+  const homeName=document.getElementById('mesa-home-name').textContent;
+  const awayName=document.getElementById('mesa-away-name').textContent;
+  const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
+  document.getElementById('anular-desc').textContent='⚽ GOL'+(sideLabel?' — '+sideLabel:'');
+  const btn=document.getElementById('anular-confirm-btn');
+  btn.style.opacity='.4';btn.style.pointerEvents='none';
+  document.getElementById('anularModal').classList.add('open');
+}
+function selectMotivo(el,motivo){
+  document.querySelectorAll('.motivo-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  anularMotivoSel=motivo;
+  const otroInput=document.getElementById('anular-otro');
+  otroInput.style.display=motivo==='Otro'?'block':'none';
+  if(motivo==='Otro')otroInput.focus();
+  const btn=document.getElementById('anular-confirm-btn');
+  btn.style.opacity='1';btn.style.pointerEvents='auto';
+}
+async function confirmAnular(){
+  if(!anularMotivoSel||!anularTarget)return;
+  const motivo=anularMotivoSel==='Otro'?document.getElementById('anular-otro').value||'Otro':anularMotivoSel;
+  // Actualizar UI: marcar el gol original como ANULADO
+  const {el,type,side,min,dbId}=anularTarget;
+  const sideLabel=el.querySelector('.mesa-event-gol')?.nextSibling?.textContent||'';
+  el.classList.add('anulado');
+  el.onclick=null;
+  const golSpan=el.querySelector('.mesa-event-gol');
+  if(golSpan)golSpan.style.textDecoration='line-through';
+  const tag=document.createElement('span');
+  tag.className='mesa-event-anulado-tag';tag.textContent='ANULADO';
+  el.appendChild(tag);
+  if(motivo){const m=document.createElement('span');m.style.cssText='font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px';m.textContent=motivo;el.appendChild(m);}
+  // Restar del marcador
+  if(side==='local'){mesaScoreHome=Math.max(0,mesaScoreHome-1);document.getElementById('mesa-score-home').textContent=mesaScoreHome;}
+  else if(side==='visita'){mesaScoreAway=Math.max(0,mesaScoreAway-1);document.getElementById('mesa-score-away').textContent=mesaScoreAway;}
+  // Agregar evento de anulación al log
+  const anulMin=Math.floor(mesaSecs/60);
+  const evAnul=document.createElement('div');
+  evAnul.className='mesa-event';
+  evAnul.innerHTML=`<span class="mesa-event-time">${anulMin}'</span><span style="color:var(--red)">❌ GOL ANULADO${sideLabel?' '+sideLabel:''}</span><span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${motivo}</span>`;
+  document.getElementById('mesa-events').prepend(evAnul);
+  showToast('Gol anulado — '+motivo,'error');
+  // Guardar en Supabase
+  try{
+    if(dbId)await supa.from('eventos_partido').update({anulado:true,motivo}).eq('id',dbId);
+    await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:'anular_gol',equipo:side||null,minuto:anulMin,motivo});
+    await supa.from('partidos').update(side==='local'?{goles_local:mesaScoreHome}:{goles_visita:mesaScoreAway}).eq('id',mesaMatchId);
+  }catch(e){console.warn('Error guardando anulación',e);}
+  closeAnular(null,true);
+}
+function closeAnular(e,force){
+  if(force||e.target===document.getElementById('anularModal'))
+    document.getElementById('anularModal').classList.remove('open');
 }
 async function mesaEvent(type,side){
   if(type==='gol'){
@@ -1581,10 +1682,13 @@ async function mesaEvent(type,side){
   const min=Math.floor(mesaSecs/60);
   addEventToLog(type,side,min);
   showToast((evtLabels[type]||type)+(side==='local'?' — '+document.getElementById('mesa-home-name').textContent:side==='visita'?' — '+document.getElementById('mesa-away-name').textContent:''),'');
-  // Guardar en Supabase
+  // Guardar en Supabase y guardar id en el elemento del log
   try{
-    await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:type,equipo:side||null,minuto:min});
-    if(type==='gol'){
+    const {data:ev}=await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:type,equipo:side||null,minuto:min}).select().single();
+    if(ev&&type==='gol'){
+      // Asignar id al primer elemento del log (el que acabamos de agregar)
+      const primer=document.getElementById('mesa-events').firstChild;
+      if(primer)primer.dataset.id=ev.id;
       await supa.from('partidos').update(
         side==='local'?{goles_local:mesaScoreHome}:{goles_visita:mesaScoreAway}
       ).eq('id',mesaMatchId);
