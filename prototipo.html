@@ -1491,6 +1491,7 @@ function filterLeagues(q){
 
 let currentLeagueId=1,currentDivisionId=1;
 let currentAdminLeagueId=null,currentAdminTorneoId=null;
+let currentLeagueLimits={maxEquipos:null,maxJugadores:null};
 
 function formatFecha(str){
   if(!str)return '';
@@ -1665,6 +1666,7 @@ async function doAdminLogin(){
 }
 function showAdminForLeague(l){
   currentAdminLeagueId=l.id;
+  currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='';
   document.getElementById('dash-league-icon').textContent=l.icon;
@@ -1697,7 +1699,8 @@ async function loadSuperLeagues(){
       leagues=ls.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
-        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025'
+        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
+        maxEquipos:l.max_equipos||null,maxJugadores:l.max_jugadores_por_equipo||null
       }));
       const activas=ls.filter(l=>l.activa).length;
       const torneosCount=ts?ts.length:0;
@@ -1718,7 +1721,11 @@ function renderSuperLeagues(){
         <div style="font-size:14px;font-weight:800">${l.name}</div>
         <div style="font-size:12px;color:var(--text2);margin-top:1px">${l.sport}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:1px">${l.adminEmail}</div>
-        <span class="super-badge ${l.active?'active':'inactive'}">${l.active?'● ACTIVA':'INACTIVA'}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <span class="super-badge ${l.active?'active':'inactive'}">${l.active?'● ACTIVA':'INACTIVA'}</span>
+          ${l.maxEquipos?`<span class="tag tag-teams">≤${l.maxEquipos} equipos</span>`:''}
+          ${l.maxJugadores?`<span class="tag tag-teams">≤${l.maxJugadores} jug/equipo</span>`:''}
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="btn btn-primary btn-sm" onclick="openLeagueAsAdmin(${l.id})">Gestionar</button>
@@ -1809,11 +1816,15 @@ async function saveNuevaLiga(){
   const btn=document.getElementById('nl-save-btn');
   btn.disabled=true; btn.textContent='Guardando…';
   try{
+    const maxEq=parseInt(document.getElementById('nl-max-equipos').value)||null;
+    const maxJug=parseInt(document.getElementById('nl-max-jugadores').value)||null;
     const {data,error}=await supa.from('ligas').insert({
       nombre,deporte,icon:nlIconSel,color:nlColorSel,
       color_texto:'#ffffff',activa:true,
       admin_email:email||null,
-      admin_pass:pass||null
+      admin_pass:pass||null,
+      max_equipos:maxEq,
+      max_jugadores_por_equipo:maxJug
     }).select().single();
     if(error)throw error;
     closeNuevaLiga(null,true);
@@ -2773,7 +2784,9 @@ async function loadAdminEquipos(){
       el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin equipos.<br>Tocá + Agregar equipo.</div>';
       return;
     }
-    el.innerHTML=adminDivEquipos.map(e=>`
+    const lim=currentLeagueLimits.maxEquipos;
+    const usoBanner=lim?`<div style="padding:8px 14px;background:${adminDivEquipos.length>=lim?'rgba(239,68,68,0.1)':'rgba(91,110,245,0.08)'};border:1px solid ${adminDivEquipos.length>=lim?'rgba(239,68,68,0.3)':'var(--border)'};border-radius:10px;font-size:12px;color:${adminDivEquipos.length>=lim?'var(--red)':'var(--text2)'};margin-bottom:8px">Equipos en esta división: <b>${adminDivEquipos.length}</b>${lim?' · Límite total de la liga: <b>'+lim+'</b>':''}</div>`:'';
+    el.innerHTML=usoBanner+adminDivEquipos.map(e=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
         <div style="width:40px;height:40px;border-radius:50%;background:${e.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(e.abreviacion||'?')}</div>
         <div style="flex:1">
@@ -2835,6 +2848,17 @@ async function saveNuevoEquipo(){
   const btn=document.getElementById('ne-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
+    if(currentLeagueLimits.maxEquipos){
+      const {data:divs}=await supa.from('divisiones').select('id,torneo:torneos!inner(liga_id)').eq('torneo.liga_id',currentAdminLeagueId);
+      const divIds=(divs||[]).map(d=>d.id);
+      if(divIds.length){
+        const {count}=await supa.from('equipos').select('id',{count:'exact',head:true}).in('division_id',divIds);
+        if(count>=currentLeagueLimits.maxEquipos){
+          errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxEquipos} equipos para esta liga`;
+          errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Equipo';return;
+        }
+      }
+    }
     const {error}=await supa.from('equipos').insert({
       division_id:currentAdminDivisionId, club_id:clubId,
       nombre, abreviacion:club?.abreviacion||null,
@@ -2866,7 +2890,9 @@ async function loadAdminJugadores(){
     const {data,error}=await supa.from('jugadores').select('*, equipo:equipos(nombre,color_principal)').in('equipo_id',equipoIds).order('equipo_id').order('numero');
     if(error)throw error;
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin jugadores aún.</div>';return;}
-    el.innerHTML=data.map(j=>`
+    const limJ=currentLeagueLimits.maxJugadores;
+    const jugBanner=limJ?`<div style="padding:8px 14px;background:rgba(91,110,245,0.08);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text2);margin-bottom:8px">Máx. <b>${limJ}</b> jugadores por equipo</div>`:'';
+    el.innerHTML=jugBanner+data.map(j=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:50%;background:${j.equipo?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${j.numero||'—'}</div>
         <div style="flex:1">
@@ -2912,6 +2938,13 @@ async function saveNuevoJugador(){
   const btn=document.getElementById('nj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
+    if(currentLeagueLimits.maxJugadores){
+      const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
+      if(count>=currentLeagueLimits.maxJugadores){
+        errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxJugadores} jugadores por equipo`;
+        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
+      }
+    }
     const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion});
     if(error)throw error;
     closeNuevoJugador(null,true);
