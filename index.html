@@ -24,36 +24,29 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
-
-/* HEADER */
 header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
 .logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a6b5c,#0d3d34);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
 header h1{font-size:17px;font-weight:700;flex:1;}
 header .subtitle{font-size:12px;color:var(--text2);}
 .theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
 .back-link{color:var(--accent);font-size:22px;cursor:pointer;padding:4px;line-height:1;}
-
-/* VIEWS */
 .view{display:none;}
 .view.active{display:block;}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
 .view.slide{animation:slideIn 0.25s ease;}
-
-/* HOME */
 .home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a2150,#0d3d34);padding:24px 20px;position:relative;overflow:hidden;}
 .home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(91,110,245,0.15);}
 .home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,0.1);}
 .home-banner h2{font-size:22px;font-weight:900;margin-bottom:4px;}
 .home-banner p{font-size:13px;color:rgba(255,255,255,0.7);}
 .home-banner .sport-icons{font-size:28px;margin-bottom:12px;}
-
 .section-title{padding:16px 16px 10px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
 .leagues-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
-
-.league-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
-.league-card:active{transform:scale(0.98);}
-.league-card:hover{border-color:var(--accent);background:var(--card2);}
-.league-card::after{content:'›';position:absolute;right:16px;font-size:22px;color:var(--text3);}
+.league-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;transition:all 0.18s;position:relative;}
+.league-card:hover{border-color:var(--accent);}
+.league-card-main{display:flex;align-items:center;gap:14px;cursor:pointer;position:relative;}
+.league-card-main::after{content:'›';position:absolute;right:0;font-size:22px;color:var(--text3);}
+.league-card-main:active{opacity:0.8;}
 .league-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
 .league-info{flex:1;}
 .league-name{font-size:15px;font-weight:800;margin-bottom:2px;}
@@ -63,26 +56,25 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .tag-active{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
 .tag-sport{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(91,110,245,0.3);}
 .tag-teams{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
-
+.league-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.league-url{font-size:11px;color:var(--text3);}
+.admin-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text3);padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;transition:all 0.15s;}
+.admin-link:active{color:var(--accent);border-color:var(--accent);}
 .search-home{margin:0 16px 12px;position:relative;}
 .search-home input{width:100%;padding:12px 16px 12px 42px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;outline:none;}
 .search-home input:focus{border-color:var(--accent);}
 .search-home input::placeholder{color:var(--text3);}
 .search-home .si{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none;}
-
-/* LEAGUE VIEW */
 .content{padding-bottom:80px;min-height:calc(100vh - 58px);}
 .screen{display:none;animation:fadeIn 0.2s ease;}
 .screen.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;gap:3px;transition:all 0.2s;}
 .nav-item .nav-icon{font-size:20px;}
 .nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
 .nav-item.active .nav-label{color:var(--accent);}
 .nav-item.active .nav-icon{transform:translateY(-1px);}
-
 .date-strip{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
 .date-strip::-webkit-scrollbar{display:none;}
 .date-pill{display:flex;flex-direction:column;align-items:center;padding:8px 14px;border-radius:20px;cursor:pointer;min-width:52px;background:var(--card2);border:1px solid var(--border);transition:all 0.2s;flex-shrink:0;}
@@ -91,18 +83,15 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .date-pill.active .day-name{color:rgba(255,255,255,0.8);}
 .date-pill .day-num{font-size:16px;font-weight:700;}
 .date-pill.active .day-num{color:#fff;}
-
 .filter-tabs{display:flex;padding:12px 16px;gap:8px;overflow-x:auto;scrollbar-width:none;}
 .filter-tabs::-webkit-scrollbar{display:none;}
 .filter-tab{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.4px;cursor:pointer;white-space:nowrap;background:var(--card2);border:1px solid var(--border);color:var(--text2);transition:all 0.2s;}
 .filter-tab.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
-
 .match-group{margin:8px 16px 16px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);}
 .group-header{padding:10px 14px;display:flex;align-items:center;gap:8px;background:var(--card2);border-bottom:1px solid var(--border);}
 .group-header .sport-icon{font-size:16px;}
 .group-header .tournament-name{font-size:12px;font-weight:700;color:var(--text2);flex:1;}
 .round-badge{background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
-
 .match-item{padding:14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border);}
 .match-item:last-child{border-bottom:none;}
 .match-item:active{background:var(--card2);}
@@ -124,7 +113,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .match-score.loser{color:var(--text2);}
 .match-score.upcoming{color:var(--text3);font-size:14px;}
 .chevron{color:var(--text3);font-size:14px;flex-shrink:0;}
-
 .section-title-sm{padding:16px 16px 8px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
 .standings-card{margin:0 16px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);margin-bottom:16px;}
 .standings-header{display:flex;align-items:center;padding:10px 14px;background:var(--card2);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.5px;}
@@ -132,7 +120,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .standings-header .col-team{flex:1;}
 .standings-header .col-stat{width:32px;text-align:center;}
 .standings-header .col-pts{width:36px;text-align:center;color:var(--accent);}
-.standing-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.standing-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);}
 .standing-row:last-child{border-bottom:none;}
 .pos-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:6px;flex-shrink:0;}
 .pos-badge.gold{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);}
@@ -143,7 +131,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .col-team-name{font-size:13px;font-weight:600;}
 .col-stat-val{width:32px;text-align:center;font-size:12px;color:var(--text2);}
 .col-pts-val{width:36px;text-align:center;font-size:14px;font-weight:800;color:var(--accent);}
-
 .scorer-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:16px;}
 .scorer-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
 .scorer-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
@@ -154,7 +141,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-goals{display:flex;flex-direction:column;align-items:center;}
 .goals-num{font-size:24px;font-weight:900;color:var(--accent);line-height:1;}
 .goals-label{font-size:9px;color:var(--text3);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
-
 .search-wrap{padding:16px;}
 .search-input-wrap{position:relative;}
 .search-input{width:100%;padding:12px 16px 12px 44px;border-radius:14px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;outline:none;}
@@ -163,14 +149,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3);pointer-events:none;}
 .search-results{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
 .player-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
-.player-avatar{width:44px;height:44px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--accent);border:2px solid var(--accent-dim);flex-shrink:0;}
+.player-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
 .player-info{flex:1;}
 .player-name{font-size:14px;font-weight:700;}
 .player-meta{font-size:12px;color:var(--text2);}
 .jersey-badge{background:var(--accent-dim);color:var(--accent);font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;}
-
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
 .modal-overlay.open{opacity:1;pointer-events:all;}
 .modal-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);}
@@ -206,11 +190,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .info-row:last-child{border-bottom:none;}
 .info-label{font-size:12px;color:var(--text2);}
 .info-value{font-size:13px;font-weight:600;}
-
+/* LOGIN MODAL */
+.login-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;}
+.demo-creds{background:var(--accent-dim);border:1px solid rgba(91,110,245,0.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--text2);}
+.demo-creds strong{color:var(--accent);}
+.demo-creds code{color:var(--text);font-family:monospace;background:rgba(0,0,0,0.2);padding:1px 5px;border-radius:4px;font-size:11px;}
 /* ADMIN */
 .admin-screen{background:var(--bg);min-height:100vh;}
-.admin-login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:8px;}
-.logo-big{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1a6b5c,#0d3d34);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#fff;margin-bottom:8px;}
 .form-group{width:100%;display:flex;flex-direction:column;gap:6px;}
 .form-label{font-size:12px;font-weight:700;color:var(--text2);}
 .form-input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;outline:none;transition:border-color 0.2s;}
@@ -244,7 +230,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .list-item-meta{font-size:12px;color:var(--text2);}
 .list-actions{display:flex;gap:6px;}
 .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
-
+/* SUPER ADMIN */
+.crown-banner{background:linear-gradient(135deg,#12091f,#0d1117);border-bottom:1px solid var(--border);padding:20px 16px 16px;}
+.super-league-row{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 16px 10px;display:flex;align-items:center;gap:12px;}
+.super-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;display:inline-block;margin-top:4px;}
+.super-badge.active{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.super-badge.inactive{background:var(--card2);color:var(--text3);border:1px solid var(--border);}
 /* RESULT MODAL */
 .result-modal{position:fixed;inset:0;background:var(--overlay);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
 .result-modal.open{opacity:1;pointer-events:all;}
@@ -265,7 +256,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
-
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;z-index:500;transition:transform 0.3s;box-shadow:0 8px 32px var(--shadow);}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
@@ -275,43 +265,40 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <body>
 <div id="app">
 
-<!-- ═══════════════ HOME ═══════════════ -->
+<!-- HOME -->
 <div id="view-home" class="view active">
   <header>
-    <div class="logo-circle">We</div>
+    <div class="logo-circle" onclick="showSuperAdmin()">We</div>
     <div style="flex:1"><h1>Ligas Deportivas</h1><span class="subtitle">Encontrá tu liga</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
-
   <div style="padding-bottom:24px">
     <div class="home-banner">
       <div class="sport-icons">🤾 ⚽ 🏀 🏐</div>
       <h2>Tu liga, online</h2>
       <p>Resultados, tabla y goleadores en tiempo real</p>
     </div>
-
     <div class="section-title">BUSCAR LIGA</div>
     <div class="search-home">
       <span class="si">🔍</span>
       <input type="text" placeholder="Buscar liga..." oninput="filterLeagues(this.value)" id="leagueSearch">
     </div>
-
-    <div class="section-title">LIGAS ACTIVAS</div>
+    <div class="section-title">LIGAS</div>
     <div class="leagues-list" id="leaguesList"></div>
   </div>
 </div>
 
-<!-- ═══════════════ LIGA DETAIL ═══════════════ -->
+<!-- LIGA DETAIL -->
 <div id="view-league" class="view">
-  <header id="league-header">
+  <header>
     <span class="back-link" onclick="goHome()">‹</span>
     <div style="flex:1">
       <h1 id="league-header-name">Liga Baires</h1>
       <span class="subtitle" id="league-header-sub">Handball · 2025</span>
     </div>
+    <button class="theme-btn" style="font-size:16px" onclick="openLoginForCurrent()">🔐</button>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
-
   <div class="content">
     <div class="screen active" id="screen-partidos">
       <div class="date-strip" id="dateStrip"></div>
@@ -323,7 +310,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <div id="matchesList"></div>
     </div>
-
     <div class="screen" id="screen-tabla">
       <div class="section-title-sm">TABLA DE POSICIONES</div>
       <div class="standings-card">
@@ -334,12 +320,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div id="standingsList"></div>
       </div>
     </div>
-
     <div class="screen" id="screen-goles">
       <div class="section-title-sm">TABLA DE GOLEADORES</div>
       <div class="scorer-list" id="scorersList"></div>
     </div>
-
     <div class="screen" id="screen-buscar">
       <div class="search-wrap">
         <div class="search-input-wrap">
@@ -352,7 +336,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
     </div>
   </div>
-
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon">⚡</span><span class="nav-label">PARTIDOS</span></div>
     <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon">📊</span><span class="nav-label">TABLA</span></div>
@@ -361,12 +344,55 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </nav>
 </div>
 
+<!-- SUPER ADMIN -->
+<div id="view-superadmin" class="view">
+  <header>
+    <span class="back-link" onclick="goHome()">‹</span>
+    <div style="flex:1"><h1>Super Admin</h1><span class="subtitle">Panel maestro</span></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div id="superadmin-login" style="padding:32px 24px;display:flex;flex-direction:column;gap:10px;align-items:center">
+    <div style="font-size:56px;margin-bottom:4px">👑</div>
+    <div style="font-size:20px;font-weight:900;text-align:center">Acceso Maestro</div>
+    <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Solo para el administrador de la plataforma</div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="superadmin@ligas.com"></div>
+    <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" value="admin2025"></div>
+    <div class="demo-creds" style="width:100%;margin-bottom:4px">🔑 <strong>Demo:</strong> <code>superadmin@ligas.com</code> / <code>admin2025</code></div>
+    <button class="btn btn-primary" onclick="goSuperAdminDash()">Ingresar como Super Admin</button>
+  </div>
+  <div id="superadmin-dashboard" style="display:none">
+    <div class="crown-banner">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="font-size:32px">👑</div>
+        <div><div style="font-size:16px;font-weight:900">Panel Maestro</div><div style="font-size:12px;color:var(--text2)">superadmin@ligas.com</div></div>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="goHome()">Salir</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--accent)">5</div><div style="font-size:10px;color:var(--text2);font-weight:700">LIGAS</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--green)">4</div><div style="font-size:10px;color:var(--text2);font-weight:700">ACTIVAS</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--gold)">50</div><div style="font-size:10px;color:var(--text2);font-weight:700">EQUIPOS</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">LIGAS REGISTRADAS</div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('Modal: Crear nueva liga','success')">+ Nueva Liga</button>
+    </div>
+    <div id="superLeaguesList" style="padding-bottom:24px"></div>
+  </div>
+</div>
+
 <!-- MATCH DETAIL MODAL -->
 <div class="modal-overlay" id="matchModal" onclick="closeMatch(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-tournament" id="modal-tournament">Liga Baires Handball · Fecha 5</div>
+      <div class="modal-tournament" id="modal-tournament">Liga Baires · Fecha 5</div>
       <div class="modal-teams">
         <div class="modal-team">
           <div class="modal-shield" id="modal-home-shield" style="background:#1a2150;color:#5b6ef5">LA</div>
@@ -428,37 +454,43 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
-<!-- ═══════════════ ADMIN ═══════════════ -->
-<div id="view-admin" style="display:none;">
-  <div id="admin-login" class="admin-screen">
-    <div class="admin-login-wrap">
-      <div class="logo-big">We</div>
-      <h2 style="font-size:22px;font-weight:800">Panel Admin</h2>
-      <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Ingresá con tu liga</p>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-input" value="admin@ligabaires.com">
-      </div>
-      <div class="form-group" style="margin-top:8px">
-        <label class="form-label">Contraseña</label>
-        <input type="password" class="form-input" value="••••••••">
-      </div>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="goAdmin('dashboard')">Ingresar</button>
-      <div style="margin-top:12px;text-align:center">
-        <a onclick="goHome()" style="font-size:13px;color:var(--accent);cursor:pointer">← Ver ligas públicas</a>
-      </div>
+<!-- LOGIN MODAL (admin de liga) -->
+<div class="modal-overlay" id="loginModal" onclick="closeLoginModal(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:20px 20px 16px;text-align:center">
+      <div class="login-icon" id="login-league-icon">🤾</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px" id="login-league-name">Liga Baires</div>
+      <div style="font-size:13px;color:var(--text2)">Panel de administración</div>
+    </div>
+    <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px">
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
+      <div class="demo-creds">🔑 <strong>Demo —</strong> email: <code id="login-demo-email">admin@liga-baires.com</code><br>contraseña: <code id="login-demo-pass">ligabaires2025</code></div>
+      <button class="btn btn-primary" onclick="doAdminLogin()" style="margin-top:4px">Ingresar al Panel</button>
+      <button class="btn btn-secondary" onclick="closeLoginModal(null,true)">Cancelar</button>
     </div>
   </div>
+</div>
 
-  <div id="admin-dashboard" class="admin-screen" style="display:none">
+<!-- ADMIN PANEL -->
+<div id="view-admin" style="display:none;">
+  <div id="admin-dashboard" class="admin-screen">
     <div class="admin-header-bar">
       <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goHome()">🌐 Ligas</span>
       <h2>Dashboard</h2>
-      <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goAdmin('login')">Salir</span>
+      <span style="font-size:13px;color:var(--text3);cursor:pointer" onclick="logoutAdmin()">Salir</span>
     </div>
     <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-      <div style="width:36px;height:36px;border-radius:10px;background:#1a2150;color:#5b6ef5;display:flex;align-items:center;justify-content:center;font-size:18px">🤾</div>
-      <div><div style="font-size:14px;font-weight:800">Liga Baires</div><div style="font-size:11px;color:var(--text2)">Handball · Temporada 2025</div></div>
+      <div id="dash-league-icon" style="width:40px;height:40px;border-radius:12px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🤾</div>
+      <div style="flex:1">
+        <div id="dash-league-name" style="font-size:14px;font-weight:800">Liga Baires</div>
+        <div id="dash-league-sub" style="font-size:11px;color:var(--text2)">Handball · Temporada 2025</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase">Logueado como</div>
+        <div id="dash-admin-email" style="font-size:11px;color:var(--accent)">admin@liga-baires.com</div>
+      </div>
     </div>
     <div class="dashboard-grid">
       <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num">8</div><div class="stat-label">EQUIPOS</div></div>
@@ -474,13 +506,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="menu-item"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Nombre, temporada, puntos</p></div><span class="menu-chevron">›</span></div>
     </div>
   </div>
-
   <div id="admin-teams" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Equipos</h2></div>
     <div style="padding:16px 16px 8px"><button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar equipo','')">+ Agregar equipo</button></div>
     <div class="admin-list" id="teamsList"></div>
   </div>
-
   <div id="admin-players" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Jugadores</h2></div>
     <div style="padding:16px 16px 8px;display:flex;gap:8px;align-items:center">
@@ -489,7 +519,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="admin-list" id="playersList"></div>
   </div>
-
   <div id="admin-matches" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Partidos</h2></div>
     <div style="padding:16px 16px 8px;display:flex;gap:8px">
@@ -498,7 +527,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="admin-list" id="adminMatchesList"></div>
   </div>
-
   <div id="admin-fixture" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Generar Fixture</h2></div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
@@ -522,7 +550,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="rst">Cargar Resultado</div>
     <div class="rss" id="resultModalSub">Local vs Visitante</div>
     <div class="score-input-row">
-      <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" value="0" min="0" id="homeScoreInput"></div>
+      <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" value="0" min="0"></div>
       <div class="score-dash">-</div>
       <div style="text-align:center"><div class="score-team-label" id="result-away-label">Visitante</div><input type="number" class="score-input" value="0" min="0"></div>
     </div>
@@ -546,16 +574,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
 </div>
 
 <script>
-// ═══ DATA ═══
-const leagues = [
-  {id:1, name:'Liga Baires', slug:'liga-baires', sport:'Handball', season:'2025', icon:'🤾', color:'#1a2150', text:'#5b6ef5', teams:8, active:true},
-  {id:2, name:'Liga Norte Fútbol', slug:'liga-norte', sport:'Fútbol', season:'Clausura 2025', icon:'⚽', color:'#1a3d20', text:'#22c55e', teams:12, active:true},
-  {id:3, name:'Liga Sur Básquet', slug:'liga-sur', sport:'Básquet', season:'2025', icon:'🏀', color:'#3d2f1a', text:'#f59e0b', teams:6, active:true},
-  {id:4, name:'Club Voley Centro', slug:'voley-centro', sport:'Vóley', season:'Apertura 2025', icon:'🏐', color:'#2f1a3d', text:'#a855f7', teams:8, active:false},
-  {id:5, name:'Pádel Palermo', slug:'padel-palermo', sport:'Pádel', season:'2025', icon:'🎾', color:'#1a3d3d', text:'#14b8a6', teams:16, active:true},
+const leagues=[
+  {id:1,name:'Liga Baires',slug:'liga-baires',sport:'Handball',season:'2025',icon:'🤾',color:'#1a2150',text:'#5b6ef5',teams:8,active:true,adminEmail:'admin@liga-baires.com',adminPass:'ligabaires2025'},
+  {id:2,name:'Liga Norte Fútbol',slug:'liga-norte',sport:'Fútbol',season:'Clausura 2025',icon:'⚽',color:'#1a3d20',text:'#22c55e',teams:12,active:true,adminEmail:'admin@liga-norte.com',adminPass:'liganorte2025'},
+  {id:3,name:'Liga Sur Básquet',slug:'liga-sur',sport:'Básquet',season:'2025',icon:'🏀',color:'#3d2f1a',text:'#f59e0b',teams:6,active:true,adminEmail:'admin@liga-sur.com',adminPass:'ligasur2025'},
+  {id:4,name:'Club Voley Centro',slug:'voley-centro',sport:'Vóley',season:'Apertura 2025',icon:'🏐',color:'#2f1a3d',text:'#a855f7',teams:8,active:false,adminEmail:'admin@voley-centro.com',adminPass:'voley2025'},
+  {id:5,name:'Pádel Palermo',slug:'padel-palermo',sport:'Pádel',season:'2025',icon:'🎾',color:'#1a3d3d',text:'#14b8a6',teams:16,active:true,adminEmail:'admin@padel-palermo.com',adminPass:'padel2025'},
 ];
-
-const teamsData = [
+const teamsData=[
   {id:1,name:'Los Andes',short:'LA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
   {id:2,name:'River Baires',short:'RB',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
   {id:3,name:'Club Tigre',short:'CT',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
@@ -565,7 +591,7 @@ const teamsData = [
   {id:7,name:'San Martín',short:'SM',color:'#1a3d3d',text:'#14b8a6',emoji:'🩵'},
   {id:8,name:'Boca Juniors',short:'BJ',color:'#1a1a3d',text:'#eab308',emoji:'💛'},
 ];
-const players = [
+const players=[
   {id:1,name:'Martín García',team:1,jersey:7,goals:12},{id:2,name:'Diego López',team:1,jersey:10,goals:8},
   {id:3,name:'Roberto Torres',team:1,jersey:5,goals:5},{id:4,name:'Carlos Sánchez',team:1,jersey:3,goals:4},
   {id:5,name:'Alejandro Fernández',team:1,jersey:14,goals:3},{id:6,name:'Santiago Martín',team:2,jersey:9,goals:10},
@@ -575,7 +601,7 @@ const players = [
   {id:13,name:'Gonzalo Herrera',team:4,jersey:9,goals:4},{id:14,name:'Emanuel Flores',team:5,jersey:11,goals:6},
   {id:15,name:'Brian Morales',team:6,jersey:7,goals:5},{id:16,name:'Tomás Vega',team:7,jersey:10,goals:4},
 ];
-const matches = [
+const matches=[
   {id:1,home:1,away:2,round:5,homeScore:18,awayScore:14,status:'done',time:'10:00',venue:'Polideportivo Baires'},
   {id:2,home:3,away:4,round:5,homeScore:null,awayScore:null,status:'upcoming',time:'12:00',venue:'Club Tigre'},
   {id:3,home:5,away:6,round:5,homeScore:null,awayScore:null,status:'live',time:'VIVO',venue:'Centro Deportivo Sur'},
@@ -583,7 +609,7 @@ const matches = [
   {id:5,home:2,away:3,round:4,homeScore:16,awayScore:18,status:'done',time:'10:00',venue:'River Baires'},
   {id:6,home:1,away:4,round:4,homeScore:24,awayScore:15,status:'done',time:'12:00',venue:'Polideportivo Baires'},
 ];
-const standings = [
+const standings=[
   {teamId:1,pj:5,pg:4,pe:0,pp:1,gf:92,gc:74,pts:12},
   {teamId:2,pj:5,pg:3,pe:1,pp:1,gf:85,gc:78,pts:10},
   {teamId:3,pj:5,pg:3,pe:0,pp:2,gf:88,gc:82,pts:9},
@@ -594,7 +620,6 @@ const standings = [
   {teamId:8,pj:5,pg:0,pe:1,pp:4,gf:65,gc:97,pts:1},
 ];
 
-// ═══ THEME ═══
 let isDark=true;
 function toggleTheme(){
   isDark=!isDark;
@@ -602,90 +627,143 @@ function toggleTheme(){
   document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=isDark?'🌙':'☀️');
 }
 
-// ═══ HOME ═══
 function renderLeagues(list){
-  const el=document.getElementById('leaguesList');
-  el.innerHTML=list.map(l=>`
-    <div class="league-card" onclick="openLeague(${l.id})">
-      <div class="league-icon" style="background:${l.color}">${l.icon}</div>
-      <div class="league-info">
-        <div class="league-name">${l.name}</div>
-        <div class="league-meta">${l.sport} · ${l.season}</div>
-        <div class="league-tags">
-          <span class="tag ${l.active?'tag-active':'tag-teams'}">${l.active?'● ACTIVA':'Inactiva'}</span>
-          <span class="tag tag-sport">${l.sport}</span>
-          <span class="tag tag-teams">${l.teams} equipos</span>
+  document.getElementById('leaguesList').innerHTML=list.map(l=>`
+    <div class="league-card">
+      <div class="league-card-main" onclick="openLeague(${l.id})">
+        <div class="league-icon" style="background:${l.color}">${l.icon}</div>
+        <div class="league-info">
+          <div class="league-name">${l.name}</div>
+          <div class="league-meta">${l.sport} · ${l.season||'—'}</div>
+          <div class="league-tags">
+            <span class="tag ${l.active?'tag-active':'tag-teams'}">${l.active?'● ACTIVA':'Inactiva'}</span>
+            <span class="tag tag-sport">${l.sport}</span>
+            <span class="tag tag-teams">${l.teams||0} equipos</span>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+      <div class="league-card-footer">
+        <span class="league-url">${l.slug}.tuapp.com</span>
+        <div class="admin-link" onclick="openLoginModal(${l.id},event)">🔐 Admin</div>
+      </div>
+    </div>`).join('');
 }
 function filterLeagues(q){
-  const filtered=leagues.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase()));
-  renderLeagues(filtered);
+  renderLeagues(leagues.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase())));
 }
+
+let currentLeagueId=1;
 function openLeague(id){
+  currentLeagueId=id;
   const l=leagues.find(x=>x.id===id);
   document.getElementById('league-header-name').textContent=l.name;
-  document.getElementById('league-header-sub').textContent=l.sport+' · '+l.season;
+  document.getElementById('league-header-sub').textContent=l.sport+' · '+(l.season||'—');
   showView('view-league');
-  // reset to partidos tab
   switchTab('partidos',document.querySelector('.nav-item'));
-  buildDateStrip();
-  renderMatches();
-  renderStandings();
-  renderScorers();
+  buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
-function goHome(){
-  showView('view-home');
-  document.getElementById('view-admin').style.display='none';
-}
+function openLoginForCurrent(){openLoginModal(currentLeagueId,null);}
+function goHome(){showView('view-home');document.getElementById('view-admin').style.display='none';}
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-admin').style.display='none';
   const v=document.getElementById(id);
   v.classList.add('active','slide');
   setTimeout(()=>v.classList.remove('slide'),300);
 }
 
-// ═══ LEAGUE TABS ═══
+let loginLeagueId=1;
+function openLoginModal(leagueId,event){
+  if(event)event.stopPropagation();
+  loginLeagueId=leagueId;
+  const l=leagues.find(x=>x.id===leagueId);
+  const icon=document.getElementById('login-league-icon');
+  icon.textContent=l.icon;icon.style.background=l.color;
+  document.getElementById('login-league-name').textContent=l.name;
+  document.getElementById('login-demo-email').textContent=l.adminEmail;
+  document.getElementById('login-demo-pass').textContent=l.adminPass;
+  document.getElementById('login-email').value=l.adminEmail;
+  document.getElementById('login-pass').value='';
+  document.getElementById('loginModal').classList.add('open');
+}
+function closeLoginModal(event,force){
+  if(force||(event&&event.target===document.getElementById('loginModal')))
+    document.getElementById('loginModal').classList.remove('open');
+}
+function doAdminLogin(){
+  const l=leagues.find(x=>x.id===loginLeagueId);
+  document.getElementById('loginModal').classList.remove('open');
+  setTimeout(()=>showAdminForLeague(l),300);
+}
+function showAdminForLeague(l){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-admin').style.display='';
+  document.getElementById('dash-league-icon').textContent=l.icon;
+  document.getElementById('dash-league-icon').style.background=l.color;
+  document.getElementById('dash-league-name').textContent=l.name;
+  document.getElementById('dash-league-sub').textContent=l.sport+' · Temporada '+(l.season||'—');
+  document.getElementById('dash-admin-email').textContent=l.adminEmail;
+  goAdmin('dashboard');
+  showToast('Bienvenido, '+l.name,'success');
+}
+function logoutAdmin(){goHome();showToast('Sesión cerrada','');}
+
+function showSuperAdmin(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-admin').style.display='none';
+  document.getElementById('view-superadmin').classList.add('active');
+  document.getElementById('superadmin-login').style.display='';
+  document.getElementById('superadmin-dashboard').style.display='none';
+}
+function goSuperAdminDash(){
+  document.getElementById('superadmin-login').style.display='none';
+  document.getElementById('superadmin-dashboard').style.display='';
+  renderSuperLeagues();
+}
+function renderSuperLeagues(){
+  document.getElementById('superLeaguesList').innerHTML=leagues.map(l=>`
+    <div class="super-league-row">
+      <div style="width:48px;height:48px;border-radius:14px;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${l.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800">${l.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:1px">${l.sport} · ${l.teams||0} equipos</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px">${l.adminEmail}</div>
+        <span class="super-badge ${l.active?'active':'inactive'}">${l.active?'● ACTIVA':'INACTIVA'}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="btn btn-primary btn-sm" onclick="openLeagueAsAdmin(${l.id})">Gestionar</button>
+        <button class="btn btn-secondary btn-sm" onclick="showToast('Config. de ${l.name}','')">Config.</button>
+      </div>
+    </div>`).join('');
+}
+function openLeagueAsAdmin(id){
+  showAdminForLeague(leagues.find(x=>x.id===id));
+}
+
 function switchTab(tab,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+tab).classList.add('active');
   el.classList.add('active');
 }
-
-// ═══ DATE STRIP ═══
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function buildDateStrip(){
-  const strip=document.getElementById('dateStrip');
-  const today=new Date();
+  const strip=document.getElementById('dateStrip'),today=new Date();
   let html='';
-  for(let i=-3;i<=10;i++){
-    const d=new Date(today);
-    d.setDate(d.getDate()+i);
-    html+=`<div class="date-pill ${i===0?'active':''}" onclick="selectDate(this)"><span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span></div>`;
-  }
+  for(let i=-3;i<=10;i++){const d=new Date(today);d.setDate(d.getDate()+i);html+=`<div class="date-pill ${i===0?'active':''}" onclick="selectDate(this)"><span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span></div>`;}
   strip.innerHTML=html;
   strip.children[3].scrollIntoView({block:'nearest',inline:'center'});
 }
-function selectDate(el){
-  document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-}
-
-// ═══ MATCHES ═══
+function selectDate(el){document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
 let currentFilter='todos';
 function filterMatches(el,filter){
   document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  currentFilter=filter;
-  renderMatches();
+  el.classList.add('active');currentFilter=filter;renderMatches();
 }
 function getTeam(id){return teamsData.find(t=>t.id===id);}
 function renderMatches(){
   const filtered=currentFilter==='todos'?matches:matches.filter(m=>m.status===currentFilter);
-  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos para mostrar</div>';return;}
+  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos</div>';return;}
   const byRound={};
   filtered.forEach(m=>{if(!byRound[m.round])byRound[m.round]=[];byRound[m.round].push(m);});
   let html='';
@@ -693,43 +771,32 @@ function renderMatches(){
     const lname=document.getElementById('league-header-name').textContent;
     html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">${lname.toUpperCase()}</span><span class="round-badge">FECHA ${round}</span></div>`;
     ms.forEach(m=>{
-      const home=getTeam(m.home),away=getTeam(m.away);
-      const isDone=m.status==='done',isLive=m.status==='live';
+      const home=getTeam(m.home),away=getTeam(m.away),isDone=m.status==='done',isLive=m.status==='live';
       const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
       html+=`<div class="match-item" onclick="openMatch(${m.id})">
         <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
         <div class="match-teams">
-          <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''} ">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'12':'-')}</span></div>
-          <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''} ">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'10':'-')}</span></div>
-        </div>
-        <span class="chevron">›</span>
-      </div>`;
+          <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'12':'-')}</span></div>
+          <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'10':'-')}</span></div>
+        </div><span class="chevron">›</span></div>`;
     });
     html+='</div>';
   });
   document.getElementById('matchesList').innerHTML=html;
 }
-
-// ═══ MATCH MODAL ═══
 function openMatch(id){
-  const m=matches.find(x=>x.id===id);
-  const home=getTeam(m.home),away=getTeam(m.away);
+  const m=matches.find(x=>x.id===id),home=getTeam(m.home),away=getTeam(m.away);
   document.getElementById('modal-home-shield').textContent=home.short;
-  document.getElementById('modal-home-shield').style.background=home.color;
-  document.getElementById('modal-home-shield').style.color=home.text;
+  document.getElementById('modal-home-shield').style.cssText=`background:${home.color};color:${home.text}`;
   document.getElementById('modal-home-name').textContent=home.name;
   document.getElementById('modal-away-shield').textContent=away.short;
-  document.getElementById('modal-away-shield').style.background=away.color;
-  document.getElementById('modal-away-shield').style.color=away.text;
+  document.getElementById('modal-away-shield').style.cssText=`background:${away.color};color:${away.text}`;
   document.getElementById('modal-away-name').textContent=away.name;
-  const score=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?'12 - 10':'- - -';
-  document.getElementById('modal-score').textContent=score;
+  document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?'12 - 10':'- - -';
   const st=document.getElementById('modal-status-tag');
-  if(m.status==='done'){st.textContent='FINALIZADO';st.className='modal-status-tag';}
-  else if(m.status==='live'){st.textContent='EN VIVO';st.className='modal-status-tag live';}
-  else{st.textContent='PROGRAMADO';st.className='modal-status-tag';}
-  const lname=document.getElementById('league-header-name').textContent;
-  document.getElementById('modal-tournament').textContent=`${lname} · Fecha ${m.round}`;
+  st.textContent=m.status==='done'?'FINALIZADO':m.status==='live'?'EN VIVO':'PROGRAMADO';
+  st.className='modal-status-tag'+(m.status==='live'?' live':'');
+  document.getElementById('modal-tournament').textContent=`${document.getElementById('league-header-name').textContent} · Fecha ${m.round}`;
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
 }
@@ -737,56 +804,34 @@ function closeMatch(e){if(e.target===document.getElementById('matchModal'))docum
 function switchModalTab(tab,el){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.modal-pane').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('pane-'+tab).classList.add('active');
+  el.classList.add('active');document.getElementById('pane-'+tab).classList.add('active');
 }
-
-// ═══ STANDINGS ═══
 function renderStandings(){
-  const sorted=[...standings].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
-  const badges=['gold','silver','bronze'];
-  let html='';
-  sorted.forEach((row,i)=>{
-    const t=getTeam(row.teamId),badge=i<3?badges[i]:'normal',dif=row.gf-row.gc;
-    html+=`<div class="standing-row"><div class="pos-badge ${badge}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
-  });
-  document.getElementById('standingsList').innerHTML=html;
+  const sorted=[...standings].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
+  document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
+    const t=getTeam(row.teamId),dif=row.gf-row.gc,badge=i<3?badges[i]:'normal';
+    return `<div class="standing-row"><div class="pos-badge ${badge}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
+  }).join('');
 }
-
-// ═══ SCORERS ═══
 function renderScorers(){
-  const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0);
-  const medals=['🥇','🥈','🥉'];
-  let html='';
-  sorted.forEach((p,i)=>{
+  const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
+  document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    html+=`<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
-  });
-  document.getElementById('scorersList').innerHTML=html;
+    return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
+  }).join('');
 }
-
-// ═══ SEARCH ═══
-let st;
+let st2;
 function searchPlayers(q){
-  clearTimeout(st);
-  st=setTimeout(()=>{
+  clearTimeout(st2);
+  st2=setTimeout(()=>{
     const results=document.getElementById('searchResults');
-    if(!q.trim()){results.innerHTML='<div class="empty-state">Escribí un nombre para buscar jugadores</div>';return;}
+    if(!q.trim()){results.innerHTML='<div class="empty-state">Escribí un nombre para buscar</div>';return;}
     const found=players.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
-    if(!found.length){results.innerHTML='<div class="empty-state">No se encontraron jugadores</div>';return;}
-    results.innerHTML=found.map(p=>{
+    results.innerHTML=found.length?found.map(p=>{
       const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-      return `<div class="player-card"><div class="player-avatar" style="color:${t.text};border-color:${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
-    }).join('');
+      return `<div class="player-card"><div class="player-avatar" style="color:${t.text};border:2px solid ${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
+    }).join(''):'<div class="empty-state">No se encontraron jugadores</div>';
   },300);
-}
-
-// ═══ ADMIN ═══
-function showAdmin(){
-  document.getElementById('view-home').classList.remove('active');
-  document.getElementById('view-league').classList.remove('active');
-  document.getElementById('view-admin').style.display='';
-  goAdmin('login');
 }
 function goAdmin(page){
   document.querySelectorAll('.admin-screen').forEach(s=>s.style.display='none');
@@ -798,9 +843,9 @@ function goAdmin(page){
 function renderAdminTeams(){
   document.getElementById('teamsList').innerHTML=teamsData.map(t=>`
     <div class="list-item">
-      <div class="shield" style="background:${t.color};color:${t.text};width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:800;flex-shrink:0">${t.short}</div>
+      <div class="shield" style="background:${t.color};color:${t.text};width:36px;height:36px;border-radius:50%;font-size:12px;flex-shrink:0">${t.short}</div>
       <div class="list-item-info"><div class="list-item-name">${t.name}</div><div class="list-item-meta">${players.filter(p=>p.team===t.id).length} jugadores</div></div>
-      <div class="list-actions"><div class="icon-btn" onclick="showToast('Editando ${t.name}','')">✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div>
+      <div class="list-actions"><div class="icon-btn" onclick="showToast('Editando','')">✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div>
     </div>`).join('');
 }
 function renderAdminPlayers(){
@@ -810,18 +855,15 @@ function renderAdminPlayers(){
   const filtered=fv?players.filter(p=>p.team===fv):players;
   document.getElementById('playersList').innerHTML=filtered.map(p=>{
     const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    return `<div class="list-item"><div style="width:36px;height:36px;border-radius:50%;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div><div class="list-item-info"><div class="list-item-name">${p.name}</div><div class="list-item-meta">${t.name} · #${p.jersey} · ${p.goals} goles</div></div><div class="list-actions"><div class="icon-btn" onclick="showToast('Editando','')" >✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div></div>`;
+    return `<div class="list-item"><div style="width:36px;height:36px;border-radius:50%;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div><div class="list-item-info"><div class="list-item-name">${p.name}</div><div class="list-item-meta">${t.name} · #${p.jersey} · ${p.goals} goles</div></div><div class="list-actions"><div class="icon-btn">✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div></div>`;
   }).join('');
 }
 function renderAdminMatches(){
   document.getElementById('adminMatchesList').innerHTML=matches.map(m=>{
-    const home=getTeam(m.home),away=getTeam(m.away);
-    const score=m.status==='done'?`${m.homeScore}-${m.awayScore}`:'Por jugar';
-    return `<div class="list-item"><div style="flex:1"><div class="list-item-name">${home.name} vs ${away.name}</div><div class="list-item-meta">Fecha ${m.round} · ${score}</div></div><div class="list-actions">${m.status!=='done'?`<div class="icon-btn" style="background:rgba(34,197,94,0.1);border-color:var(--green);color:var(--green);font-size:11px;font-weight:700;width:auto;padding:0 10px" onclick="openResultModal(${m.id})">Res.</div>`:''}<div class="icon-btn" onclick="showToast('Editando','')" >✏️</div></div></div>`;
+    const home=getTeam(m.home),away=getTeam(m.away),score=m.status==='done'?`${m.homeScore}-${m.awayScore}`:'Por jugar';
+    return `<div class="list-item"><div style="flex:1"><div class="list-item-name">${home.name} vs ${away.name}</div><div class="list-item-meta">Fecha ${m.round} · ${score}</div></div><div class="list-actions">${m.status!=='done'?`<div class="icon-btn" style="background:rgba(34,197,94,0.1);border-color:var(--green);color:var(--green);font-size:11px;font-weight:700;width:auto;padding:0 10px" onclick="openResultModal(${m.id})">Res.</div>`:''}<div class="icon-btn">✏️</div></div></div>`;
   }).join('');
 }
-
-// ═══ RESULT MODAL ═══
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 let scorers=[];
 function openResultModal(id){
@@ -830,33 +872,15 @@ function openResultModal(id){
   scorers=[];renderScorerTags();
   document.getElementById('resultModal').classList.add('open');
 }
-function addScorer(){
-  scorers.push({team:document.getElementById('scorerTeamSel').value,player:document.getElementById('scorerPlayerSel').value});
-  renderScorerTags();
-}
+function addScorer(){scorers.push({team:document.getElementById('scorerTeamSel').value,player:document.getElementById('scorerPlayerSel').value});renderScorerTags();}
 function removeScorer(i){scorers.splice(i,1);renderScorerTags();}
-function renderScorerTags(){
-  document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');
-}
-
-// ═══ TOAST ═══
+function renderScorerTags(){document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');}
 function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast'+(type?' '+type:'');
-  t.classList.add('show');
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast'+(type?' '+type:'');t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
-
-// ═══ INIT ═══
 renderLeagues(leagues);
-
-// Demo admin button
-const demoBar=document.createElement('div');
-demoBar.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;z-index:200;box-shadow:0 2px 12px rgba(91,110,245,0.5);white-space:nowrap';
-demoBar.textContent='⚙️ PANEL ADMIN (DEMO)';
-demoBar.onclick=showAdmin;
-document.getElementById('app').appendChild(demoBar);
 </script>
 </body>
 </html>
