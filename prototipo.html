@@ -389,6 +389,79 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.error{border-color:var(--red);color:var(--red);}
+/* ═══ NEW FEATURES ═══ */
+/* FOTOS / UPLOADS */
+.foto-upload-zone{border:2px dashed var(--border);border-radius:14px;padding:18px;text-align:center;cursor:pointer;position:relative;transition:all .2s;background:var(--input-bg);}
+.foto-upload-zone:hover{border-color:var(--accent);background:var(--accent-dim);}
+.foto-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.foto-upload-zone .fuz-icon{font-size:24px;margin-bottom:4px;}
+.foto-upload-zone .fuz-text{font-size:11px;color:var(--text2);font-weight:600;}
+.foto-preview-img{width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid var(--accent);display:none;}
+.foto-preview-img.visible{display:inline-block;}
+/* COMPLETENESS */
+.comp-ring{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.comp-ring.comp-100{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.comp-ring.comp-half{background:rgba(234,179,8,.12);color:var(--yellow);border:1px solid rgba(234,179,8,.3);}
+.comp-ring.comp-low{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+/* TV MODE */
+#tv-overlay{position:fixed;inset:0;background:#0d1117;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#tv-overlay.open{display:flex;}
+.tv-league-name{font-size:clamp(11px,2.5vw,20px);font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;}
+.tv-teams-row{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;margin-bottom:8px;}
+.tv-team-name{font-size:clamp(16px,5vw,52px);font-weight:900;color:#fff;text-align:center;flex:1;}
+.tv-score-big{font-size:clamp(72px,20vw,180px);font-weight:900;color:#fff;letter-spacing:-4px;line-height:1;white-space:nowrap;}
+.tv-sep{color:rgba(255,255,255,0.3);}
+.tv-info-row{display:flex;align-items:center;gap:20px;margin-top:20px;}
+.tv-period{font-size:clamp(13px,3.5vw,26px);font-weight:700;color:rgba(255,255,255,0.55);}
+.tv-timer-big{font-size:clamp(26px,7vw,68px);font-weight:900;font-family:monospace;color:var(--accent);}
+.tv-close-btn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+/* PLAYER PROFILE */
+.player-profile-modal{position:fixed;inset:0;background:var(--overlay);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.player-profile-modal.open{opacity:1;pointer-events:all;}
+.player-profile-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
+.player-profile-modal.open .player-profile-sheet{transform:translateY(0);}
+.pp-header{background:linear-gradient(135deg,#1a2150,#0d3d34);padding:24px 20px 20px;position:relative;}
+.pp-avatar{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;margin-bottom:12px;}
+.pp-avatar-img{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;margin-bottom:12px;}
+.pp-name{font-size:20px;font-weight:900;color:#fff;}
+.pp-sub{font-size:13px;color:rgba(255,255,255,.7);}
+.pp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
+.pp-stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.pp-stat-val{font-size:22px;font-weight:900;color:var(--accent);line-height:1;}
+.pp-stat-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;}
+/* COMUNICADOS */
+.comunicado-item{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:8px;}
+/* MULTAS */
+.multa-item{background:var(--card);border:1px solid rgba(239,68,68,.25);border-left:3px solid var(--red);border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:8px;}
+.multa-amount{font-size:16px;font-weight:900;color:var(--red);}
+.multa-estado-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.multa-estado-badge.pendiente{background:rgba(239,68,68,.12);color:var(--red);}
+.multa-estado-badge.pagada{background:rgba(34,197,94,.12);color:var(--green);}
+/* PLAYOFFS */
+.bracket-match{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;}
+.bracket-team{padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);}
+.bracket-team:last-child{border-bottom:none;}
+.bracket-team.winner{background:rgba(34,197,94,.07);color:var(--green);}
+.bracket-score{margin-left:auto;font-size:15px;font-weight:900;}
+/* CANCHA DISPONIBILIDAD */
+.cancha-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.cancha-slot{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);margin-bottom:4px;}
+.cancha-slot.libre{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.3);}
+.cancha-slot.ocupado{background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.3);}
+.slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.slot-dot.libre{background:var(--green);}
+.slot-dot.ocupado{background:var(--red);}
+/* HISTORIAL */
+.season-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+/* INFORME ÁRBITRO */
+.informe-incident{background:var(--card2);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.informe-incident-type{font-size:14px;flex-shrink:0;}
+/* @MEDIA PRINT */
+@media print{
+  header,nav,.admin-header-bar,.back-link,.btn,button,.mesa-btns{display:none!important;}
+  .view:not(.active){display:none!important;}
+  body{background:#fff;color:#000;}
+}
 </style>
 </head>
 <body>
@@ -430,6 +503,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </header>
   <div style="padding-bottom:32px">
     <div id="league-torneo-banner"></div>
+    <div style="padding:8px 16px">
+      <button class="btn btn-secondary" style="width:100%;font-size:13px" onclick="openInscripcion()">📝 Solicitar inscripción de club</button>
+    </div>
     <div class="section-title" id="league-divs-title">DIVISIONES</div>
     <div id="league-divs-list" style="padding:0 16px;display:flex;flex-direction:column;gap:10px"></div>
     <div class="section-title" style="margin-top:12px">TORNEOS ANTERIORES</div>
@@ -740,6 +816,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="menu-item" onclick="goAdmin('players')"><div class="menu-icon">👤</div><div class="menu-text"><h3>Jugadores</h3><p>Jugadores y fotos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('matches')"><div class="menu-icon">📅</div><div class="menu-text"><h3>Partidos</h3><p>Fixture y resultados</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('fixture')"><div class="menu-icon">🔄</div><div class="menu-text"><h3>Generar Fixture</h3><p>Round-robin automático</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openComunicados('admin')"><div class="menu-icon">📢</div><div class="menu-text"><h3>Comunicados</h3><p>Mensajes y avisos</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openMultas()"><div class="menu-icon">💰</div><div class="menu-text"><h3>Multas y Sanciones</h3><p>Control de infracciones</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openCanchas()"><div class="menu-icon">🏟️</div><div class="menu-text"><h3>Canchas</h3><p>Disponibilidad de instalaciones</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openHistorial()"><div class="menu-icon">🏅</div><div class="menu-text"><h3>Historial</h3><p>Temporadas y campeones</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openPlayoffs()"><div class="menu-icon">🎯</div><div class="menu-text"><h3>Playoffs / Eliminatoria</h3><p>Fase final del torneo</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="exportPDF()"><div class="menu-icon">📄</div><div class="menu-text"><h3>Exportar PDF</h3><p>Imprimir posiciones y datos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Nombre, temporada, puntos</p></div><span class="menu-chevron">›</span></div>
     </div>
   </div>
@@ -885,6 +967,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <input class="form-input" id="nc-pass" type="text" placeholder="Ej: losandes2025" style="width:100%"></div>
         <div style="font-size:11px;color:var(--text3)">El delegado usará estas credenciales para entrar a la app y gestionar el plantel.</div>
       </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Escudo del club (opcional)</label>
+        <div class="foto-upload-zone" id="nc-logo-zone" onclick="document.getElementById('nc-logo-input').click()">
+          <input type="file" id="nc-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'nc')">
+          <img id="nc-logo-preview" class="foto-preview-img" alt="logo">
+          <div id="nc-logo-placeholder">📷 Toca para subir escudo</div>
+        </div>
+      </div>
       <div id="nc-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevoClub(null,true)">Cancelar</button>
@@ -1010,6 +1100,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Equipo</label>
         <select class="form-input" id="nj-equipo" style="width:100%"><option value="">Cargando...</option></select></div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Foto del jugador (opcional)</label>
+        <div class="foto-upload-zone" id="nj-foto-zone" onclick="document.getElementById('nj-foto-input').click()">
+          <input type="file" id="nj-foto-input" accept="image/*" style="display:none" onchange="handleJugadorFotoChange(this,'nj')">
+          <img id="nj-foto-preview" class="foto-preview-img" style="width:60px;height:75px;border-radius:8px" alt="foto">
+          <div id="nj-foto-placeholder">📷 Toca para subir foto</div>
+        </div>
+      </div>
       <div id="nj-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevoJugador(null,true)">Cancelar</button>
@@ -1042,6 +1140,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <input class="form-input" id="np-cancha" type="text" placeholder="Ej: Estadio Municipal" style="width:100%"></div>
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Fecha/Jornada N°</label>
         <input class="form-input" id="np-jornada" type="number" min="1" placeholder="1" style="width:100%"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Árbitro (email, opcional)</label>
+        <input class="form-input" id="np-arbitro" type="email" placeholder="arbitro@ejemplo.com" style="width:100%"></div>
       <div id="np-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevoPartido(null,true)">Cancelar</button>
@@ -1167,6 +1267,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <button class="mesa-btn timeout" onclick="mesaEvent('timeout','')"><span class="mb-icon">⏱</span><span class="mb-label">TIEMPO MUERTO</span></button>
       <button class="mesa-btn sust" onclick="mesaEvent('sust','')"><span class="mb-icon">🔄</span><span class="mb-label">SUSTITUCIÓN</span></button>
       <button class="mesa-btn fin-tiempo" onclick="endPeriod()"><span class="mb-icon">🏁</span><span class="mb-label">FIN DE TIEMPO</span></button>
+      <button class="mesa-btn" onclick="openTVMode()" style="background:var(--card2);grid-column:1/-1"><span class="mb-icon">📺</span><span class="mb-label">MODO TV / PANTALLA GRANDE</span></button>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="shareResult(null)">🔗 Compartir resultado</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="openActaDigital()">📋 Acta digital</button>
     </div>
     <div class="mesa-log">
       <div class="mesa-log-title">REGISTRO DE EVENTOS</div>
@@ -1197,9 +1302,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
     </div>
     <!-- Tabs -->
-    <div style="display:flex;border-bottom:2px solid var(--border)">
-      <div id="dtab-plantel" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px" onclick="switchDelegTab('plantel',this)">PLANTEL</div>
-      <div id="dtab-partidos" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px" onclick="switchDelegTab('partidos',this)">PARTIDOS</div>
+    <div style="display:flex;border-bottom:2px solid var(--border);overflow-x:auto">
+      <div id="dtab-plantel" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('plantel',this)">PLANTEL</div>
+      <div id="dtab-partidos" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('partidos',this)">PARTIDOS</div>
+      <div id="dtab-cuerpo" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('cuerpo',this)">CUERPO TÉC.</div>
+      <div id="dtab-comunicados" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="openComunicados('delegado')">AVISOS</div>
     </div>
     <!-- Tab Plantel -->
     <div id="deleg-tab-plantel">
@@ -1215,6 +1322,34 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div id="deleg-tab-partidos" style="display:none">
       <div id="deleg-partidos-list" style="padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
+      </div>
+    </div>
+    <!-- Tab Cuerpo Técnico -->
+    <div id="deleg-tab-cuerpo" style="display:none">
+      <div style="padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--text2)">Cuerpo técnico</div>
+        <button class="btn btn-primary btn-sm" onclick="openNuevoCT()">+ Agregar</button>
+      </div>
+      <div id="deleg-cuerpo-list" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
+      </div>
+      <!-- Modal CT inline -->
+      <div id="ct-form" style="display:none;padding:0 16px 16px">
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
+          <input class="form-input" id="ct-nombre" placeholder="Nombre completo">
+          <select class="form-input" id="ct-rol" style="padding:10px">
+            <option value="Director Técnico">Director Técnico</option>
+            <option value="Asistente">Asistente Técnico</option>
+            <option value="Preparador Físico">Preparador Físico</option>
+            <option value="Médico">Médico</option>
+            <option value="Utilero">Utilero</option>
+            <option value="Coordinador">Coordinador</option>
+          </select>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('ct-form').style.display='none'">Cancelar</button>
+            <button class="btn" style="flex:1" onclick="saveCT()">Guardar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1242,6 +1377,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Equipo / División</label>
         <select class="form-input" id="dj-equipo" style="width:100%"><option value="">Cargando...</option></select></div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Foto del jugador (opcional)</label>
+        <div class="foto-upload-zone" onclick="document.getElementById('dj-foto-input').click()">
+          <input type="file" id="dj-foto-input" accept="image/*" style="display:none" onchange="handleJugadorFotoChange(this,'dj')">
+          <img id="dj-foto-preview" class="foto-preview-img" style="width:60px;height:75px;border-radius:8px" alt="foto">
+          <div id="dj-foto-placeholder">📷 Toca para subir foto</div>
+        </div>
+      </div>
       <div id="dj-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeDelegJugador(null,true)">Cancelar</button>
@@ -1274,6 +1417,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <div class="nl-color-btn" onclick="ecSelectColor(this,'#c0392b')" style="background:#c0392b"></div>
           <div class="nl-color-btn" onclick="ecSelectColor(this,'#2c3e50')" style="background:#2c3e50"></div>
           <div class="nl-color-btn" onclick="ecSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Escudo del club (opcional)</label>
+        <div class="foto-upload-zone" onclick="document.getElementById('ec-logo-input').click()">
+          <input type="file" id="ec-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'ec')">
+          <img id="ec-logo-preview" class="foto-preview-img" alt="logo">
+          <div id="ec-logo-placeholder">📷 Toca para cambiar escudo</div>
         </div>
       </div>
       <div id="ec-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
@@ -1377,6 +1528,274 @@ header .subtitle{font-size:12px;color:var(--text2);}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- TV MODE OVERLAY -->
+<div id="tv-overlay" onclick="closeTVMode()">
+  <div style="position:absolute;top:16px;right:16px;opacity:.4;font-size:13px;color:#fff">Toca para salir · ESC</div>
+  <div style="font-size:20px;font-weight:900;color:rgba(255,255,255,.5);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase" id="tv-match-title">Partido</div>
+  <div style="display:flex;align-items:center;gap:40px;justify-content:center;width:100%;max-width:900px">
+    <div style="flex:1;text-align:right">
+      <div id="tv-local-logo" style="font-size:64px;margin-bottom:8px">🏅</div>
+      <div class="tv-team-name" id="tv-local-name">Local</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="tv-score-big"><span id="tv-score-local">0</span><span style="color:rgba(255,255,255,.4);margin:0 8px">-</span><span id="tv-score-visita">0</span></div>
+      <div id="tv-timer-display" style="font-size:28px;font-weight:700;color:rgba(255,255,255,.7);font-family:monospace">0:00</div>
+      <div id="tv-status-badge" style="font-size:14px;font-weight:700;padding:4px 16px;border-radius:20px;background:rgba(34,197,94,.2);color:#22c55e">EN VIVO</div>
+    </div>
+    <div style="flex:1;text-align:left">
+      <div id="tv-visita-logo" style="font-size:64px;margin-bottom:8px">🏅</div>
+      <div class="tv-team-name" id="tv-visita-name">Visita</div>
+    </div>
+  </div>
+  <div id="tv-scorers-list" style="margin-top:24px;color:rgba(255,255,255,.65);font-size:16px;text-align:center;max-width:600px;line-height:1.8"></div>
+</div>
+
+<!-- PLAYER PROFILE MODAL -->
+<div class="modal-overlay" id="playerProfileModal" onclick="closePlayerProfile(event)">
+  <div class="player-profile-modal">
+    <div class="pp-header">
+      <button class="modal-close-btn" onclick="closePlayerProfile(null,true)">✕</button>
+      <div class="pp-avatar" id="pp-avatar">JD</div>
+      <div class="pp-name" id="pp-name">Jugador</div>
+      <div class="pp-sub" id="pp-sub">Club · #00</div>
+    </div>
+    <div class="pp-stats" id="pp-stats">
+      <div class="pp-stat"><div class="pp-stat-val" id="pp-goles">0</div><div class="pp-stat-lbl">Goles</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="pp-asistencias">0</div><div class="pp-stat-lbl">Asist.</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="pp-partidos">0</div><div class="pp-stat-lbl">PJ</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="pp-amarillas">0</div><div class="pp-stat-lbl">🟨</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="pp-rojas">0</div><div class="pp-stat-lbl">🟥</div></div>
+    </div>
+    <div style="padding:20px">
+      <div id="pp-suspension-banner" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;color:var(--red);font-size:13px;font-weight:700;text-align:center;margin-bottom:16px"></div>
+      <div id="pp-cred-zone" style="margin-top:4px;text-align:center">
+        <button class="btn" style="width:100%;margin-bottom:10px" onclick="openCredFromProfile()">🪪 Ver credencial</button>
+        <button class="btn btn-secondary" style="width:100%" onclick="sharePlayerProfile()">🔗 Compartir perfil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMUNICADOS MODAL -->
+<div class="modal-overlay" id="comunicadosModal" onclick="closeComunicados(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:900">Comunicados</div>
+      <button class="btn" style="padding:6px 14px;font-size:13px" id="nuevo-comunicado-btn" onclick="showNuevoComunicado()">+ Nuevo</button>
+    </div>
+    <div id="nuevo-comunicado-form" style="display:none;padding:16px;border-bottom:1px solid var(--border);background:var(--card2)">
+      <textarea class="form-input" id="comunicado-texto" rows="3" placeholder="Texto del comunicado..." style="resize:none;margin-bottom:8px"></textarea>
+      <div style="display:flex;gap:8px">
+        <select class="form-input" id="comunicado-tipo" style="flex:1;padding:8px">
+          <option value="general">General</option>
+          <option value="urgente">Urgente</option>
+          <option value="informativo">Informativo</option>
+        </select>
+        <button class="btn" onclick="saveComunicado()" style="flex-shrink:0">Enviar</button>
+      </div>
+    </div>
+    <div id="comunicados-list" style="overflow-y:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando...</div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeComunicados(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MULTAS MODAL -->
+<div class="modal-overlay" id="multasModal" onclick="closeMultas(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:900">Multas y Sanciones</div>
+      <button class="btn" style="padding:6px 14px;font-size:13px" onclick="showNuevaMulta()">+ Nueva</button>
+    </div>
+    <div id="nueva-multa-form" style="display:none;padding:16px;border-bottom:1px solid var(--border);background:var(--card2)">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input class="form-input" id="multa-dest" placeholder="Club o jugador destinatario">
+        <textarea class="form-input" id="multa-motivo" rows="2" placeholder="Motivo..." style="resize:none"></textarea>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="multa-monto" type="number" placeholder="Monto $" style="flex:1">
+          <input class="form-input" id="multa-vence" type="date" style="flex:1">
+        </div>
+        <button class="btn" onclick="saveMulta()">Registrar multa</button>
+      </div>
+    </div>
+    <div id="multas-list" style="overflow-y:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando...</div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeMultas(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFORME ÁRBITRO MODAL -->
+<div class="modal-overlay" id="informeArbitroModal" onclick="closeInformeArbitro(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Informe del Árbitro</div>
+      <div style="font-size:16px;font-weight:900;margin-top:2px" id="informe-match-title">Partido</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="form-label">Observaciones generales</label>
+        <textarea class="form-input" id="informe-obs" rows="3" placeholder="Resumen del partido, comportamiento, condiciones..." style="resize:none"></textarea>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">Incidencias</label>
+          <button class="btn" style="padding:4px 12px;font-size:12px" onclick="addInformeIncident()">+ Añadir</button>
+        </div>
+        <div id="informe-incidents" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div>
+        <label class="form-label">Calificación del encuentro</label>
+        <select class="form-input" id="informe-calificacion" style="padding:10px">
+          <option value="excelente">Excelente</option>
+          <option value="bueno" selected>Bueno</option>
+          <option value="regular">Regular</option>
+          <option value="malo">Malo</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeInformeArbitro(null,true)">Cancelar</button>
+      <button class="btn" style="flex:1" onclick="saveInformeArbitro()">Guardar informe</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPROGRAMAR MODAL -->
+<div class="modal-overlay" id="reprogramarModal" onclick="closeReprogramar(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Reprogramar Partido</div>
+      <div style="font-size:16px;font-weight:900;margin-top:2px" id="reprogramar-title">Partido</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="form-label">Nueva fecha</label>
+        <input class="form-input" type="date" id="reprogram-fecha">
+      </div>
+      <div>
+        <label class="form-label">Nuevo horario</label>
+        <input class="form-input" type="time" id="reprogram-hora">
+      </div>
+      <div>
+        <label class="form-label">Cancha (opcional)</label>
+        <input class="form-input" type="text" id="reprogram-cancha" placeholder="Nombre de la cancha">
+      </div>
+      <div>
+        <label class="form-label">Motivo</label>
+        <textarea class="form-input" id="reprogram-motivo" rows="2" placeholder="Motivo de la reprogramación..." style="resize:none"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeReprogramar(null,true)">Cancelar</button>
+        <button class="btn" style="flex:1" onclick="saveReprogramacion()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CANCHAS MODAL -->
+<div class="modal-overlay" id="canchasModal" onclick="closeCanchas(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:900">Canchas</div>
+      <button class="btn" style="padding:6px 14px;font-size:13px" onclick="showNuevaCancha()">+ Nueva</button>
+    </div>
+    <div id="nueva-cancha-form" style="display:none;padding:16px;border-bottom:1px solid var(--border);background:var(--card2)">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input class="form-input" id="cancha-nombre" placeholder="Nombre de la cancha">
+        <input class="form-input" id="cancha-direccion" placeholder="Dirección">
+        <input class="form-input" id="cancha-capacidad" type="number" placeholder="Capacidad (jugadores)">
+        <button class="btn" onclick="saveCancha()">Registrar cancha</button>
+      </div>
+    </div>
+    <div id="canchas-list" style="overflow-y:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando...</div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeCanchas(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYOFFS MODAL -->
+<div class="modal-overlay" id="playoffsModal" onclick="closePlayoffs(event)">
+  <div class="modal-sheet" style="max-height:92vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:900">Fase Eliminatoria</div>
+      <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="closePlayoffs(null,true)">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px">
+      <div id="playoffs-bracket" style="display:flex;flex-direction:column;gap:20px">
+        <div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando bracket...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIAL MODAL -->
+<div class="modal-overlay" id="historialModal" onclick="closeHistorial(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:900">Historial de Temporadas</div>
+    </div>
+    <div id="historial-list" style="overflow-y:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando...</div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeHistorial(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- INSCRIPCIÓN ONLINE MODAL -->
+<div class="modal-overlay" id="inscripcionModal" onclick="closeInscripcion(event)">
+  <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Solicitud de inscripción</div>
+      <div style="font-size:16px;font-weight:900;margin-top:2px" id="inscripcion-liga-nombre">Liga</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="form-label">Nombre del club</label>
+        <input class="form-input" id="insc-club" placeholder="Club Atletico Ejemplo">
+      </div>
+      <div>
+        <label class="form-label">Nombre del delegado</label>
+        <input class="form-input" id="insc-delegado" placeholder="Tu nombre completo">
+      </div>
+      <div>
+        <label class="form-label">Email de contacto</label>
+        <input class="form-input" id="insc-email" type="email" placeholder="delegado@ejemplo.com">
+      </div>
+      <div>
+        <label class="form-label">Teléfono</label>
+        <input class="form-input" id="insc-tel" type="tel" placeholder="+54 9 11 1234-5678">
+      </div>
+      <div>
+        <label class="form-label">Mensaje (opcional)</label>
+        <textarea class="form-input" id="insc-msg" rows="2" placeholder="Información adicional..." style="resize:none"></textarea>
+      </div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeInscripcion(null,true)">Cancelar</button>
+      <button class="btn" style="flex:1" onclick="saveInscripcion()">Enviar solicitud</button>
     </div>
   </div>
 </div>
@@ -2467,14 +2886,15 @@ function showDelegadoView(club){
 }
 
 function switchDelegTab(tab,el){
-  ['plantel','partidos'].forEach(t=>{
-    document.getElementById('deleg-tab-'+t).style.display=t===tab?'':'none';
+  ['plantel','partidos','cuerpo'].forEach(t=>{
+    const pane=document.getElementById('deleg-tab-'+t);
+    if(pane)pane.style.display=t===tab?'':'none';
     const tabEl=document.getElementById('dtab-'+t);
-    tabEl.style.color=t===tab?'var(--accent)':'var(--text3)';
-    tabEl.style.borderBottomColor=t===tab?'var(--accent)':'transparent';
+    if(tabEl){tabEl.style.color=t===tab?'var(--accent)':'var(--text3)';tabEl.style.borderBottomColor=t===tab?'var(--accent)':'transparent';}
   });
   if(tab==='plantel')loadDelegPlantel();
   if(tab==='partidos')loadDelegPartidos();
+  if(tab==='cuerpo')loadCuerpoTecnico();
 }
 
 async function loadDelegPlantel(){
@@ -2502,12 +2922,15 @@ async function loadDelegPlantel(){
     }
     el.innerHTML=list.map(j=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:50%;background:${delegadoClub.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${j.numero||'—'}</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">${escHtml(j.nombre)}</div>
-          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')}</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:${delegadoClub.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer" onclick="openPlayerProfile(${j.id})">${j.foto_url?`<img src="${j.foto_url}" style="width:100%;height:100%;object-fit:cover" alt="">`:j.numero||'?'}</div>
+        <div style="flex:1;cursor:pointer" onclick="openPlayerProfile(${j.id})">
+          <div style="font-size:13px;font-weight:700">${escHtml(j.nombre)}${j.suspendido?` <span style="font-size:10px;background:rgba(239,68,68,.15);color:var(--red);border-radius:6px;padding:1px 5px">SUSP</span>`:''}</div>
+          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')} · #${j.numero||'—'}</div>
         </div>
-        <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarJugadorDeleg(${j.id},'${escHtml(j.nombre)}')">✕</button>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" style="font-size:11px;padding:3px 7px" onclick="openCredModal(${j.id})">🪪</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarJugadorDeleg(${j.id},'${escHtml(j.nombre)}')">✕</button>
+        </div>
       </div>`).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
@@ -2567,8 +2990,15 @@ async function saveDelegJugador(){
   const btn=document.getElementById('dj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion});
+    let fotoUrl=null;
+    const djBlob=window._djFotoBlob;
+    if(djBlob){
+      try{fotoUrl=await uploadImageToStorage(djBlob,'jugadores',`jug_${equipoId}_${Date.now()}.webp`);}
+      catch(imgErr){console.warn('Foto upload failed:',imgErr);}
+    }
+    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl});
     if(error)throw error;
+    window._djFotoBlob=null;
     closeDelegJugador(null,true);
     showToast('"'+nombre+'" agregado ✓','success');
     await loadDelegPlantel();
@@ -2677,9 +3107,12 @@ async function loadAdminClubes(){
     }
     el.innerHTML=adminLigaClubes.map(c=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
-        <div style="width:44px;height:44px;border-radius:12px;background:${c.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(c.abreviacion||'CL')}</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:${c.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden">${c.logo_url?`<img src="${c.logo_url}" style="width:100%;height:100%;object-fit:cover" alt="${escHtml(c.abreviacion||'CL')}">`:escHtml(c.abreviacion||'CL')}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800">${escHtml(c.nombre)}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px;font-weight:800">${escHtml(c.nombre)}</span>
+            ${renderCompletenessRing(calcClubCompleteness(c))}
+          </div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.delegado_email||'Sin delegado asignado'}</div>
         </div>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
@@ -2730,12 +3163,22 @@ async function saveNuevoClub(){
   const btn=document.getElementById('nc-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
+    let logoUrl=null;
+    const logoFile=window._ncLogoBlob;
+    if(logoFile){
+      try{
+        const ts=Date.now();
+        logoUrl=await uploadImageToStorage(logoFile,'escudos',`${currentAdminLeagueId}_${abrev||ts}.webp`);
+      }catch(imgErr){console.warn('Logo upload failed:',imgErr);}
+    }
     const {error}=await supa.from('clubes').insert({
       liga_id:currentAdminLeagueId, nombre, abreviacion:abrev||null,
       color_principal:ncColorSel, color_texto:'#ffffff',
-      delegado_email:email||null, delegado_pass:pass||null
+      delegado_email:email||null, delegado_pass:pass||null,
+      logo_url:logoUrl
     });
     if(error)throw error;
+    window._ncLogoBlob=null;
     closeNuevoClub(null,true);
     showToast('"'+nombre+'" creado ✓','success');
     await loadAdminClubes();
@@ -2945,8 +3388,15 @@ async function saveNuevoJugador(){
         errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
       }
     }
-    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion});
+    let fotoUrl=null;
+    const fotoBlob=window._njFotoBlob;
+    if(fotoBlob){
+      try{fotoUrl=await uploadImageToStorage(fotoBlob,'jugadores',`jugador_${equipoId}_${Date.now()}.webp`);}
+      catch(imgErr){console.warn('Foto upload failed:',imgErr);}
+    }
+    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl});
     if(error)throw error;
+    window._njFotoBlob=null;
     closeNuevoJugador(null,true);
     showToast('"'+nombre+'" agregado ✓','success');
     await loadAdminJugadores();
@@ -2993,6 +3443,10 @@ async function loadAdminPartidos(){
           <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
         </div>
         ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
+        ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📅 Reprogramar</button>
+          <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="shareResultText('${escHtml(p.local?.nombre||'Local')} ${p.goles_local??0} - ${p.goles_visita??0} ${escHtml(p.visita?.nombre||'Visitante')}')">🔗 Compartir</button>
+        </div>`:'<div style="margin-top:8px"><button class="btn btn-secondary btn-sm" style="width:100%;font-size:11px" onclick="shareResultText(\''+escHtml(p.local?.nombre||'Local')+' '+p.goles_local+' - '+p.goles_visita+' '+escHtml(p.visita?.nombre||'Visitante')+'\')">🔗 Compartir resultado</button></div>'}
       </div>`).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
@@ -3030,6 +3484,7 @@ async function saveNuevoPartido(){
   const hora=document.getElementById('np-hora').value;
   const cancha=document.getElementById('np-cancha').value.trim();
   const jornada=parseInt(document.getElementById('np-jornada').value)||null;
+  const arbitroEmail=document.getElementById('np-arbitro')?.value?.trim()||null;
   const errEl=document.getElementById('np-error');
   if(!localId||!visitaId){errEl.textContent='Seleccioná ambos equipos';errEl.style.display='';return;}
   if(localId===visitaId){errEl.textContent='Local y visitante deben ser distintos';errEl.style.display='';return;}
@@ -3039,7 +3494,7 @@ async function saveNuevoPartido(){
     const {error}=await supa.from('partidos').insert({
       division_id:currentAdminDivisionId, equipo_local_id:localId, equipo_visita_id:visitaId,
       fecha:fecha||null, hora:hora||null, cancha:cancha||null, jornada, estado:'programado',
-      goles_local:0, goles_visita:0
+      goles_local:0, goles_visita:0, arbitro_email:arbitroEmail
     });
     if(error)throw error;
     closeNuevoPartido(null,true);
@@ -3296,8 +3751,8 @@ async function loadArbitroPartidos(user){
       const label=isLive?'EN VIVO':isDone?'FINALIZADO':'PROGRAMADO';
       const bg=isLive?'rgba(34,197,94,0.15)':isDone?'var(--card2)':'var(--accent-dim)';
       const fg=isLive?'var(--green)':isDone?'var(--text3)':'var(--accent)';
-      return `<div class="arbitro-match" onclick="openPlanillaDB(${p.id})">
-        <div style="display:flex;align-items:center;gap:10px">
+      return `<div class="arbitro-match">
+        <div style="display:flex;align-items:center;gap:10px" onclick="openPlanillaDB(${p.id})">
           <div class="arb-status ${isLive?'live':isDone?'done':'pending'}"></div>
           <div style="flex:1">
             <div style="font-size:14px;font-weight:800">${escHtml(p.local?.nombre||'Local')} <span style="color:var(--text3)">vs</span> ${escHtml(p.visita?.nombre||'Visitante')}</div>
@@ -3306,6 +3761,9 @@ async function loadArbitroPartidos(user){
           <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:${bg};color:${fg}">${label}</div>
         </div>
         ${isDone?`<div style="text-align:center;font-size:16px;font-weight:900;padding:4px 0 0">${p.goles_local??0} - ${p.goles_visita??0}</div>`:''}
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:6px" onclick="openInformeArbitro(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📝 Informe</button>
+        </div>
       </div>`;
     };
     el.innerHTML=activos.length?activos.map(renderP).join(''):'<div style="text-align:center;color:var(--text3);padding:32px;font-size:14px">Sin partidos próximos asignados.</div>';
@@ -3442,7 +3900,16 @@ async function saveEditClub(){
   const btn=document.getElementById('ec-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    await supa.from('clubes').update({nombre,abreviacion:abreviacion||null,color_principal:ecColor}).eq('id',delegadoClub.id);
+    const updates={nombre,abreviacion:abreviacion||null,color_principal:ecColor};
+    const ecLogoBlob=window._ecLogoBlob;
+    if(ecLogoBlob){
+      try{
+        const logoUrl=await uploadImageToStorage(ecLogoBlob,'escudos',`${delegadoClub.id}_logo.webp`);
+        updates.logo_url=logoUrl;
+        window._ecLogoBlob=null;
+      }catch(imgErr){console.warn('Logo upload failed:',imgErr);}
+    }
+    await supa.from('clubes').update(updates).eq('id',delegadoClub.id);
     delegadoClub.nombre=nombre;
     delegadoClub.abreviacion=abreviacion||null;
     delegadoClub.color_principal=ecColor;
@@ -3479,6 +3946,612 @@ function showToast(msg,type=''){
     renderLeagues(leagues);
   }
 })();
+
+// ═══ IMAGE UPLOAD / RESIZE ═══
+async function resizeAndConvertToWebP(file,maxW,maxH){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width,h=img.height;
+      const ar=w/h;
+      if(w>maxW){w=maxW;h=Math.round(w/ar);}
+      if(h>maxH){h=maxH;w=Math.round(h*ar);}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        if(blob)resolve(blob);
+        else reject(new Error('Canvas toBlob failed'));
+      },'image/webp',0.85);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image load failed'));};
+    img.src=url;
+  });
+}
+async function uploadImageToStorage(blob,bucket,path){
+  const {data,error}=await supa.storage.from(bucket).upload(path,blob,{upsert:true,contentType:'image/webp'});
+  if(error)throw error;
+  const {data:{publicUrl}}=supa.storage.from(bucket).getPublicUrl(path);
+  return publicUrl;
+}
+async function handleEscudoFileChange(input,prefix){
+  const file=input.files[0];if(!file)return;
+  const preview=document.getElementById(prefix+'-logo-preview');
+  const placeholder=document.getElementById(prefix+'-logo-placeholder');
+  try{
+    const blob=await resizeAndConvertToWebP(file,256,256);
+    window['_'+prefix+'LogoBlob']=blob;
+    preview.src=URL.createObjectURL(blob);
+    preview.classList.add('visible');
+    if(placeholder)placeholder.style.display='none';
+  }catch(e){showToast('Error procesando imagen','error');}
+}
+async function handleJugadorFotoChange(input,prefix){
+  const file=input.files[0];if(!file)return;
+  const preview=document.getElementById(prefix+'-foto-preview');
+  const placeholder=document.getElementById(prefix+'-foto-placeholder');
+  try{
+    const blob=await resizeAndConvertToWebP(file,320,400);
+    window['_'+prefix+'FotoBlob']=blob;
+    preview.src=URL.createObjectURL(blob);
+    preview.classList.add('visible');
+    if(placeholder)placeholder.style.display='none';
+  }catch(e){showToast('Error procesando imagen','error');}
+}
+
+// ═══ COMPLETENESS ═══
+function calcClubCompleteness(c){
+  const fields=[c.nombre,c.abreviacion,c.color_principal,c.logo_url,c.delegado_email,c.delegado_pass];
+  return Math.round(fields.filter(Boolean).length/fields.length*100);
+}
+function renderCompletenessRing(pct){
+  const cls=pct>=100?'comp-100':pct>=50?'comp-half':'comp-low';
+  const icon=pct>=100?'✓':pct>=50?'~':'!';
+  return `<span class="comp-ring ${cls}">${icon} ${pct}%</span>`;
+}
+
+// ═══ TV MODE ═══
+function openTVMode(){
+  const overlay=document.getElementById('tv-overlay');
+  overlay.classList.add('open');
+  document.getElementById('tv-local-name').textContent=document.getElementById('mesa-home-name')?.textContent||'Local';
+  document.getElementById('tv-visita-name').textContent=document.getElementById('mesa-away-name')?.textContent||'Visitante';
+  document.getElementById('tv-score-local').textContent=document.getElementById('mesa-score-home')?.textContent||'0';
+  document.getElementById('tv-score-visita').textContent=document.getElementById('mesa-score-away')?.textContent||'0';
+  document.getElementById('tv-timer-display').textContent=document.getElementById('mesa-timer')?.textContent||'0:00';
+  document.getElementById('tv-match-title').textContent=document.getElementById('mesa-subtitle')?.textContent||'Partido';
+  document.addEventListener('keydown',tvKeyHandler);
+  setInterval(syncTVScore,2000);
+}
+function tvKeyHandler(e){if(e.key==='Escape')closeTVMode();}
+function syncTVScore(){
+  const overlay=document.getElementById('tv-overlay');
+  if(!overlay.classList.contains('open'))return;
+  document.getElementById('tv-score-local').textContent=document.getElementById('mesa-score-home')?.textContent||'0';
+  document.getElementById('tv-score-visita').textContent=document.getElementById('mesa-score-away')?.textContent||'0';
+  document.getElementById('tv-timer-display').textContent=document.getElementById('mesa-timer')?.textContent||'0:00';
+}
+function closeTVMode(){
+  document.getElementById('tv-overlay').classList.remove('open');
+  document.removeEventListener('keydown',tvKeyHandler);
+}
+
+// ═══ PLAYER PROFILE ═══
+let _ppCurrentJugadorId=null;
+async function openPlayerProfile(jugadorId){
+  _ppCurrentJugadorId=jugadorId;
+  document.getElementById('playerProfileModal').classList.add('open');
+  try{
+    const {data:j}=await supa.from('jugadores')
+      .select('*, equipo:equipo_id(nombre,abreviacion,color_principal)')
+      .eq('id',jugadorId).single();
+    if(!j)return;
+    const initials=(j.nombre||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const av=document.getElementById('pp-avatar');
+    if(j.foto_url){
+      av.innerHTML=`<img src="${j.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    }else{
+      av.textContent=initials;
+      av.style.background=j.equipo?.color_principal||'var(--accent)';
+    }
+    document.getElementById('pp-name').textContent=j.nombre||'—';
+    document.getElementById('pp-sub').textContent=`${j.equipo?.nombre||'Sin equipo'}${j.numero?' · #'+j.numero:''}${j.posicion?' · '+j.posicion:''}`;
+    document.getElementById('pp-goles').textContent=j.goles||0;
+    document.getElementById('pp-asistencias').textContent=j.asistencias||0;
+    document.getElementById('pp-partidos').textContent=j.partidos_jugados||0;
+    document.getElementById('pp-amarillas').textContent=j.amarillas_acumuladas||0;
+    document.getElementById('pp-rojas').textContent=j.rojas_acumuladas||0;
+    const susp=document.getElementById('pp-suspension-banner');
+    if(j.suspendido&&j.fechas_suspension>0){
+      susp.style.display='';
+      susp.textContent=`Suspendido · ${j.fechas_suspension} fecha(s) restantes`;
+    }else{susp.style.display='none';}
+  }catch(e){console.warn('openPlayerProfile error',e);}
+}
+function closePlayerProfile(e,force){
+  if(force||e?.target===document.getElementById('playerProfileModal'))
+    document.getElementById('playerProfileModal').classList.remove('open');
+}
+function openCredFromProfile(){
+  closePlayerProfile(null,true);
+  if(_ppCurrentJugadorId)setTimeout(()=>openCredModal(_ppCurrentJugadorId),200);
+}
+function sharePlayerProfile(){
+  const name=document.getElementById('pp-name')?.textContent||'Jugador';
+  const text=`Perfil de ${name} — Liga App`;
+  if(navigator.share){navigator.share({title:text,text});}
+  else{navigator.clipboard?.writeText(text);showToast('Copiado al portapapeles','success');}
+}
+
+// ═══ ACTA DIGITAL ═══
+function openActaDigital(){
+  const id=mesaMatchId;
+  if(id)openPlanillaDB(id);
+  else showToast('Seleccioná un partido primero','error');
+}
+
+// ═══ SHARE RESULT ═══
+function shareResultText(text){
+  if(navigator.share){navigator.share({title:'Resultado Liga App',text});}
+  else{navigator.clipboard?.writeText(text)||document.execCommand('copy');showToast('Copiado ✓','success');}
+}
+function shareResult(matchEl){
+  const local=document.getElementById('mesa-home-name')?.textContent||'Local';
+  const visita=document.getElementById('mesa-away-name')?.textContent||'Visitante';
+  const gl=document.getElementById('mesa-score-home')?.textContent||'0';
+  const gv=document.getElementById('mesa-score-away')?.textContent||'0';
+  shareResultText(`${local} ${gl} - ${gv} ${visita}`);
+}
+
+// ═══ EXPORT PDF ═══
+function exportPDF(){window.print();}
+
+// ═══ COMUNICADOS ═══
+let _comunicadosScope='admin';
+function openComunicados(scope){
+  _comunicadosScope=scope||'admin';
+  const canCreate=scope==='admin'||scope==='delegado';
+  document.getElementById('nuevo-comunicado-btn').style.display=canCreate?'':'none';
+  document.getElementById('comunicadosModal').classList.add('open');
+  loadComunicados();
+}
+function closeComunicados(e,force){
+  if(force||e?.target===document.getElementById('comunicadosModal'))
+    document.getElementById('comunicadosModal').classList.remove('open');
+}
+function showNuevoComunicado(){
+  const f=document.getElementById('nuevo-comunicado-form');
+  f.style.display=f.style.display==='none'?'':'none';
+}
+async function loadComunicados(){
+  const el=document.getElementById('comunicados-list');
+  el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px;font-size:14px">Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('comunicados')
+      .select('*').order('created_at',{ascending:false}).limit(30);
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin comunicados.</div>';return;}
+    el.innerHTML=data.map(c=>`
+      <div class="comunicado-item" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent)">${escHtml(c.tipo||'general')}</span>
+          <span style="font-size:11px;color:var(--text3)">${new Date(c.created_at).toLocaleDateString('es-AR')}</span>
+        </div>
+        <div style="font-size:14px">${escHtml(c.texto||'')}</div>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';
+  }
+}
+async function saveComunicado(){
+  const texto=document.getElementById('comunicado-texto').value.trim();
+  const tipo=document.getElementById('comunicado-tipo').value;
+  if(!texto){showToast('Escribí el comunicado','error');return;}
+  try{
+    await supa.from('comunicados').insert({texto,tipo,liga_id:currentAdminLeagueId||null});
+    document.getElementById('comunicado-texto').value='';
+    showNuevoComunicado();
+    showToast('Comunicado enviado ✓','success');
+    await loadComunicados();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ MULTAS ═══
+function openMultas(){
+  document.getElementById('multasModal').classList.add('open');
+  loadMultas();
+}
+function closeMultas(e,force){
+  if(force||e?.target===document.getElementById('multasModal'))
+    document.getElementById('multasModal').classList.remove('open');
+}
+function showNuevaMulta(){
+  const f=document.getElementById('nueva-multa-form');
+  f.style.display=f.style.display==='none'?'':'none';
+}
+async function loadMultas(){
+  const el=document.getElementById('multas-list');
+  el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('multas')
+      .select('*').eq('liga_id',currentAdminLeagueId||0).order('created_at',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin multas registradas.</div>';return;}
+    el.innerHTML=data.map(m=>`
+      <div class="multa-item" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="font-size:14px;font-weight:700">${escHtml(m.destinatario||'—')}</div>
+          <span class="multa-estado-badge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${m.pagada?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'};color:${m.pagada?'var(--green)':'var(--red)'}">${m.pagada?'Pagada':'Pendiente'}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${escHtml(m.motivo||'')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:15px;font-weight:900">$${m.monto||0}</div>
+          ${!m.pagada?`<button class="btn btn-sm" style="font-size:11px;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3)" onclick="marcarMultaPagada(${m.id})">Marcar pagada</button>`:''}
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
+}
+async function saveMulta(){
+  const dest=document.getElementById('multa-dest').value.trim();
+  const motivo=document.getElementById('multa-motivo').value.trim();
+  const monto=parseFloat(document.getElementById('multa-monto').value)||0;
+  if(!dest||!motivo){showToast('Completá destinatario y motivo','error');return;}
+  try{
+    await supa.from('multas').insert({destinatario:dest,motivo,monto,liga_id:currentAdminLeagueId||null,pagada:false});
+    ['multa-dest','multa-motivo','multa-monto','multa-vence'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    showNuevaMulta();showToast('Multa registrada ✓','success');
+    await loadMultas();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function marcarMultaPagada(id){
+  try{
+    await supa.from('multas').update({pagada:true}).eq('id',id);
+    showToast('Multa marcada como pagada ✓','success');
+    await loadMultas();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ INFORME ÁRBITRO ═══
+let _informeMatchId=null,_informeIncidents=[];
+function openInformeArbitro(matchId,titulo){
+  _informeMatchId=matchId;
+  _informeIncidents=[];
+  document.getElementById('informe-match-title').textContent=titulo||'Partido';
+  document.getElementById('informe-obs').value='';
+  document.getElementById('informe-calificacion').value='bueno';
+  renderInformeIncidents();
+  document.getElementById('informeArbitroModal').classList.add('open');
+}
+function closeInformeArbitro(e,force){
+  if(force||e?.target===document.getElementById('informeArbitroModal'))
+    document.getElementById('informeArbitroModal').classList.remove('open');
+}
+function addInformeIncident(){
+  _informeIncidents.push({tipo:'amarilla',descripcion:'',minuto:''});
+  renderInformeIncidents();
+}
+function renderInformeIncidents(){
+  const el=document.getElementById('informe-incidents');
+  if(!_informeIncidents.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:8px">Sin incidencias.</div>';return;}
+  el.innerHTML=_informeIncidents.map((inc,i)=>`
+    <div class="informe-incident" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <select class="form-input" style="flex:1;padding:6px;font-size:12px" onchange="_informeIncidents[${i}].tipo=this.value">
+          <option value="amarilla" ${inc.tipo==='amarilla'?'selected':''}>🟨 Amarilla</option>
+          <option value="roja" ${inc.tipo==='roja'?'selected':''}>🟥 Roja</option>
+          <option value="gol" ${inc.tipo==='gol'?'selected':''}>⚽ Gol</option>
+          <option value="lesion" ${inc.tipo==='lesion'?'selected':''}>🚑 Lesión</option>
+          <option value="otro" ${inc.tipo==='otro'?'selected':''}>📝 Otro</option>
+        </select>
+        <input class="form-input" style="width:60px;padding:6px;font-size:12px" type="number" placeholder="Min." value="${inc.minuto}" onchange="_informeIncidents[${i}].minuto=this.value">
+        <button onclick="_informeIncidents.splice(${i},1);renderInformeIncidents()" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <input class="form-input" style="padding:6px;font-size:12px" placeholder="Descripción..." value="${escHtml(inc.descripcion)}" onchange="_informeIncidents[${i}].descripcion=this.value">
+    </div>`).join('');
+}
+async function saveInformeArbitro(){
+  const obs=document.getElementById('informe-obs').value.trim();
+  const cal=document.getElementById('informe-calificacion').value;
+  const arbitroEmail=arbitroCurrentUser?.email||null;
+  try{
+    await supa.from('informe_arbitro').upsert({
+      partido_id:_informeMatchId,arbitro_email:arbitroEmail,
+      observaciones:obs,calificacion:cal,
+      incidencias:JSON.stringify(_informeIncidents)
+    },{onConflict:'partido_id,arbitro_email'});
+    closeInformeArbitro(null,true);
+    showToast('Informe guardado ✓','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ REPROGRAMAR ═══
+let _reprogramarMatchId=null;
+function openReprogramar(matchId,titulo){
+  _reprogramarMatchId=matchId;
+  document.getElementById('reprogramar-title').textContent=titulo||'Partido';
+  document.getElementById('reprogram-fecha').value='';
+  document.getElementById('reprogram-hora').value='';
+  document.getElementById('reprogram-cancha').value='';
+  document.getElementById('reprogram-motivo').value='';
+  document.getElementById('reprogramarModal').classList.add('open');
+}
+function closeReprogramar(e,force){
+  if(force||e?.target===document.getElementById('reprogramarModal'))
+    document.getElementById('reprogramarModal').classList.remove('open');
+}
+async function saveReprogramacion(){
+  const fecha=document.getElementById('reprogram-fecha').value;
+  const hora=document.getElementById('reprogram-hora').value;
+  const cancha=document.getElementById('reprogram-cancha').value.trim();
+  if(!fecha){showToast('Seleccioná una fecha','error');return;}
+  try{
+    const updates={estado:'programado'};
+    if(fecha)updates.fecha=fecha;
+    if(hora)updates.hora=hora;
+    if(cancha)updates.cancha=cancha;
+    await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);
+    closeReprogramar(null,true);
+    showToast('Partido reprogramado ✓','success');
+    await loadAdminPartidos();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ HISTORIAL ═══
+function openHistorial(){
+  document.getElementById('historialModal').classList.add('open');
+  loadHistorial();
+}
+function closeHistorial(e,force){
+  if(force||e?.target===document.getElementById('historialModal'))
+    document.getElementById('historialModal').classList.remove('open');
+}
+async function loadHistorial(){
+  const el=document.getElementById('historial-list');
+  el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('historial_temporadas')
+      .select('*').eq('liga_id',currentAdminLeagueId||0).order('temporada',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin historial registrado.</div>';return;}
+    el.innerHTML=data.map(h=>`
+      <div class="season-card" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:16px;font-weight:900">🏆 ${escHtml(h.campeon||'—')}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${escHtml(h.torneo||'')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;color:var(--accent)">${escHtml(h.temporada||'')}</div>
+            ${h.segundo?`<div style="font-size:11px;color:var(--text3)">2° ${escHtml(h.segundo)}</div>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
+}
+
+// ═══ CANCHAS ═══
+function openCanchas(){
+  document.getElementById('canchasModal').classList.add('open');
+  loadCanchas();
+}
+function closeCanchas(e,force){
+  if(force||e?.target===document.getElementById('canchasModal'))
+    document.getElementById('canchasModal').classList.remove('open');
+}
+function showNuevaCancha(){
+  const f=document.getElementById('nueva-cancha-form');
+  f.style.display=f.style.display==='none'?'':'none';
+}
+async function loadCanchas(){
+  const el=document.getElementById('canchas-list');
+  el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('canchas').select('*').eq('liga_id',currentAdminLeagueId||0).order('nombre');
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin canchas registradas.</div>';return;}
+    el.innerHTML=data.map(c=>`
+      <div class="cancha-card" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700">🏟️ ${escHtml(c.nombre||'Cancha')}</div>
+            ${c.direccion?`<div style="font-size:12px;color:var(--text2)">📍 ${escHtml(c.direccion)}</div>`:''}
+          </div>
+          ${c.capacidad?`<div style="font-size:12px;color:var(--text3)">${c.capacidad} jugadores</div>`:''}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <span class="cancha-slot" style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)">Disponible</span>
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
+}
+async function saveCancha(){
+  const nombre=document.getElementById('cancha-nombre').value.trim();
+  const dir=document.getElementById('cancha-direccion').value.trim();
+  const cap=parseInt(document.getElementById('cancha-capacidad').value)||null;
+  if(!nombre){showToast('El nombre es obligatorio','error');return;}
+  try{
+    await supa.from('canchas').insert({nombre,direccion:dir||null,capacidad:cap,liga_id:currentAdminLeagueId||null});
+    ['cancha-nombre','cancha-direccion','cancha-capacidad'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    showNuevaCancha();showToast('Cancha registrada ✓','success');
+    await loadCanchas();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ PLAYOFFS ═══
+function openPlayoffs(){
+  document.getElementById('playoffsModal').classList.add('open');
+  loadPlayoffsBracket();
+}
+function closePlayoffs(e,force){
+  if(force||e?.target===document.getElementById('playoffsModal'))
+    document.getElementById('playoffsModal').classList.remove('open');
+}
+async function loadPlayoffsBracket(){
+  const el=document.getElementById('playoffs-bracket');
+  el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .eq('division_id',currentAdminDivisionId||0)
+      .eq('tipo','eliminatorio')
+      .order('fecha');
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">No hay partidos eliminatorios configurados.<br><br><small>Creá partidos con tipo "eliminatorio" para verlos aquí.</small></div>';return;}
+    const rounds={};
+    data.forEach(p=>{const r=p.jornada||1;if(!rounds[r])rounds[r]=[];rounds[r].push(p);});
+    const roundNames=['Ronda 1','Cuartos','Semifinal','Final'];
+    el.innerHTML=Object.entries(rounds).map(([r,partidos])=>`
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${roundNames[(parseInt(r)-1)%roundNames.length]||'Ronda '+r}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${partidos.map(p=>`
+            <div class="bracket-match" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px">
+              <div class="bracket-team" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;${p.goles_local>p.goles_visita?'font-weight:800;color:var(--accent)':''}">
+                <span>${escHtml(p.local?.nombre||'Local')}</span>
+                <span>${p.estado==='finalizado'?p.goles_local??'':''}</span>
+              </div>
+              <div class="bracket-team" style="display:flex;align-items:center;justify-content:space-between;${p.goles_visita>p.goles_local?'font-weight:800;color:var(--accent)':''}">
+                <span>${escHtml(p.visita?.nombre||'Visitante')}</span>
+                <span>${p.estado==='finalizado'?p.goles_visita??'':''}</span>
+              </div>
+              ${p.fecha?`<div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right">${formatFecha(p.fecha)}</div>`:''}
+            </div>`).join('')}
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
+}
+
+// ═══ INSCRIPCIÓN ONLINE ═══
+let _inscripcionLigaId=null;
+function openInscripcion(){
+  _inscripcionLigaId=currentLeagueId||currentAdminLeagueId||null;
+  const liga=leagues.find(l=>l.id===_inscripcionLigaId);
+  document.getElementById('inscripcion-liga-nombre').textContent=liga?.name||'Liga';
+  ['insc-club','insc-delegado','insc-email','insc-tel','insc-msg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('inscripcionModal').classList.add('open');
+}
+function closeInscripcion(e,force){
+  if(force||e?.target===document.getElementById('inscripcionModal'))
+    document.getElementById('inscripcionModal').classList.remove('open');
+}
+async function saveInscripcion(){
+  const club=document.getElementById('insc-club').value.trim();
+  const delegado=document.getElementById('insc-delegado').value.trim();
+  const email=document.getElementById('insc-email').value.trim();
+  const tel=document.getElementById('insc-tel').value.trim();
+  const msg=document.getElementById('insc-msg').value.trim();
+  if(!club||!email){showToast('Completá nombre del club y email','error');return;}
+  try{
+    await supa.from('solicitudes_inscripcion').insert({
+      liga_id:_inscripcionLigaId,nombre_club:club,
+      nombre_delegado:delegado||null,email_contacto:email,
+      telefono:tel||null,mensaje:msg||null,estado:'pendiente'
+    });
+    closeInscripcion(null,true);
+    showToast('Solicitud enviada ✓ — La liga se pondrá en contacto','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ CUERPO TÉCNICO ═══
+function openNuevoCT(){
+  document.getElementById('ct-nombre').value='';
+  document.getElementById('ct-rol').value='Director Técnico';
+  document.getElementById('ct-form').style.display='';
+}
+async function saveCT(){
+  const nombre=document.getElementById('ct-nombre').value.trim();
+  const rol=document.getElementById('ct-rol').value;
+  if(!nombre){showToast('El nombre es obligatorio','error');return;}
+  const clubId=delegadoClub?.id;
+  if(!clubId){showToast('Error: sin club','error');return;}
+  try{
+    await supa.from('cuerpo_tecnico').insert({club_id:clubId,nombre,rol});
+    document.getElementById('ct-form').style.display='none';
+    showToast(nombre+' agregado ✓','success');
+    await loadCuerpoTecnico();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function loadCuerpoTecnico(){
+  const el=document.getElementById('deleg-cuerpo-list');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('cuerpo_tecnico').select('*').eq('club_id',delegadoClub?.id||0).order('rol');
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Sin integrantes registrados.</div>';return;}
+    el.innerHTML=data.map(ct=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:14px;font-weight:700">${escHtml(ct.nombre)}</div>
+          <div style="font-size:12px;color:var(--accent)">${escHtml(ct.rol)}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="eliminarCT(${ct.id})">✕</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar.</div>';}
+}
+async function eliminarCT(id){
+  if(!confirm('¿Eliminar este integrante?'))return;
+  try{
+    await supa.from('cuerpo_tecnico').delete().eq('id',id);
+    showToast('Eliminado','error');
+    await loadCuerpoTecnico();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ CREDENCIAL DESDE SUPABASE ═══
+async function openCredModal(jugadorId){
+  try{
+    const {data:j}=await supa.from('jugadores')
+      .select('*, equipo:equipo_id(nombre,abreviacion,color_principal, club:club_id(nombre,logo_url))')
+      .eq('id',jugadorId).single();
+    if(!j){showToast('Jugador no encontrado','error');return;}
+    const initials=(j.nombre||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const color=j.equipo?.color_principal||'#1a2150';
+    document.getElementById('credHeader').style.background=`linear-gradient(135deg,${color},${color}dd)`;
+    const photo=document.getElementById('cred-photo');
+    if(j.foto_url){photo.innerHTML=`<img src="${j.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;photo.textContent='';}
+    else{photo.textContent=initials;photo.style.background='rgba(255,255,255,0.15)';}
+    document.getElementById('cred-name').textContent=j.nombre||'—';
+    document.getElementById('cred-number').textContent=`Camiseta #${j.numero||'—'} · ${j.equipo?.nombre||'Sin equipo'}`;
+    document.getElementById('cred-league-icon').textContent=j.equipo?.club?.logo_url?'🏟️':'🏆';
+    document.getElementById('cred-league-name').textContent=(j.equipo?.club?.nombre||'Liga').toUpperCase();
+    document.getElementById('cred-season').textContent=new Date().getFullYear();
+    document.getElementById('cred-team').textContent=j.equipo?.nombre||'—';
+    document.getElementById('cred-goals').textContent=j.goles||0;
+    document.getElementById('cred-yellows').textContent=(j.amarillas_acumuladas||0)+' 🟡';
+    document.getElementById('cred-reds').textContent=(j.rojas_acumuladas||0)+' 🔴';
+    document.getElementById('cred-id').textContent='ID: LB-'+new Date().getFullYear()+'-'+String(j.id).padStart(3,'0');
+    const statusEl=document.getElementById('cred-status');
+    const stamp=document.getElementById('cred-stamp');
+    if(j.suspendido){
+      statusEl.className='cred-status suspended';
+      document.getElementById('cred-status-text').textContent='SUSPENDIDO';
+      stamp.style.display='';
+    }else{
+      statusEl.className='cred-status ok';
+      document.getElementById('cred-status-text').textContent='HABILITADO';
+      stamp.style.display='none';
+    }
+    document.getElementById('cred-qr-svg').innerHTML=generateQR(j.id);
+    document.getElementById('credModal').classList.add('open');
+  }catch(e){showToast('Error cargando credencial: '+e.message,'error');}
+}
+
+// ═══ ADMIN DASHBOARD STATS ═══
+async function loadAdminDashboard(){
+  try{
+    const [eq,jug,part]=await Promise.all([
+      supa.from('equipos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId||0),
+      supa.from('jugadores').select('jugadores.id',{count:'exact',head:true}).eq('equipos.division_id',currentAdminDivisionId||0),
+      supa.from('partidos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId||0)
+    ]);
+    const cards=document.querySelectorAll('#admin-dashboard .stat-card .stat-num');
+    if(cards[0]&&eq.count!=null)cards[0].textContent=eq.count;
+    if(cards[2]&&part.count!=null)cards[2].textContent=part.count;
+  }catch(e){console.warn('loadAdminDashboard error',e);}
+}
 </script>
 </body>
 </html>
