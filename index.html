@@ -255,6 +255,74 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
+/* ÁRBITRO */
+.arbitro-match{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 16px 10px;cursor:pointer;transition:all .15s;}
+.arbitro-match:active{background:var(--card2);}
+.arb-match-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.arb-time{font-size:13px;font-weight:800;color:var(--accent);}
+.arb-venue{font-size:11px;color:var(--text3);}
+.arb-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:8px;}
+.arb-status.pending{background:var(--card2);color:var(--text3);border:1px solid var(--border);}
+.arb-status.live{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.arb-status.done{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(91,110,245,0.3);}
+.arb-vs{display:flex;align-items:center;gap:10px;}
+.arb-team{font-size:13px;font-weight:700;flex:1;}
+.arb-team.right{text-align:right;}
+.arb-score{font-size:20px;font-weight:900;color:var(--text2);width:48px;text-align:center;}
+/* PLANILLA VALIDACIÓN */
+.plan-team-block{margin-bottom:16px;}
+.plan-team-title{font-size:12px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;padding:10px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.plan-player-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.plan-player-row:last-child{border-bottom:none;}
+.plan-player-num{width:28px;height:28px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.plan-player-name{flex:1;font-size:13px;font-weight:600;}
+.plan-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.plan-badge.ok{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.plan-badge.susp{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+/* MESA DE CONTROL */
+.mesa-scoreboard{background:linear-gradient(135deg,#0d1117,#1a2150);padding:20px 16px;border-bottom:1px solid var(--border);}
+.mesa-teams-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mesa-team-name{font-size:13px;font-weight:800;flex:1;text-align:center;}
+.mesa-score-display{display:flex;align-items:center;gap:4px;padding:0 8px;}
+.mesa-score-num{font-size:52px;font-weight:900;line-height:1;min-width:48px;text-align:center;}
+.mesa-score-sep{font-size:28px;color:var(--text3);}
+.mesa-time-row{display:flex;align-items:center;justify-content:center;gap:16px;}
+.mesa-timer{font-size:28px;font-weight:900;font-family:monospace;color:var(--accent);}
+.mesa-period{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:4px 14px;font-size:11px;font-weight:700;color:var(--text2);}
+.mesa-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;}
+.mesa-btn{border:none;border-radius:16px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .15s;font-family:inherit;}
+.mesa-btn:active{transform:scale(.96);}
+.mesa-btn .mb-icon{font-size:28px;}
+.mesa-btn .mb-label{font-size:11px;font-weight:800;letter-spacing:.4px;color:#fff;}
+.mesa-btn.gol-local{background:linear-gradient(135deg,#1a2150,#3b4fd4);}
+.mesa-btn.gol-visit{background:linear-gradient(135deg,#1a3d20,#15803d);}
+.mesa-btn.amarilla{background:linear-gradient(135deg,#3d2e00,#b45309);}
+.mesa-btn.roja{background:linear-gradient(135deg,#3d0a0a,#b91c1c);}
+.mesa-btn.exclusion{background:linear-gradient(135deg,#2d1a3d,#7c3aed);}
+.mesa-btn.timeout{background:linear-gradient(135deg,#0d2d3d,#0e7490);}
+.mesa-btn.sust{background:linear-gradient(135deg,#1a2d1a,#166534);}
+.mesa-btn.fin-tiempo{background:linear-gradient(135deg,#2d2d1a,#92400e);}
+.mesa-log{padding:0 16px 16px;}
+.mesa-log-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.mesa-event{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.mesa-event:last-child{border-bottom:none;}
+.mesa-event-min{font-size:11px;font-weight:800;color:var(--accent);width:28px;}
+.mesa-event-icon{font-size:16px;width:24px;text-align:center;}
+.mesa-event-text{flex:1;font-size:12px;font-weight:600;}
+.mesa-event-team{font-size:10px;color:var(--text3);}
+/* DELEGADO */
+.deleg-club-header{padding:16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.deleg-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;}
+.deleg-menu-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transition:all .15s;position:relative;}
+.deleg-menu-card:active{background:var(--card2);}
+.deleg-menu-icon{font-size:28px;margin-bottom:8px;}
+.deleg-menu-label{font-size:13px;font-weight:800;}
+.deleg-menu-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.deleg-badge{position:absolute;top:10px;right:10px;background:var(--red);color:#fff;font-size:10px;font-weight:800;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.notif-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:0 16px 8px;display:flex;gap:10px;align-items:flex-start;}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;}
+.notif-text{font-size:13px;font-weight:600;flex:1;}
+.notif-time{font-size:11px;color:var(--text3);}
 /* CREDENCIAL */
 .cred-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
 .cred-overlay.open{opacity:1;pointer-events:all;}
@@ -496,8 +564,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
     <div class="demo-creds" style="width:100%">
       🔑 <strong>Probá con:</strong><br>
-      Liga Baires → <code>admin@liga-baires.com</code> / <code>ligabaires2025</code><br>
-      Liga Norte → <code>admin@liga-norte.com</code> / <code>liganorte2025</code><br>
+      Liga Admin → <code>admin@liga-baires.com</code> / <code>ligabaires2025</code><br>
+      Árbitro → <code>arbitro@ligas.com</code> / <code>arbitro2025</code><br>
+      Mesa de control → <code>mesa@ligabaires.com</code> / <code>mesa2025</code><br>
+      Delegado → <code>delegado@losandes.com</code> / <code>losandes2025</code><br>
       Super Admin → <code>superadmin@ligas.com</code> / <code>admin2025</code>
     </div>
     <button class="btn btn-primary" onclick="doAdminLogin()" style="margin-top:4px;width:100%">Ingresar</button>
@@ -598,6 +668,189 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="rsb">
       <button class="btn btn-secondary" onclick="closeModal('resultModal')">Cancelar</button>
       <button class="btn btn-primary" onclick="showToast('Resultado guardado ✓','success');closeModal('resultModal')">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ÁRBITRO ═══ -->
+<div id="view-arbitro" class="view">
+  <header>
+    <span class="back-link" onclick="logoutAdmin()">‹</span>
+    <div style="flex:1"><h1 id="arb-name">Carlos Medina</h1><span class="subtitle">Árbitro · Liga Baires</span></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div style="padding-bottom:24px">
+    <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
+      <span style="font-size:22px">📅</span>
+      <div><div style="font-size:13px;font-weight:700">Hoy — Sábado 21 Jun</div><div style="font-size:11px;color:var(--text2)">2 partidos asignados</div></div>
+    </div>
+    <div class="section-title">MIS PARTIDOS</div>
+    <div id="arbitro-matches"></div>
+    <div class="section-title" style="margin-top:8px">PRÓXIMOS</div>
+    <div id="arbitro-next"></div>
+  </div>
+</div>
+
+<!-- PLANILLA MODAL (árbitro) -->
+<div class="modal-overlay" id="planillaModal" onclick="closePlanilla(event)">
+  <div class="modal-sheet" style="padding-bottom:24px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;background:var(--card2);border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;text-align:center;margin-bottom:8px" id="planilla-round">Liga Baires · Fecha 5</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="text-align:center;flex:1"><div style="font-size:13px;font-weight:800" id="planilla-home">Los Andes</div></div>
+        <div style="font-size:14px;font-weight:700;color:var(--text3);padding:0 12px">vs</div>
+        <div style="text-align:center;flex:1"><div style="font-size:13px;font-weight:800" id="planilla-away">River Baires</div></div>
+      </div>
+    </div>
+    <div style="padding:12px 16px;overflow-y:auto;max-height:60vh">
+      <div class="plan-team-block">
+        <div class="plan-team-title" id="plan-home-title">LOCAL — LOS ANDES</div>
+        <div id="plan-home-players"></div>
+      </div>
+      <div class="plan-team-block">
+        <div class="plan-team-title" id="plan-away-title">VISITANTE — RIVER BAIRES</div>
+        <div id="plan-away-players"></div>
+      </div>
+    </div>
+    <div style="padding:0 16px;display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="closePlanilla(null,true)">Cerrar</button>
+      <button class="btn btn-primary" onclick="showToast('Planilla confirmada ✓','success');closePlanilla(null,true)">Confirmar Planilla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MESA DE CONTROL ═══ -->
+<div id="view-mesa" class="view">
+  <header>
+    <span class="back-link" onclick="logoutAdmin()">‹</span>
+    <div style="flex:1"><h1>Mesa de Control</h1><span class="subtitle" id="mesa-subtitle">Liga Baires · Fecha 5</span></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div style="padding-bottom:32px">
+    <div class="mesa-scoreboard">
+      <div class="mesa-teams-row">
+        <div class="mesa-team-name" id="mesa-home-name">Los Andes</div>
+        <div class="mesa-score-display">
+          <div class="mesa-score-num" id="mesa-score-home">0</div>
+          <div class="mesa-score-sep">-</div>
+          <div class="mesa-score-num" id="mesa-score-away">0</div>
+        </div>
+        <div class="mesa-team-name" id="mesa-away-name">River Baires</div>
+      </div>
+      <div class="mesa-time-row">
+        <div class="mesa-period" id="mesa-period">1° TIEMPO</div>
+        <div class="mesa-timer" id="mesa-timer">00:00</div>
+        <button onclick="toggleTimer()" style="background:var(--green);color:#fff;border:none;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer" id="mesa-timer-btn">▶ INICIAR</button>
+      </div>
+    </div>
+    <div class="mesa-btns">
+      <button class="mesa-btn gol-local" onclick="mesaEvent('gol','local')"><span class="mb-icon">⚽</span><span class="mb-label">GOL LOCAL</span></button>
+      <button class="mesa-btn gol-visit" onclick="mesaEvent('gol','visita')"><span class="mb-icon">⚽</span><span class="mb-label">GOL VISITANTE</span></button>
+      <button class="mesa-btn amarilla" onclick="mesaEvent('amarilla','')"><span class="mb-icon">🟡</span><span class="mb-label">AMARILLA</span></button>
+      <button class="mesa-btn roja" onclick="mesaEvent('roja','')"><span class="mb-icon">🔴</span><span class="mb-label">ROJA</span></button>
+      <button class="mesa-btn exclusion" onclick="mesaEvent('exclusion','')"><span class="mb-icon">🚫</span><span class="mb-label">EXCLUSIÓN 2'</span></button>
+      <button class="mesa-btn timeout" onclick="mesaEvent('timeout','')"><span class="mb-icon">⏱</span><span class="mb-label">TIEMPO MUERTO</span></button>
+      <button class="mesa-btn sust" onclick="mesaEvent('sust','')"><span class="mb-icon">🔄</span><span class="mb-label">SUSTITUCIÓN</span></button>
+      <button class="mesa-btn fin-tiempo" onclick="endPeriod()"><span class="mb-icon">🏁</span><span class="mb-label">FIN DE TIEMPO</span></button>
+    </div>
+    <div class="mesa-log">
+      <div class="mesa-log-title">REGISTRO DE EVENTOS</div>
+      <div id="mesa-events"><div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DELEGADO ═══ -->
+<div id="view-delegado" class="view">
+  <header>
+    <span class="back-link" onclick="logoutAdmin()">‹</span>
+    <div style="flex:1"><h1 id="deleg-club-name">Los Andes</h1><span class="subtitle">Delegado · Liga Baires</span></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div style="padding-bottom:24px">
+    <div class="deleg-club-header">
+      <div id="deleg-shield" style="width:52px;height:52px;border-radius:14px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#5b6ef5;flex-shrink:0">LA</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800" id="deleg-name2">Los Andes</div>
+        <div style="font-size:12px;color:var(--text2)">Liga Baires · Handball</div>
+        <div style="font-size:11px;color:var(--green);margin-top:2px">● Afiliado activo</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--text3);font-weight:700">ADMIN</div>
+        <div style="font-size:11px;color:var(--accent)">delegado@losandes.com</div>
+      </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="section-title">NOTIFICACIONES <span style="background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;vertical-align:middle">3</span></div>
+    <div class="notif-item"><div class="notif-dot" style="background:var(--gold)"></div><div><div class="notif-text">Solicitud de transferencia: Club Tigre quiere a Roberto Torres</div><div class="notif-time">Hace 2 horas</div></div></div>
+    <div class="notif-item"><div class="notif-dot"></div><div><div class="notif-text">Habilitación aprobada: Martín García ✓</div><div class="notif-time">Ayer</div></div></div>
+    <div class="notif-item"><div class="notif-dot"></div><div><div class="notif-text">Partido el sábado 21/06 · 10:00 hs vs River Baires</div><div class="notif-time">Hace 2 días</div></div></div>
+
+    <div class="section-title" style="margin-top:4px">GESTIÓN DEL CLUB</div>
+    <div class="deleg-menu-grid">
+      <div class="deleg-menu-card" onclick="showToast('Plantel — 12 jugadores activos','')">
+        <div class="deleg-menu-icon">👥</div>
+        <div class="deleg-menu-label">Plantel</div>
+        <div class="deleg-menu-sub">12 jugadores</div>
+      </div>
+      <div class="deleg-menu-card" onclick="showToast('Habilitaciones — 2 pendientes','')">
+        <div class="deleg-badge">2</div>
+        <div class="deleg-menu-icon">✅</div>
+        <div class="deleg-menu-label">Habilitaciones</div>
+        <div class="deleg-menu-sub">2 pendientes</div>
+      </div>
+      <div class="deleg-menu-card" onclick="showTransferModal()">
+        <div class="deleg-badge">1</div>
+        <div class="deleg-menu-icon">🔄</div>
+        <div class="deleg-menu-label">Transferencias</div>
+        <div class="deleg-menu-sub">1 solicitud</div>
+      </div>
+      <div class="deleg-menu-card" onclick="showToast('Próximo: sábado 10:00 vs River','')">
+        <div class="deleg-menu-icon">📅</div>
+        <div class="deleg-menu-label">Mis Partidos</div>
+        <div class="deleg-menu-sub">Próx: sáb 10:00</div>
+      </div>
+      <div class="deleg-menu-card" onclick="showToast('Datos del club','')">
+        <div class="deleg-menu-icon">🏢</div>
+        <div class="deleg-menu-label">Datos del Club</div>
+        <div class="deleg-menu-sub">Contactos, sede</div>
+      </div>
+      <div class="deleg-menu-card" onclick="showToast('Lesiones e impedimentos','')">
+        <div class="deleg-menu-icon">🩹</div>
+        <div class="deleg-menu-label">Lesiones</div>
+        <div class="deleg-menu-sub">1 jugador lesionado</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSFERENCIA MODAL -->
+<div class="modal-overlay" id="transferModal" onclick="closeTransfer(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;background:var(--card2);border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Solicitud de Transferencia</div>
+      <div style="font-size:16px;font-weight:900">Club Tigre quiere a Roberto Torres</div>
+    </div>
+    <div style="padding:16px">
+      <div class="list-item" style="margin-bottom:16px">
+        <div style="width:44px;height:44px;border-radius:50%;background:#3d1a1a;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0">RT</div>
+        <div class="list-item-info">
+          <div class="list-item-name">Roberto Torres</div>
+          <div class="list-item-meta">Los Andes · #5 · 5 goles esta temporada</div>
+        </div>
+      </div>
+      <div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Solicita:</div>
+        <div style="font-size:14px;font-weight:700">🔴 Club Tigre</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Pase definitivo · Temporada 2025</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="showToast('Transferencia rechazada','error');closeTransfer(null,true)">✗ Rechazar</button>
+        <button class="btn btn-primary" onclick="showToast('Transferencia aprobada ✓','success');closeTransfer(null,true)">✓ Aprobar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -743,6 +996,11 @@ function showView(id){
 }
 
 const SUPERADMIN={email:'superadmin@ligas.com',pass:'admin2025'};
+const extraUsers=[
+  {email:'arbitro@ligas.com',pass:'arbitro2025',role:'arbitro',name:'Carlos Medina',league:'Liga Baires'},
+  {email:'mesa@ligabaires.com',pass:'mesa2025',role:'mesa',name:'Mesa Partido 5',league:'Liga Baires'},
+  {email:'delegado@losandes.com',pass:'losandes2025',role:'delegado',name:'Los Andes',league:'Liga Baires'},
+];
 function showAdminLogin(){
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
@@ -760,6 +1018,14 @@ function doAdminLogin(){
   // Check league admin
   const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
   if(league){showAdminForLeague(league);return;}
+  // Check extra roles (árbitro, mesa, delegado)
+  const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
+  if(xu){
+    if(xu.role==='arbitro')showArbitroView(xu);
+    else if(xu.role==='mesa')showMesaView(xu);
+    else if(xu.role==='delegado')showDelegadoView(xu);
+    return;
+  }
   // Wrong credentials
   document.getElementById('login-error').style.display='block';
 }
@@ -1011,6 +1277,159 @@ function generateQR(seed){
   }
   return `<rect width="21" height="21" fill="#fff"/>${cells}`;
 }
+// ═══ ÁRBITRO ═══
+function showArbitroView(user){
+  showView('view-arbitro');
+  document.getElementById('arb-name').textContent=user.name;
+  renderArbitroMatches();
+  showToast('Bienvenido, '+user.name,'success');
+}
+function renderArbitroMatches(){
+  const todayMs=[matches[1],matches[2]];
+  document.getElementById('arbitro-matches').innerHTML=todayMs.map(m=>{
+    const home=getTeam(m.home),away=getTeam(m.away);
+    const isLive=m.status==='live',isDone=m.status==='done';
+    const label=isLive?'EN VIVO':isDone?'FINALIZADO':'PROGRAMADO';
+    const bg=isLive?'rgba(34,197,94,0.15)':isDone?'var(--card2)':'var(--accent-dim)';
+    const fg=isLive?'var(--green)':isDone?'var(--text3)':'var(--accent)';
+    return `<div class="arbitro-match" onclick="openPlanilla(${m.id})">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="arb-status ${m.status==='live'?'live':m.status==='done'?'done':'pending'}"></div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">${home.name} <span style="color:var(--text3)">vs</span> ${away.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Fecha ${m.round} · ${m.venue} · ${m.time}</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:${bg};color:${fg}">${label}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('arbitro-next').innerHTML=`<div class="arbitro-match">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="arb-status pending"></div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800">Los Andes <span style="color:var(--text3)">vs</span> Unión FC</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Fecha 6 · Polideportivo Baires · Sáb 28 Jun 10:00</div>
+      </div>
+      <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">PENDIENTE</div>
+    </div>
+  </div>`;
+}
+function openPlanilla(matchId){
+  const m=matches.find(x=>x.id===matchId);
+  const home=getTeam(m.home),away=getTeam(m.away);
+  document.getElementById('planilla-round').textContent='Liga Baires · Fecha '+m.round;
+  document.getElementById('planilla-home').textContent=home.name;
+  document.getElementById('planilla-away').textContent=away.name;
+  document.getElementById('plan-home-title').textContent='LOCAL — '+home.name.toUpperCase();
+  document.getElementById('plan-away-title').textContent='VISITANTE — '+away.name.toUpperCase();
+  renderPlanillaPlayers(m.home,m.away);
+  document.getElementById('planillaModal').classList.add('open');
+}
+function closePlanilla(e,force){
+  if(force||e.target===document.getElementById('planillaModal'))
+    document.getElementById('planillaModal').classList.remove('open');
+}
+function renderPlanillaPlayers(homeId,awayId){
+  const renderList=(teamId,elId)=>{
+    const pl=players.filter(p=>p.team===teamId);
+    document.getElementById(elId).innerHTML=pl.map(p=>{
+      const card=playerCards.find(x=>x.id===p.id)||{suspended:false};
+      const ok=!card.suspended;
+      return `<div class="plan-player-row">
+        <div style="width:26px;height:26px;border-radius:8px;background:var(--card2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">#${p.jersey}</div>
+        <div style="flex:1;font-size:13px;font-weight:600">${p.name}</div>
+        <div class="plan-badge ${ok?'ok':'susp'}">${ok?'HABILITADO':'SUSPENDIDO'}</div>
+      </div>`;
+    }).join('');
+  };
+  renderList(homeId,'plan-home-players');
+  renderList(awayId,'plan-away-players');
+}
+
+// ═══ MESA DE CONTROL ═══
+let mesaScoreHome=0,mesaScoreAway=0,mesaSecs=0,mesaRunning=false,mesaTimerInterval=null,mesaPeriod=1;
+function showMesaView(user){
+  showView('view-mesa');
+  document.getElementById('mesa-subtitle').textContent=user.league+' · Fecha 5';
+  const m=matches.find(x=>x.status==='live')||matches[1];
+  const home=getTeam(m.home),away=getTeam(m.away);
+  document.getElementById('mesa-home-name').textContent=home.name;
+  document.getElementById('mesa-away-name').textContent=away.name;
+  mesaScoreHome=0;mesaScoreAway=0;mesaSecs=0;mesaRunning=false;mesaPeriod=1;
+  if(mesaTimerInterval)clearInterval(mesaTimerInterval);
+  document.getElementById('mesa-score-home').textContent='0';
+  document.getElementById('mesa-score-away').textContent='0';
+  document.getElementById('mesa-timer').textContent='00:00';
+  document.getElementById('mesa-period').textContent='1° TIEMPO';
+  document.getElementById('mesa-timer-btn').textContent='▶ INICIAR';
+  document.getElementById('mesa-timer-btn').disabled=false;
+  document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
+  showToast('Mesa de Control activada','success');
+}
+function toggleTimer(){
+  mesaRunning=!mesaRunning;
+  document.getElementById('mesa-timer-btn').textContent=mesaRunning?'⏸ PAUSAR':'▶ REANUDAR';
+  if(mesaRunning){
+    mesaTimerInterval=setInterval(()=>{
+      mesaSecs++;
+      const min=Math.floor(mesaSecs/60),sec=mesaSecs%60;
+      document.getElementById('mesa-timer').textContent=String(min).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+    },1000);
+  } else {
+    clearInterval(mesaTimerInterval);
+  }
+}
+const evtLabels={gol:'⚽ GOL',amarilla:'🟡 AMARILLA',roja:'🔴 ROJA',exclusion:"🚫 EXCLUSIÓN 2'",timeout:'⏱ T. MUERTO',sust:'🔄 SUSTITUCIÓN',fin:'🏁 FIN DE TIEMPO'};
+function mesaEvent(type,side){
+  if(type==='gol'){
+    if(side==='local'){mesaScoreHome++;document.getElementById('mesa-score-home').textContent=mesaScoreHome;}
+    else{mesaScoreAway++;document.getElementById('mesa-score-away').textContent=mesaScoreAway;}
+  }
+  const min=Math.floor(mesaSecs/60);
+  const homeName=document.getElementById('mesa-home-name').textContent;
+  const awayName=document.getElementById('mesa-away-name').textContent;
+  const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
+  const el=document.getElementById('mesa-events');
+  const empty=el.querySelector('[data-empty]');
+  if(empty)empty.remove();
+  else if(el.children.length===1&&el.firstChild.textContent.includes('Sin eventos'))el.innerHTML='';
+  const entry=document.createElement('div');
+  entry.className='mesa-event';
+  entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span>${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
+  el.prepend(entry);
+  showToast((evtLabels[type]||type)+(sideLabel?' — '+sideLabel:''),'');
+}
+function endPeriod(){
+  clearInterval(mesaTimerInterval);
+  mesaRunning=false;mesaSecs=0;
+  document.getElementById('mesa-timer').textContent='00:00';
+  document.getElementById('mesa-timer-btn').textContent='▶ INICIAR';
+  if(mesaPeriod===1){
+    mesaPeriod=2;
+    document.getElementById('mesa-period').textContent='2° TIEMPO';
+    showToast('Fin del 1° tiempo · 2° tiempo listo','');
+    mesaEvent('fin','');
+  } else {
+    mesaPeriod=3;
+    document.getElementById('mesa-period').textContent='FINALIZADO';
+    document.getElementById('mesa-timer-btn').textContent='— FIN —';
+    document.getElementById('mesa-timer-btn').disabled=true;
+    showToast('Partido finalizado 🏁','success');
+    mesaEvent('fin','');
+  }
+}
+
+// ═══ DELEGADO ═══
+function showDelegadoView(user){
+  showView('view-delegado');
+  showToast('Bienvenido, '+user.name,'success');
+}
+function showTransferModal(){document.getElementById('transferModal').classList.add('open');}
+function closeTransfer(e,force){
+  if(force||e.target===document.getElementById('transferModal'))
+    document.getElementById('transferModal').classList.remove('open');
+}
+
 function showToast(msg,type=''){
   const t=document.getElementById('toast');t.textContent=msg;
   t.className='toast'+(type?' '+type:'');t.classList.add('show');
