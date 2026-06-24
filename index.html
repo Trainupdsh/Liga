@@ -255,6 +255,20 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
+/* TORNEO / DIVISIÓN */
+.torneo-banner{margin:16px;border-radius:16px;padding:18px 20px;border:1px solid rgba(255,255,255,0.08);}
+.torneo-banner-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:4px;}
+.torneo-banner-name{font-size:19px;font-weight:900;color:#fff;}
+.torneo-banner-sub{font-size:12px;color:rgba(255,255,255,0.6);margin-top:3px;}
+.div-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;margin-bottom:0;}
+.div-card::after{content:'›';position:absolute;right:14px;font-size:22px;color:var(--text3);}
+.div-card:active{transform:scale(0.98);}
+.div-card:hover{border-color:var(--accent);}
+.div-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.div-card-name{font-size:15px;font-weight:800;margin-bottom:2px;}
+.div-card-meta{font-size:12px;color:var(--text2);}
+.past-torneo-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;}
+.past-torneo-card:active{background:var(--card2);}
 /* ÁRBITRO */
 .arbitro-match{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 16px 10px;cursor:pointer;transition:all .15s;}
 .arbitro-match:active{background:var(--card2);}
@@ -392,13 +406,32 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
-<!-- LIGA DETAIL -->
+<!-- LIGA DETAIL — Torneos & Divisiones -->
 <div id="view-league" class="view">
   <header>
     <span class="back-link" onclick="goHome()">‹</span>
     <div style="flex:1">
       <h1 id="league-header-name">Liga Baires</h1>
       <span class="subtitle" id="league-header-sub">Handball · 2025</span>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div style="padding-bottom:32px">
+    <div id="league-torneo-banner"></div>
+    <div class="section-title" id="league-divs-title">DIVISIONES</div>
+    <div id="league-divs-list" style="padding:0 16px;display:flex;flex-direction:column;gap:10px"></div>
+    <div class="section-title" style="margin-top:12px">TORNEOS ANTERIORES</div>
+    <div id="league-torneos-old" style="padding:0 16px;display:flex;flex-direction:column;gap:8px;padding-bottom:32px"></div>
+  </div>
+</div>
+
+<!-- DIVISIÓN DETAIL — Partidos / Tabla / Goleadores -->
+<div id="view-division" class="view">
+  <header>
+    <span class="back-link" onclick="goBackToLeague()">‹</span>
+    <div style="flex:1">
+      <h1 id="division-header-name">Mayores Masculino</h1>
+      <span class="subtitle" id="division-header-sub">Apertura 2025 · Liga Baires</span>
     </div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
@@ -928,23 +961,45 @@ const players=[
   {id:13,name:'Gonzalo Herrera',team:4,jersey:9,goals:4},{id:14,name:'Emanuel Flores',team:5,jersey:11,goals:6},
   {id:15,name:'Brian Morales',team:6,jersey:7,goals:5},{id:16,name:'Tomás Vega',team:7,jersey:10,goals:4},
 ];
+const torneos=[
+  {id:1,leagueId:1,name:'Apertura 2025',status:'active',start:'Mar 2025',divsCount:3},
+  {id:2,leagueId:1,name:'Clausura 2024',status:'done',start:'Ago 2024',divsCount:3},
+  {id:3,leagueId:2,name:'Clausura 2025',status:'active',start:'Ene 2025',divsCount:2},
+  {id:4,leagueId:3,name:'Torneo 2025',status:'active',start:'Feb 2025',divsCount:4},
+  {id:5,leagueId:5,name:'Temporada 2025',status:'active',start:'Mar 2025',divsCount:2},
+];
+const divisiones=[
+  {id:1,torneoId:1,name:'Mayores Masculino',teams:8,rounds:7,currentRound:5,icon:'🤾‍♂️'},
+  {id:2,torneoId:1,name:'Mayores Femenino',teams:6,rounds:5,currentRound:3,icon:'🤾‍♀️'},
+  {id:3,torneoId:1,name:'Sub-18 Masculino',teams:6,rounds:5,currentRound:4,icon:'👦'},
+  {id:4,torneoId:2,name:'Mayores Masculino',teams:8,rounds:7,currentRound:7,icon:'🤾‍♂️'},
+  {id:5,torneoId:2,name:'Mayores Femenino',teams:6,rounds:5,currentRound:5,icon:'🤾‍♀️'},
+  {id:6,torneoId:3,name:'Primera División',teams:12,rounds:11,currentRound:8,icon:'⚽'},
+  {id:7,torneoId:3,name:'Reserva',teams:12,rounds:11,currentRound:8,icon:'⚽'},
+  {id:8,torneoId:4,name:'Mayores Masculino',teams:6,rounds:5,currentRound:3,icon:'🏀'},
+  {id:9,torneoId:4,name:'Mayores Femenino',teams:6,rounds:5,currentRound:2,icon:'🏀'},
+  {id:10,torneoId:4,name:'Sub-18',teams:4,rounds:3,currentRound:2,icon:'🏀'},
+  {id:11,torneoId:4,name:'Sub-15',teams:4,rounds:3,currentRound:1,icon:'🏀'},
+  {id:12,torneoId:5,name:'Cat. A Mixto',teams:16,rounds:8,currentRound:4,icon:'🎾'},
+  {id:13,torneoId:5,name:'Cat. B Mixto',teams:16,rounds:8,currentRound:3,icon:'🎾'},
+];
 const matches=[
-  {id:1,home:1,away:2,round:5,homeScore:18,awayScore:14,status:'done',time:'10:00',venue:'Polideportivo Baires'},
-  {id:2,home:3,away:4,round:5,homeScore:null,awayScore:null,status:'upcoming',time:'12:00',venue:'Club Tigre'},
-  {id:3,home:5,away:6,round:5,homeScore:null,awayScore:null,status:'live',time:'VIVO',venue:'Centro Deportivo Sur'},
-  {id:4,home:7,away:8,round:5,homeScore:22,awayScore:20,status:'done',time:'16:00',venue:'Estadio Municipal'},
-  {id:5,home:2,away:3,round:4,homeScore:16,awayScore:18,status:'done',time:'10:00',venue:'River Baires'},
-  {id:6,home:1,away:4,round:4,homeScore:24,awayScore:15,status:'done',time:'12:00',venue:'Polideportivo Baires'},
+  {id:1,home:1,away:2,round:5,homeScore:18,awayScore:14,status:'done',time:'10:00',venue:'Polideportivo Baires',divId:1},
+  {id:2,home:3,away:4,round:5,homeScore:null,awayScore:null,status:'upcoming',time:'12:00',venue:'Club Tigre',divId:1},
+  {id:3,home:5,away:6,round:5,homeScore:null,awayScore:null,status:'live',time:'VIVO',venue:'Centro Deportivo Sur',divId:1},
+  {id:4,home:7,away:8,round:5,homeScore:22,awayScore:20,status:'done',time:'16:00',venue:'Estadio Municipal',divId:1},
+  {id:5,home:2,away:3,round:4,homeScore:16,awayScore:18,status:'done',time:'10:00',venue:'River Baires',divId:1},
+  {id:6,home:1,away:4,round:4,homeScore:24,awayScore:15,status:'done',time:'12:00',venue:'Polideportivo Baires',divId:1},
 ];
 const standings=[
-  {teamId:1,pj:5,pg:4,pe:0,pp:1,gf:92,gc:74,pts:12},
-  {teamId:2,pj:5,pg:3,pe:1,pp:1,gf:85,gc:78,pts:10},
-  {teamId:3,pj:5,pg:3,pe:0,pp:2,gf:88,gc:82,pts:9},
-  {teamId:4,pj:5,pg:2,pe:2,pp:1,gf:79,gc:80,pts:8},
-  {teamId:5,pj:5,pg:2,pe:1,pp:2,gf:76,gc:83,pts:7},
-  {teamId:6,pj:5,pg:2,pe:0,pp:3,gf:70,gc:85,pts:6},
-  {teamId:7,pj:5,pg:1,pe:1,pp:3,gf:72,gc:88,pts:4},
-  {teamId:8,pj:5,pg:0,pe:1,pp:4,gf:65,gc:97,pts:1},
+  {teamId:1,pj:5,pg:4,pe:0,pp:1,gf:92,gc:74,pts:12,divId:1},
+  {teamId:2,pj:5,pg:3,pe:1,pp:1,gf:85,gc:78,pts:10,divId:1},
+  {teamId:3,pj:5,pg:3,pe:0,pp:2,gf:88,gc:82,pts:9,divId:1},
+  {teamId:4,pj:5,pg:2,pe:2,pp:1,gf:79,gc:80,pts:8,divId:1},
+  {teamId:5,pj:5,pg:2,pe:1,pp:2,gf:76,gc:83,pts:7,divId:1},
+  {teamId:6,pj:5,pg:2,pe:0,pp:3,gf:70,gc:85,pts:6,divId:1},
+  {teamId:7,pj:5,pg:1,pe:1,pp:3,gf:72,gc:88,pts:4,divId:1},
+  {teamId:8,pj:5,pg:0,pe:1,pp:4,gf:65,gc:97,pts:1,divId:1},
 ];
 
 let isDark=true;
@@ -975,16 +1030,65 @@ function filterLeagues(q){
   renderLeagues(leagues.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase())));
 }
 
-let currentLeagueId=1;
+let currentLeagueId=1,currentDivisionId=1;
 function openLeague(id){
   currentLeagueId=id;
   const l=leagues.find(x=>x.id===id);
   document.getElementById('league-header-name').textContent=l.name;
   document.getElementById('league-header-sub').textContent=l.sport+' · '+(l.season||'—');
+  renderLeagueTorneos(id,l);
   showView('view-league');
-  switchTab('partidos',document.querySelector('.nav-item'));
+}
+function renderLeagueTorneos(leagueId,l){
+  const active=torneos.filter(t=>t.leagueId===leagueId&&t.status==='active');
+  const past=torneos.filter(t=>t.leagueId===leagueId&&t.status!=='active');
+  // Banner
+  if(active.length){
+    const t=active[0];
+    document.getElementById('league-torneo-banner').innerHTML=`
+      <div class="torneo-banner" style="background:linear-gradient(135deg,${l.color},${l.color}bb)">
+        <div class="torneo-banner-label">Torneo activo</div>
+        <div class="torneo-banner-name">${t.name}</div>
+        <div class="torneo-banner-sub">${t.divsCount} divisiones · Desde ${t.start}</div>
+      </div>`;
+    document.getElementById('league-divs-title').textContent='DIVISIONES — '+t.name;
+    const divs=divisiones.filter(d=>d.torneoId===t.id);
+    document.getElementById('league-divs-list').innerHTML=divs.map(d=>`
+      <div class="div-card" onclick="openDivision(${d.id})">
+        <div class="div-card-icon" style="background:${l.color}">${d.icon}</div>
+        <div style="flex:1">
+          <div class="div-card-name">${d.name}</div>
+          <div class="div-card-meta">${d.teams} equipos · Fecha ${d.currentRound} de ${d.rounds}</div>
+        </div>
+      </div>`).join('');
+  } else {
+    document.getElementById('league-torneo-banner').innerHTML='';
+    document.getElementById('league-divs-title').textContent='DIVISIONES';
+    document.getElementById('league-divs-list').innerHTML='<div class="empty-state">Sin torneo activo</div>';
+  }
+  // Past tournaments
+  document.getElementById('league-torneos-old').innerHTML=past.length?past.map(t=>`
+    <div class="past-torneo-card" onclick="showToast('${t.name} — archivado','')">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${l.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800">${t.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${t.divsCount} divisiones · ${t.start}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">FINALIZADO</span>
+    </div>`).join(''):'<div class="empty-state">Sin torneos anteriores</div>';
+}
+function openDivision(divId){
+  currentDivisionId=divId;
+  const d=divisiones.find(x=>x.id===divId);
+  const t=torneos.find(x=>x.id===d.torneoId);
+  const l=leagues.find(x=>x.id===t.leagueId);
+  document.getElementById('division-header-name').textContent=d.name;
+  document.getElementById('division-header-sub').textContent=t.name+' · '+l.name;
+  showView('view-division');
+  switchTab('partidos',document.querySelector('#view-division .nav-item'));
   buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
+function goBackToLeague(){showView('view-league');}
 
 function goHome(){showView('view-home');document.getElementById('view-admin').style.display='none';}
 function showView(id){
@@ -1093,13 +1197,14 @@ function filterMatches(el,filter){
 }
 function getTeam(id){return teamsData.find(t=>t.id===id);}
 function renderMatches(){
-  const filtered=currentFilter==='todos'?matches:matches.filter(m=>m.status===currentFilter);
-  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos</div>';return;}
+  const divMs=matches.filter(m=>!m.divId||m.divId===currentDivisionId);
+  const filtered=currentFilter==='todos'?divMs:divMs.filter(m=>m.status===currentFilter);
+  if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos en esta división</div>';return;}
   const byRound={};
   filtered.forEach(m=>{if(!byRound[m.round])byRound[m.round]=[];byRound[m.round].push(m);});
   let html='';
   Object.entries(byRound).sort((a,b)=>b[0]-a[0]).forEach(([round,ms])=>{
-    const lname=document.getElementById('league-header-name').textContent;
+    const lname=document.getElementById('division-header-name').textContent||document.getElementById('league-header-name').textContent;
     html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">${lname.toUpperCase()}</span><span class="round-badge">FECHA ${round}</span></div>`;
     ms.forEach(m=>{
       const home=getTeam(m.home),away=getTeam(m.away),isDone=m.status==='done',isLive=m.status==='live';
@@ -1127,7 +1232,8 @@ function openMatch(id){
   const st=document.getElementById('modal-status-tag');
   st.textContent=m.status==='done'?'FINALIZADO':m.status==='live'?'EN VIVO':'PROGRAMADO';
   st.className='modal-status-tag'+(m.status==='live'?' live':'');
-  document.getElementById('modal-tournament').textContent=`${document.getElementById('league-header-name').textContent} · Fecha ${m.round}`;
+  const divName=document.getElementById('division-header-name').textContent||document.getElementById('league-header-name').textContent;
+  document.getElementById('modal-tournament').textContent=`${divName} · Fecha ${m.round}`;
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
 }
@@ -1138,7 +1244,9 @@ function switchModalTab(tab,el){
   el.classList.add('active');document.getElementById('pane-'+tab).classList.add('active');
 }
 function renderStandings(){
-  const sorted=[...standings].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
+  const divSt=standings.filter(s=>!s.divId||s.divId===currentDivisionId);
+  if(!divSt.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin datos de posiciones</div>';return;}
+  const sorted=[...divSt].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
   document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
     const t=getTeam(row.teamId),dif=row.gf-row.gc,badge=i<3?badges[i]:'normal';
     return `<div class="standing-row"><div class="pos-badge ${badge}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
