@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liga Handball — Prototipo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 600; }
+    .tab-btn { transition: all 0.15s; }
+    .pos-1 { background: #fef9c3; }
+    .pos-2 { background: #f3f4f6; }
+    .pos-3 { background: #fef3c7; }
+    .shield { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: white; flex-shrink: 0; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: white; flex-shrink: 0; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .admin-page { display: none; }
+    .admin-page.active { display: block; }
+    .medal-1 { background: linear-gradient(135deg, #FFD700, #FFA500); }
+    .medal-2 { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); }
+    .medal-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); }
+    .view-toggle { cursor: pointer; }
+    input, select { outline: none; }
+    input:focus, select:focus { box-shadow: 0 0 0 2px #2563eb44; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- TOGGLE: Público / Admin -->
+<div class="bg-gray-800 text-white text-center py-2 text-sm flex items-center justify-center gap-4">
+  <span class="text-gray-400">Vista:</span>
+  <button onclick="showView('public')" id="btn-public" class="px-3 py-1 rounded bg-blue-600 text-white font-medium">Pública</button>
+  <button onclick="showView('admin')" id="btn-admin" class="px-3 py-1 rounded bg-transparent text-gray-300 font-medium hover:bg-gray-700">Admin</button>
+  <span class="text-gray-500 text-xs ml-2">← prototipo</span>
+</div>
+
+<!-- VISTA PÚBLICA -->
+<div id="view-public" class="view">
+
+  <div class="bg-blue-700 text-white shadow">
+    <div class="max-w-2xl mx-auto px-4 pt-4 pb-0">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-700 font-black text-lg">H</div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Liga Municipal Handball</h1>
+          <p class="text-blue-200 text-xs">Temporada 2025 · 12 equipos</p>
+        </div>
+      </div>
+      <div class="flex overflow-x-auto gap-1 -mb-px hidden sm:flex" id="tabs-desktop">
+        <button onclick="showTab('standings')" class="tab-btn tab-active px-4 py-2 text-sm whitespace-nowrap border-b-2" id="tab-standings">Tabla</button>
+        <button onclick="showTab('scorers')" class="tab-btn px-4 py-2 text-sm whitespace-nowrap text-blue-200 hover:text-white" id="tab-scorers">Goleadores</button>
+        <button onclick="showTab('fixture')" class="tab-btn px-4 py-2 text-sm whitespace-nowrap text-blue-200 hover:text-white" id="tab-fixture">Fixture</button>
+        <button onclick="showTab('results')" class="tab-btn px-4 py-2 text-sm whitespace-nowrap text-blue-200 hover:text-white" id="tab-results">Resultados</button>
+        <button onclick="showTab('players')" class="tab-btn px-4 py-2 text-sm whitespace-nowrap text-blue-200 hover:text-white" id="tab-players">Jugadores</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 py-4 pb-24 sm:pb-6">
+    <div id="page-standings" class="page active">
+      <h2 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Tabla de Posiciones</h2>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-500 text-xs uppercase">
+                <th class="text-left px-3 py-2 w-6">#</th>
+                <th class="text-left px-2 py-2">Equipo</th>
+                <th class="px-2 py-2">PJ</th>
+                <th class="px-2 py-2">PG</th>
+                <th class="px-2 py-2">PE</th>
+                <th class="px-2 py-2">PP</th>
+                <th class="px-2 py-2">GF</th>
+                <th class="px-2 py-2">GC</th>
+                <th class="px-2 py-2">DIF</th>
+                <th class="px-2 py-2 font-bold text-gray-700">PTS</th>
+              </tr>
+            </thead>
+            <tbody id="standings-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2 text-center">Actualizado hace 2 horas</p>
+    </div>
+
+    <div id="page-scorers" class="page">
+      <h2 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Ranking de Goleadores</h2>
+      <div class="space-y-2" id="scorers-list"></div>
+    </div>
+
+    <div id="page-fixture" class="page">
+      <h2 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Próximos Partidos</h2>
+      <div id="fixture-list" class="space-y-4"></div>
+    </div>
+
+    <div id="page-results" class="page">
+      <h2 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Últimos Resultados</h2>
+      <div id="results-list" class="space-y-3"></div>
+    </div>
+
+    <div id="page-players" class="page">
+      <h2 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Buscar Jugador</h2>
+      <div class="relative mb-4">
+        <input type="text" id="player-search-input" oninput="filterPlayers()" placeholder="Buscar por nombre..."
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 pl-10 text-sm bg-white shadow-sm" />
+        <span class="absolute left-3 top-3.5 text-gray-400">🔍</span>
+      </div>
+      <div id="players-list" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex sm:hidden z-50">
+    <button onclick="showTab('standings')" id="mob-standings" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-blue-600">
+      <span class="text-lg">📊</span><span class="text-xs font-medium">Tabla</span>
+    </button>
+    <button onclick="showTab('scorers')" id="mob-scorers" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400">
+      <span class="text-lg">⚽</span><span class="text-xs">Goles</span>
+    </button>
+    <button onclick="showTab('fixture')" id="mob-fixture" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400">
+      <span class="text-lg">📅</span><span class="text-xs">Fixture</span>
+    </button>
+    <button onclick="showTab('results')" id="mob-results" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400">
+      <span class="text-lg">🏆</span><span class="text-xs">Resultados</span>
+    </button>
+    <button onclick="showTab('players')" id="mob-players" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-400">
+      <span class="text-lg">👤</span><span class="text-xs">Jugadores</span>
+    </button>
+  </div>
+</div>
+
+<!-- VISTA ADMIN -->
+<div id="view-admin" class="view hidden">
+  <div id="admin-login" class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl mx-auto mb-3">H</div>
+        <h1 class="font-bold text-xl text-gray-800">Panel Admin</h1>
+        <p class="text-gray-500 text-sm mt-1">Liga Municipal Handball</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" value="admin@ligahandball.com" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+          <input type="password" value="password" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+        </div>
+        <button onclick="showAdminPanel()" class="w-full bg-blue-600 text-white rounded-lg py-2.5 font-semibold text-sm">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-panel" class="hidden">
+    <div class="flex h-screen bg-gray-100 overflow-hidden">
+      <div class="w-56 bg-gray-900 text-white flex-col hidden md:flex flex-shrink-0">
+        <div class="px-4 py-5 border-b border-gray-700">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm">H</div>
+            <div><p class="font-semibold text-sm">Liga Handball</p><p class="text-gray-400 text-xs">Temporada 2025</p></div>
+          </div>
+        </div>
+        <nav class="flex-1 px-2 py-4 space-y-1">
+          <button onclick="showAdminPage('dashboard')" id="anav-dashboard" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium bg-gray-700 text-white flex items-center gap-2"><span>📊</span> Dashboard</button>
+          <button onclick="showAdminPage('teams')" id="anav-teams" class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-700 hover:text-white flex items-center gap-2"><span>🛡️</span> Equipos</button>
+          <button onclick="showAdminPage('players')" id="anav-players" class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-700 hover:text-white flex items-center gap-2"><span>👥</span> Jugadores</button>
+          <button onclick="showAdminPage('matches')" id="anav-matches" class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-700 hover:text-white flex items-center gap-2"><span>📅</span> Partidos</button>
+        </nav>
+        <div class="px-4 py-4 border-t border-gray-700">
+          <button onclick="showView('public'); showAdminLogin()" class="text-gray-400 text-xs hover:text-white">← Ver web pública</button>
+        </div>
+      </div>
+
+      <div class="md:hidden fixed top-8 left-0 right-0 bg-gray-900 text-white z-40 flex items-center gap-2 px-4 py-3 border-b border-gray-700">
+        <div class="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-black text-xs">H</div>
+        <span class="font-semibold text-sm flex-1">Admin — Liga Handball</span>
+        <button onclick="showView('public'); showAdminLogin()" class="text-gray-400 text-xs">← Pública</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        <div class="max-w-4xl mx-auto p-4 md:p-8 mt-16 md:mt-0">
+          <div id="apage-dashboard" class="admin-page active">
+            <h1 class="text-xl font-bold text-gray-800 mb-6">Dashboard</h1>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div class="bg-white rounded-xl p-4 shadow-sm text-center"><p class="text-3xl font-black text-blue-600">12</p><p class="text-gray-500 text-sm mt-1">Equipos</p></div>
+              <div class="bg-white rounded-xl p-4 shadow-sm text-center"><p class="text-3xl font-black text-green-600">187</p><p class="text-gray-500 text-sm mt-1">Jugadores</p></div>
+              <div class="bg-white rounded-xl p-4 shadow-sm text-center"><p class="text-3xl font-black text-purple-600">28</p><p class="text-gray-500 text-sm mt-1">Partidos jugados</p></div>
+              <div class="bg-white rounded-xl p-4 shadow-sm text-center"><p class="text-3xl font-black text-orange-500">8</p><p class="text-gray-500 text-sm mt-1">Por jugar</p></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-5">
+              <h2 class="font-semibold text-gray-700 mb-3">Próximos partidos a cargar</h2>
+              <div class="space-y-3" id="admin-upcoming"></div>
+            </div>
+          </div>
+
+          <div id="apage-teams" class="admin-page">
+            <div class="flex items-center justify-between mb-6">
+              <h1 class="text-xl font-bold text-gray-800">Equipos</h1>
+              <button onclick="toggleModal('modal-team')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Agregar equipo</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="admin-teams-list"></div>
+          </div>
+
+          <div id="apage-players" class="admin-page">
+            <div class="flex items-center justify-between mb-4">
+              <h1 class="text-xl font-bold text-gray-800">Jugadores</h1>
+              <button onclick="toggleModal('modal-player')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Agregar</button>
+            </div>
+            <div class="mb-4 flex gap-2">
+              <input type="text" placeholder="Buscar jugador..." class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1" />
+              <select class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"><option>Todos los equipos</option><option>Los Tigres</option><option>Halcones FC</option></select>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                  <tr>
+                    <th class="text-left px-4 py-3">Jugador</th>
+                    <th class="text-left px-4 py-3 hidden sm:table-cell">Equipo</th>
+                    <th class="px-4 py-3">#</th>
+                    <th class="px-4 py-3">Goles</th>
+                    <th class="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-players-table"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="apage-matches" class="admin-page">
+            <div class="flex items-center justify-between mb-6">
+              <h1 class="text-xl font-bold text-gray-800">Partidos</h1>
+              <button onclick="toggleModal('modal-match')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Cargar partido</button>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <p class="text-blue-700 text-sm font-medium">💡 Tocá "Cargar resultado" en un partido pendiente</p>
+            </div>
+            <div id="admin-matches-list" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 flex z-40">
+        <button onclick="showAdminPage('dashboard')" id="amob-dashboard" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-blue-400"><span class="text-lg">📊</span><span class="text-xs">Dashboard</span></button>
+        <button onclick="showAdminPage('teams')" id="amob-teams" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-500"><span class="text-lg">🛡️</span><span class="text-xs">Equipos</span></button>
+        <button onclick="showAdminPage('players')" id="amob-players" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-500"><span class="text-lg">👥</span><span class="text-xs">Jugadores</span></button>
+        <button onclick="showAdminPage('matches')" id="amob-matches" class="flex-1 py-3 flex flex-col items-center gap-0.5 text-gray-500"><span class="text-lg">📅</span><span class="text-xs">Partidos</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<div id="modal-team" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-gray-800 text-lg">Nuevo equipo</h3>
+      <button onclick="toggleModal('modal-team')" class="text-gray-400 text-xl">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nombre del equipo</label><input type="text" placeholder="ej. Los Tigres" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Abreviatura (máx 4)</label><input type="text" placeholder="TIG" maxlength="4" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Escudo</label><div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"><p class="text-gray-400 text-sm">🖼️ Subir imagen</p><p class="text-gray-300 text-xs mt-1">PNG, JPG hasta 2MB</p></div></div>
+      <div class="flex gap-3 pt-2">
+        <button onclick="toggleModal('modal-team')" class="flex-1 border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm">Cancelar</button>
+        <button onclick="toggleModal('modal-team')" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-player" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-gray-800 text-lg">Nuevo jugador</h3>
+      <button onclick="toggleModal('modal-player')" class="text-gray-400 text-xl">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label><input type="text" placeholder="ej. Juan Pérez" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Equipo</label><select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white"><option>Seleccionar...</option><option>Los Tigres</option><option>Halcones FC</option></select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Número</label><input type="number" placeholder="7" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Foto</label><div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"><p class="text-gray-400 text-sm">📷 Subir foto</p></div></div>
+      <div class="flex gap-3 pt-2">
+        <button onclick="toggleModal('modal-player')" class="flex-1 border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm">Cancelar</button>
+        <button onclick="toggleModal('modal-player')" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-match" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-gray-800 text-lg">Nuevo partido</h3>
+      <button onclick="toggleModal('modal-match')" class="text-gray-400 text-xl">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Jornada</label><input type="number" placeholder="ej. 8" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Local</label><select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white"><option>Los Tigres</option><option>Halcones FC</option></select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Visitante</label><select class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white"><option>Halcones FC</option><option>Los Tigres</option></select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label><input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Hora</label><input type="time" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Sede</label><input type="text" placeholder="Gimnasio Municipal" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" /></div>
+      <div class="flex gap-3 pt-2">
+        <button onclick="toggleModal('modal-match')" class="flex-1 border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm">Cancelar</button>
+        <button onclick="toggleModal('modal-match')" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-result" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-gray-800 text-lg">Cargar resultado</h3>
+      <button onclick="toggleModal('modal-result')" class="text-gray-400 text-xl">✕</button>
+    </div>
+    <div class="bg-gray-50 rounded-xl p-4 mb-5">
+      <p class="text-xs text-gray-500 text-center mb-3 uppercase tracking-wide">Resultado final</p>
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1 text-center">
+          <div class="shield mx-auto mb-2" style="background:#1d4ed8;width:36px;height:36px;font-size:13px">TIG</div>
+          <p class="text-sm font-semibold text-gray-700">Los Tigres</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" value="18" min="0" class="w-14 text-center text-2xl font-black border-2 border-gray-200 rounded-xl py-2" />
+          <span class="text-gray-400 font-bold text-xl">:</span>
+          <input type="number" value="15" min="0" class="w-14 text-center text-2xl font-black border-2 border-gray-200 rounded-xl py-2" />
+        </div>
+        <div class="flex-1 text-center">
+          <div class="shield mx-auto mb-2" style="background:#dc2626;width:36px;height:36px;font-size:13px">HAL</div>
+          <p class="text-sm font-semibold text-gray-700">Halcones FC</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm font-semibold text-gray-700">Goleadores</p>
+        <button class="text-blue-600 text-sm font-medium">+ Agregar</button>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+          <div class="avatar" style="background:#1d4ed8;width:28px;height:28px;font-size:11px">JR</div>
+          <span class="text-sm flex-1">Juan Rodríguez</span>
+          <span class="text-xs text-gray-400">Los Tigres</span>
+          <div class="flex items-center gap-1">
+            <button class="w-6 h-6 rounded bg-gray-200 text-gray-600 text-xs font-bold">−</button>
+            <span class="w-6 text-center text-sm font-bold">3</span>
+            <button class="w-6 h-6 rounded bg-blue-100 text-blue-600 text-xs font-bold">+</button>
+          </div>
+          <button class="text-red-400 text-xs ml-1">✕</button>
+        </div>
+        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+          <div class="avatar" style="background:#dc2626;width:28px;height:28px;font-size:11px">PG</div>
+          <span class="text-sm flex-1">Pablo García</span>
+          <span class="text-xs text-gray-400">Halcones</span>
+          <div class="flex items-center gap-1">
+            <button class="w-6 h-6 rounded bg-gray-200 text-gray-600 text-xs font-bold">−</button>
+            <span class="w-6 text-center text-sm font-bold">4</span>
+            <button class="w-6 h-6 rounded bg-blue-100 text-blue-600 text-xs font-bold">+</button>
+          </div>
+          <button class="text-red-400 text-xs ml-1">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="toggleModal('modal-result')" class="flex-1 border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm">Cancelar</button>
+      <button onclick="toggleModal('modal-result')" class="flex-1 bg-green-600 text-white rounded-lg py-2.5 text-sm font-semibold">✓ Confirmar resultado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const colors = ['#1d4ed8','#dc2626','#16a34a','#9333ea','#ea580c','#0891b2','#be185d','#854d0e','#1e3a5f','#065f46','#7c3aed','#b45309'];
+const teams = [
+  {name:'Los Tigres', short:'TIG', color:colors[0], pts:22, pj:9, pg:7, pe:1, pp:1, gf:178, gc:141},
+  {name:'Halcones FC', short:'HAL', color:colors[1], pts:19, pj:9, pg:6, pe:1, pp:2, gf:162, gc:138},
+  {name:'Leones Norte', short:'LEO', color:colors[2], pts:16, pj:9, pg:5, pe:1, pp:3, gf:155, gc:148},
+  {name:'Panteras Sur', short:'PAN', color:colors[3], pts:13, pj:9, pg:4, pe:1, pp:4, gf:147, gc:152},
+  {name:'Águilas RC', short:'AGU', color:colors[4], pts:11, pj:9, pg:3, pe:2, pp:4, gf:141, gc:155},
+  {name:'Toros Oeste', short:'TOR', color:colors[5], pts:9, pj:9, pg:2, pe:3, pp:4, gf:138, gc:160},
+  {name:'Lobos BH', short:'LOB', color:colors[6], pts:7, pj:9, pg:2, pe:1, pp:6, gf:132, gc:168},
+  {name:'Delfines AC', short:'DEL', color:colors[7], pts:5, pj:9, pg:1, pe:2, pp:6, gf:124, gc:175},
+];
+const scorers = [
+  {name:'Juan Rodríguez', team:'Los Tigres', color:colors[0], goals:24, jersey:7},
+  {name:'Pablo García', team:'Halcones FC', color:colors[1], goals:21, jersey:10},
+  {name:'Marcos Díaz', team:'Leones Norte', color:colors[2], goals:18, jersey:9},
+  {name:'Santiago Ruiz', team:'Los Tigres', color:colors[0], goals:16, jersey:4},
+  {name:'Nicolás Herrera', team:'Panteras Sur', color:colors[3], goals:14, jersey:11},
+  {name:'Rodrigo Vega', team:'Águilas RC', color:colors[4], goals:13, jersey:8},
+  {name:'Facundo Morales', team:'Halcones FC', color:colors[1], goals:12, jersey:3},
+  {name:'Tomás Benítez', team:'Leones Norte', color:colors[2], goals:11, jersey:6},
+  {name:'Lucas Peralta', team:'Toros Oeste', color:colors[5], goals:9, jersey:14},
+  {name:'Ignacio Sosa', team:'Lobos BH', color:colors[6], goals:8, jersey:2},
+];
+const fixtures = [
+  {round:10, date:'Sáb 28 Jun', time:'19:00', home:'Los Tigres', homeC:colors[0], homeS:'TIG', away:'Leones Norte', awayC:colors[2], awayS:'LEO', venue:'Gimnasio Municipal'},
+  {round:10, date:'Sáb 28 Jun', time:'21:00', home:'Halcones FC', homeC:colors[1], homeS:'HAL', away:'Panteras Sur', awayC:colors[3], awayS:'PAN', venue:'Club Atlético'},
+  {round:10, date:'Dom 29 Jun', time:'10:00', home:'Águilas RC', homeC:colors[4], homeS:'AGU', away:'Toros Oeste', awayC:colors[5], awayS:'TOR', venue:'Polideportivo Norte'},
+  {round:11, date:'Sáb 5 Jul', time:'18:00', home:'Leones Norte', homeC:colors[2], homeS:'LEO', away:'Halcones FC', awayC:colors[1], awayS:'HAL', venue:'Gimnasio Municipal'},
+];
+const results = [
+  {round:9, date:'21 Jun', home:'Los Tigres', homeC:colors[0], homeS:'TIG', homeScore:24, away:'Toros Oeste', awayC:colors[5], awayS:'TOR', awayScore:18, scorers:['J. Rodríguez 5g','S. Ruiz 3g']},
+  {round:9, date:'21 Jun', home:'Halcones FC', homeC:colors[1], homeS:'HAL', homeScore:21, away:'Lobos BH', awayC:colors[6], awayS:'LOB', awayScore:14, scorers:['P. García 4g','F. Morales 3g']},
+  {round:9, date:'22 Jun', home:'Leones Norte', homeC:colors[2], homeS:'LEO', homeScore:19, away:'Águilas RC', awayC:colors[4], awayS:'AGU', awayScore:19, scorers:['M. Díaz 5g','R. Vega 4g']},
+  {round:8, date:'14 Jun', home:'Panteras Sur', homeC:colors[3], homeS:'PAN', homeScore:22, away:'Delfines AC', awayC:colors[7], awayS:'DEL', awayScore:15, scorers:['N. Herrera 6g']},
+  {round:8, date:'14 Jun', home:'Los Tigres', homeC:colors[0], homeS:'TIG', homeScore:26, away:'Halcones FC', awayC:colors[1], awayS:'HAL', awayScore:22, scorers:['J. Rodríguez 5g','P. García 5g']},
+];
+const allPlayers = [...scorers,
+  {name:'Carlos Fernández', team:'Toros Oeste', color:colors[5], goals:7, jersey:5},
+  {name:'Andrés Castro', team:'Panteras Sur', color:colors[3], goals:5, jersey:12},
+  {name:'Roberto Méndez', team:'Delfines AC', color:colors[7], goals:4, jersey:8},
+];
+
+function Shield(s,c,size=28){return`<div class="shield" style="background:${c};width:${size}px;height:${size}px">${s}</div>`;}
+function Avatar(name,color,size=36){const i=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();return`<div class="avatar" style="background:${color};width:${size}px;height:${size}px">${i}</div>`;}
+
+function renderStandings(){
+  const sorted=[...teams].sort((a,b)=>b.pts!==a.pts?b.pts-a.pts:(b.gf-b.gc)-(a.gf-a.gc));
+  document.getElementById('standings-body').innerHTML=sorted.map((t,i)=>{
+    const pos=i+1,dif=t.gf-t.gc,medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
+    const rc=pos===1?'pos-1':pos===2?'pos-2':pos===3?'pos-3':'';
+    return`<tr class="${rc} border-t border-gray-100"><td class="px-3 py-2.5 text-xs text-gray-500">${medal}</td><td class="px-2 py-2.5"><div class="flex items-center gap-2">${Shield(t.short,t.color)}<span class="font-medium text-gray-800 text-sm">${t.name}</span></div></td><td class="px-2 py-2.5 text-center text-sm">${t.pj}</td><td class="px-2 py-2.5 text-center text-sm text-green-600 font-medium">${t.pg}</td><td class="px-2 py-2.5 text-center text-sm text-yellow-600">${t.pe}</td><td class="px-2 py-2.5 text-center text-sm text-red-500">${t.pp}</td><td class="px-2 py-2.5 text-center text-sm">${t.gf}</td><td class="px-2 py-2.5 text-center text-sm">${t.gc}</td><td class="px-2 py-2.5 text-center text-sm font-medium ${dif>0?'text-green-600':'text-red-500'}">${dif>0?'+':''}${dif}</td><td class="px-2 py-2.5 text-center font-black text-blue-700">${t.pts}</td></tr>`;
+  }).join('');
+}
+
+function renderScorers(){
+  document.getElementById('scorers-list').innerHTML=scorers.map((s,i)=>{
+    const pos=i+1,mc=pos===1?'medal-1':pos===2?'medal-2':pos===3?'medal-3':'bg-gray-200 text-gray-600';
+    return`<div class="bg-white rounded-xl shadow-sm flex items-center gap-3 px-4 py-3"><div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0 ${mc}">${pos<=3?['🥇','🥈','🥉'][pos-1]:pos}</div>${Avatar(s.name,s.color)}<div class="flex-1 min-w-0"><p class="font-semibold text-gray-800 text-sm truncate">${s.name}</p><p class="text-xs text-gray-400">${s.team} · #${s.jersey}</p></div><div class="text-right"><p class="text-2xl font-black text-blue-700">${s.goals}</p><p class="text-xs text-gray-400">goles</p></div></div>`;
+  }).join('');
+}
+
+function renderFixture(){
+  const byRound={};
+  fixtures.forEach(f=>{if(!byRound[f.round])byRound[f.round]=[];byRound[f.round].push(f);});
+  document.getElementById('fixture-list').innerHTML=Object.entries(byRound).map(([round,ms])=>
+    `<div><p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Fecha ${round}</p><div class="space-y-2">${ms.map(m=>`<div class="bg-white rounded-xl shadow-sm px-4 py-3"><p class="text-xs text-gray-400 mb-2">📅 ${m.date} ${m.time} · ${m.venue}</p><div class="flex items-center justify-between gap-2"><div class="flex items-center gap-2 flex-1">${Shield(m.homeS,m.homeC)}<span class="font-semibold text-sm">${m.home}</span></div><span class="bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1 rounded-lg">VS</span><div class="flex items-center gap-2 flex-1 justify-end"><span class="font-semibold text-sm">${m.away}</span>${Shield(m.awayS,m.awayC)}</div></div></div>`).join('')}</div></div>`
+  ).join('');
+}
+
+function renderResults(){
+  document.getElementById('results-list').innerHTML=results.map(r=>{
+    const hw=r.homeScore>r.awayScore,draw=r.homeScore===r.awayScore;
+    return`<div class="bg-white rounded-xl shadow-sm px-4 py-3 cursor-pointer" onclick="this.querySelector('.sd').classList.toggle('hidden')"><p class="text-xs text-gray-400 mb-2">Fecha ${r.round} · ${r.date}</p><div class="flex items-center gap-2 justify-between"><div class="flex items-center gap-2 flex-1 ${hw?'':'opacity-60'}">${Shield(r.homeS,r.homeC)}<span class="font-semibold text-sm">${r.home}</span></div><div class="flex items-center gap-1 flex-shrink-0"><span class="text-2xl font-black ${hw?'text-gray-900':'text-gray-400'}">${r.homeScore}</span><span class="text-gray-300 font-bold">:</span><span class="text-2xl font-black ${!hw&&!draw?'text-gray-900':'text-gray-400'}">${r.awayScore}</span></div><div class="flex items-center gap-2 flex-1 justify-end ${!hw&&!draw?'':'opacity-60'}"><span class="font-semibold text-sm">${r.away}</span>${Shield(r.awayS,r.awayC)}</div></div><div class="sd hidden mt-2 pt-2 border-t border-gray-100"><p class="text-xs text-gray-500">⚽ ${r.scorers.join(' · ')}</p></div><p class="text-xs text-blue-400 text-right mt-1">ver goleadores ↓</p></div>`;
+  }).join('');
+}
+
+function renderPlayers(list){
+  const el=document.getElementById('players-list');
+  if(!list.length){el.innerHTML='<p class="text-center text-gray-400 py-8">No se encontraron jugadores</p>';return;}
+  el.innerHTML=list.map(p=>`<div class="bg-white rounded-xl shadow-sm flex items-center gap-3 px-4 py-3">${Avatar(p.name,p.color)}<div class="flex-1"><p class="font-semibold text-gray-800 text-sm">${p.name}</p><p class="text-xs text-gray-400">${p.team} · #${p.jersey}</p></div><div class="text-right"><p class="font-bold text-blue-700">${p.goals}</p><p class="text-xs text-gray-400">goles</p></div></div>`).join('');
+}
+
+function filterPlayers(){
+  const q=document.getElementById('player-search-input').value.toLowerCase();
+  renderPlayers(q.length<1?allPlayers:allPlayers.filter(p=>p.name.toLowerCase().includes(q)));
+}
+
+function renderAdminTeams(){
+  document.getElementById('admin-teams-list').innerHTML=teams.map(t=>`<div class="bg-white rounded-xl shadow-sm flex items-center gap-3 p-4">${Shield(t.short,t.color,40)}<div class="flex-1"><p class="font-semibold text-gray-800">${t.name}</p><p class="text-xs text-gray-400">${t.short}</p></div><div class="flex gap-2"><button class="text-xs text-blue-600 border border-blue-200 px-2 py-1 rounded-lg">Editar</button><button class="text-xs text-red-400 border border-red-200 px-2 py-1 rounded-lg">Borrar</button></div></div>`).join('');
+}
+
+function renderAdminPlayers(){
+  document.getElementById('admin-players-table').innerHTML=allPlayers.map(p=>`<tr class="border-t border-gray-100"><td class="px-4 py-2.5"><div class="flex items-center gap-2">${Avatar(p.name,p.color,30)}<span class="text-sm font-medium">${p.name}</span></div></td><td class="px-4 py-2.5 hidden sm:table-cell"><span class="text-sm text-gray-600">${p.team}</span></td><td class="px-4 py-2.5 text-center text-sm text-gray-500">#${p.jersey}</td><td class="px-4 py-2.5 text-center text-sm font-bold text-blue-700">${p.goals}</td><td class="px-4 py-2.5 text-center"><button class="text-xs text-blue-600">Editar</button></td></tr>`).join('');
+}
+
+function renderAdminMatches(){
+  const all=[
+    ...results.map(r=>({...r,status:'finished'})),
+    ...fixtures.map(f=>({...f,status:'scheduled',homeScore:null,awayScore:null,date:f.date+' '+f.time,home:f.home,away:f.away,homeC:f.homeC,awayC:f.awayC,homeS:f.homeS,awayS:f.awayS})),
+  ];
+  document.getElementById('admin-matches-list').innerHTML=all.map(m=>`<div class="bg-white rounded-xl shadow-sm p-4"><div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-400">Fecha ${m.round} · ${m.date}</span><span class="text-xs px-2 py-0.5 rounded-full font-medium ${m.status==='finished'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${m.status==='finished'?'✓ Jugado':'⏳ Pendiente'}</span></div><div class="flex items-center gap-2 justify-between"><div class="flex items-center gap-2 flex-1">${Shield(m.homeS,m.homeC)}<span class="font-semibold text-sm">${m.home}</span></div><div class="px-3 text-center">${m.status==='finished'?`<span class="font-black text-lg">${m.homeScore} : ${m.awayScore}</span>`:`<button onclick="toggleModal('modal-result')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Cargar resultado</button>`}</div><div class="flex items-center gap-2 flex-1 justify-end"><span class="font-semibold text-sm">${m.away}</span>${Shield(m.awayS,m.awayC)}</div></div>${m.status==='finished'?`<p class="text-xs text-gray-400 mt-2">⚽ ${(m.scorers||[]).join(' · ')}</p>`:''}</div>`).join('');
+}
+
+function renderAdminUpcoming(){
+  document.getElementById('admin-upcoming').innerHTML=fixtures.slice(0,3).map(f=>`<div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0"><div class="flex items-center gap-1">${Shield(f.homeS,f.homeC,22)}<span class="text-sm text-gray-600">${f.home}</span></div><span class="text-gray-300 text-xs">vs</span><div class="flex items-center gap-1">${Shield(f.awayS,f.awayC,22)}<span class="text-sm text-gray-600">${f.away}</span></div><span class="ml-auto text-xs text-gray-400">${f.date}</span><button onclick="toggleModal('modal-result')" class="text-xs text-blue-600 border border-blue-200 px-2 py-1 rounded whitespace-nowrap">Cargar</button></div>`).join('');
+}
+
+const tabPages=['standings','scorers','fixture','results','players'];
+function showTab(name){
+  tabPages.forEach(t=>{
+    document.getElementById(`page-${t}`).classList.toggle('active',t===name);
+    const d=document.getElementById(`tab-${t}`);
+    if(d)d.className=`tab-btn px-4 py-2 text-sm whitespace-nowrap border-b-2 ${t===name?'tab-active border-blue-500':'text-blue-200 hover:text-white border-transparent'}`;
+    const m=document.getElementById(`mob-${t}`);
+    if(m)m.className=`flex-1 py-3 flex flex-col items-center gap-0.5 ${t===name?'text-blue-600':'text-gray-400'}`;
+  });
+}
+
+const adminPages=['dashboard','teams','players','matches'];
+function showAdminPage(name){
+  adminPages.forEach(p=>{
+    document.getElementById(`apage-${p}`).classList.toggle('active',p===name);
+    const n=document.getElementById(`anav-${p}`);
+    if(n)n.className=`w-full text-left px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${p===name?'bg-gray-700 text-white':'text-gray-400 hover:bg-gray-700 hover:text-white'}`;
+    const mb=document.getElementById(`amob-${p}`);
+    if(mb)mb.className=`flex-1 py-3 flex flex-col items-center gap-0.5 ${p===name?'text-blue-400':'text-gray-500'}`;
+  });
+}
+
+function showView(name){
+  document.getElementById('view-public').classList.toggle('hidden',name!=='public');
+  document.getElementById('view-admin').classList.toggle('hidden',name!=='admin');
+  document.getElementById('btn-public').className=`px-3 py-1 rounded font-medium text-sm ${name==='public'?'bg-blue-600 text-white':'bg-transparent text-gray-300'}`;
+  document.getElementById('btn-admin').className=`px-3 py-1 rounded font-medium text-sm ${name==='admin'?'bg-blue-600 text-white':'bg-transparent text-gray-300'}`;
+}
+
+function showAdminPanel(){
+  document.getElementById('admin-login').classList.add('hidden');
+  document.getElementById('admin-panel').classList.remove('hidden');
+}
+function showAdminLogin(){
+  document.getElementById('admin-login').classList.remove('hidden');
+  document.getElementById('admin-panel').classList.add('hidden');
+}
+function toggleModal(id){document.getElementById(id).classList.toggle('hidden');}
+
+renderStandings();renderScorers();renderFixture();renderResults();renderPlayers(allPlayers);
+renderAdminTeams();renderAdminPlayers();renderAdminMatches();renderAdminUpcoming();
+</script>
+</body>
+</html>
