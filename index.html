@@ -722,6 +722,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="admin-menu">
       <div class="menu-item" onclick="goAdmin('torneos')"><div class="menu-icon">🏆</div><div class="menu-text"><h3>Torneos</h3><p>Torneos y divisiones</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="goAdmin('clubes')"><div class="menu-icon">🏟️</div><div class="menu-text"><h3>Clubes</h3><p>Clubes y delegados</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('teams')"><div class="menu-icon">🛡️</div><div class="menu-text"><h3>Equipos</h3><p>Gestionar equipos y escudos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('players')"><div class="menu-icon">👤</div><div class="menu-text"><h3>Jugadores</h3><p>Jugadores y fotos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('matches')"><div class="menu-icon">📅</div><div class="menu-text"><h3>Partidos</h3><p>Fixture y resultados</p></div><span class="menu-chevron">›</span></div>
@@ -763,6 +764,16 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <button class="btn btn-primary" onclick="showToast('¡Fixture generado! 28 partidos creados','success')">Generar Fixture Automático</button>
     </div>
+  </div>
+  <!-- CLUBES LIST -->
+  <div id="admin-clubes" class="admin-screen" style="display:none">
+    <div class="admin-header-bar">
+      <span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span>
+      <h2>Clubes</h2>
+      <button class="btn btn-primary btn-sm" onclick="openNuevoClub()">+ Nuevo</button>
+    </div>
+    <div style="padding:8px 16px;font-size:12px;color:var(--text2)">Cada club tiene un delegado que gestiona sus jugadores.</div>
+    <div id="adminClubesList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:10px"></div>
   </div>
   <!-- TORNEOS LIST -->
   <div id="admin-torneos" class="admin-screen" style="display:none">
@@ -820,6 +831,48 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Agregar partido</button>
       </div>
       <div id="adminPartidosList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO CLUB -->
+<div class="modal-overlay" id="nuevoClubModal" onclick="closeNuevoClub(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div id="nc-preview-icon" style="width:44px;height:44px;border-radius:12px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;flex-shrink:0">CL</div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Club</div><div id="nc-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del club</label>
+        <input class="form-input" id="nc-nombre" type="text" placeholder="Ej: Club Atlético Los Andes" oninput="ncUpdatePreview()" style="width:100%"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Abreviación (3–4 letras)</label>
+        <input class="form-input" id="nc-abrev" type="text" placeholder="LA" maxlength="4" oninput="ncUpdatePreview()" style="width:100%;text-transform:uppercase"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Color del club</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="nc-colores">
+          <div class="nl-color-btn selected" onclick="ncSelectColor(this,'#1a2150')" style="background:#1a2150"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#1a3d20')" style="background:#1a3d20"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#3d1a20')" style="background:#3d1a20"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#2d1a3d')" style="background:#2d1a3d"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#1a3a3d')" style="background:#1a3a3d"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#c0392b')" style="background:#c0392b"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#2c3e50')" style="background:#2c3e50"></div>
+          <div class="nl-color-btn" onclick="ncSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
+        </div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Acceso del delegado</div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Email</label>
+          <input class="form-input" id="nc-email" type="email" placeholder="delegado@miclub.com" style="width:100%"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Contraseña</label>
+          <input class="form-input" id="nc-pass" type="text" placeholder="Ej: losandes2025" style="width:100%"></div>
+        <div style="font-size:11px;color:var(--text3)">El delegado usará estas credenciales para entrar a la app y gestionar el plantel.</div>
+      </div>
+      <div id="nc-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeNuevoClub(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="nc-save-btn" style="flex:1" onclick="saveNuevoClub()">Crear Club</button>
+      </div>
     </div>
   </div>
 </div>
@@ -901,22 +954,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Equipo</div><div id="ne-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del equipo</label>
-        <input class="form-input" id="ne-nombre" type="text" placeholder="Ej: Club Atlético Baires" oninput="neUpdatePreview()" style="width:100%"></div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Abreviación (3 letras)</label>
-        <input class="form-input" id="ne-abrev" type="text" placeholder="BAI" maxlength="4" oninput="neUpdatePreview()" style="width:100%;text-transform:uppercase"></div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Color</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ne-colores">
-          <div class="nl-color-btn selected" onclick="neSelectColor(this,'#1a2150')" style="background:#1a2150"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#1a3d20')" style="background:#1a3d20"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#3d1a20')" style="background:#3d1a20"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#2d1a3d')" style="background:#2d1a3d"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#1a3a3d')" style="background:#1a3a3d"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#c0392b')" style="background:#c0392b"></div>
-          <div class="nl-color-btn" onclick="neSelectColor(this,'#2c3e50')" style="background:#2c3e50"></div>
-        </div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Club</label>
+        <select class="form-input" id="ne-club" style="width:100%" onchange="neOnClubChange()">
+          <option value="">Seleccionar club existente...</option>
+        </select>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Si el club no existe, crealo primero en el menú "Clubes"</div>
       </div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre en esta división (opcional)</label>
+        <input class="form-input" id="ne-nombre" type="text" placeholder="Deja vacío para usar el nombre del club" oninput="neUpdatePreview()" style="width:100%"></div>
       <div id="ne-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevoEquipo(null,true)">Cancelar</button>
@@ -1109,62 +1154,72 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-delegado" class="view">
   <header>
     <span class="back-link" onclick="logoutAdmin()">‹</span>
-    <div style="flex:1"><h1 id="deleg-club-name">Los Andes</h1><span class="subtitle">Delegado · Liga Baires</span></div>
+    <div style="flex:1"><h1 id="deleg-club-name">Mi Club</h1><span id="deleg-subtitle" class="subtitle">Delegado</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:24px">
     <div class="deleg-club-header">
-      <div id="deleg-shield" style="width:52px;height:52px;border-radius:14px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#5b6ef5;flex-shrink:0">LA</div>
+      <div id="deleg-shield" style="width:52px;height:52px;border-radius:14px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0">CL</div>
       <div style="flex:1">
-        <div style="font-size:15px;font-weight:800" id="deleg-name2">Los Andes</div>
-        <div style="font-size:12px;color:var(--text2)">Liga Baires · Handball</div>
+        <div style="font-size:15px;font-weight:800" id="deleg-name2">Mi Club</div>
+        <div style="font-size:12px;color:var(--text2)" id="deleg-liga-info">—</div>
         <div style="font-size:11px;color:var(--green);margin-top:2px">● Afiliado activo</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:10px;color:var(--text3);font-weight:700">ADMIN</div>
-        <div style="font-size:11px;color:var(--accent)">delegado@losandes.com</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:700">DELEGADO</div>
+        <div style="font-size:11px;color:var(--accent)" id="deleg-email-label">—</div>
       </div>
     </div>
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:2px solid var(--border)">
+      <div id="dtab-plantel" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px" onclick="switchDelegTab('plantel',this)">PLANTEL</div>
+      <div id="dtab-partidos" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px" onclick="switchDelegTab('partidos',this)">PARTIDOS</div>
+    </div>
+    <!-- Tab Plantel -->
+    <div id="deleg-tab-plantel">
+      <div style="padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--text2)" id="deleg-plantel-count">— jugadores</div>
+        <button class="btn btn-primary btn-sm" onclick="openDelegAgregarJugador()">+ Agregar jugador</button>
+      </div>
+      <div id="deleg-plantel-list" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
+      </div>
+    </div>
+    <!-- Tab Partidos -->
+    <div id="deleg-tab-partidos" style="display:none">
+      <div id="deleg-partidos-list" style="padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- Notificaciones -->
-    <div class="section-title">NOTIFICACIONES <span style="background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;vertical-align:middle">3</span></div>
-    <div class="notif-item"><div class="notif-dot" style="background:var(--gold)"></div><div><div class="notif-text">Solicitud de transferencia: Club Tigre quiere a Roberto Torres</div><div class="notif-time">Hace 2 horas</div></div></div>
-    <div class="notif-item"><div class="notif-dot"></div><div><div class="notif-text">Habilitación aprobada: Martín García ✓</div><div class="notif-time">Ayer</div></div></div>
-    <div class="notif-item"><div class="notif-dot"></div><div><div class="notif-text">Partido el sábado 21/06 · 10:00 hs vs River Baires</div><div class="notif-time">Hace 2 días</div></div></div>
-
-    <div class="section-title" style="margin-top:4px">GESTIÓN DEL CLUB</div>
-    <div class="deleg-menu-grid">
-      <div class="deleg-menu-card" onclick="showToast('Plantel — 12 jugadores activos','')">
-        <div class="deleg-menu-icon">👥</div>
-        <div class="deleg-menu-label">Plantel</div>
-        <div class="deleg-menu-sub">12 jugadores</div>
+<!-- MODAL: DELEGADO AGREGAR JUGADOR -->
+<div class="modal-overlay" id="delegJugadorModal" onclick="closeDelegJugador(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Agregar Jugador</div>
+      <div id="dj-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre completo</label>
+        <input class="form-input" id="dj-nombre" type="text" placeholder="Ej: Martín García" oninput="document.getElementById('dj-preview-nombre').textContent=this.value||'Sin nombre'" style="width:100%"></div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:0 0 90px"><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">N° Camiseta</label>
+          <input class="form-input" id="dj-numero" type="number" min="1" max="99" placeholder="10" style="width:100%"></div>
+        <div style="flex:1"><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Posición</label>
+          <select class="form-input" id="dj-posicion" style="width:100%">
+            <option>Portero</option><option>Defensor</option><option>Mediocampista</option><option>Delantero</option>
+            <option>Pivot</option><option>Lateral</option><option>Armador</option><option>Otro</option>
+          </select></div>
       </div>
-      <div class="deleg-menu-card" onclick="showToast('Habilitaciones — 2 pendientes','')">
-        <div class="deleg-badge">2</div>
-        <div class="deleg-menu-icon">✅</div>
-        <div class="deleg-menu-label">Habilitaciones</div>
-        <div class="deleg-menu-sub">2 pendientes</div>
-      </div>
-      <div class="deleg-menu-card" onclick="showTransferModal()">
-        <div class="deleg-badge">1</div>
-        <div class="deleg-menu-icon">🔄</div>
-        <div class="deleg-menu-label">Transferencias</div>
-        <div class="deleg-menu-sub">1 solicitud</div>
-      </div>
-      <div class="deleg-menu-card" onclick="showToast('Próximo: sábado 10:00 vs River','')">
-        <div class="deleg-menu-icon">📅</div>
-        <div class="deleg-menu-label">Mis Partidos</div>
-        <div class="deleg-menu-sub">Próx: sáb 10:00</div>
-      </div>
-      <div class="deleg-menu-card" onclick="showToast('Datos del club','')">
-        <div class="deleg-menu-icon">🏢</div>
-        <div class="deleg-menu-label">Datos del Club</div>
-        <div class="deleg-menu-sub">Contactos, sede</div>
-      </div>
-      <div class="deleg-menu-card" onclick="showToast('Lesiones e impedimentos','')">
-        <div class="deleg-menu-icon">🩹</div>
-        <div class="deleg-menu-label">Lesiones</div>
-        <div class="deleg-menu-sub">1 jugador lesionado</div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Equipo / División</label>
+        <select class="form-input" id="dj-equipo" style="width:100%"><option value="">Cargando...</option></select></div>
+      <div id="dj-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeDelegJugador(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="dj-save-btn" style="flex:1" onclick="saveDelegJugador()">Agregar</button>
       </div>
     </div>
   </div>
@@ -1531,14 +1586,20 @@ function doAdminLogin(){
   // Check league admin
   const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
   if(league){showAdminForLeague(league);return;}
-  // Check extra roles (árbitro, mesa, delegado)
+  // Check extra roles hardcodeados (árbitro, mesa)
   const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
   if(xu){
     if(xu.role==='arbitro')showArbitroView(xu);
     else if(xu.role==='mesa')showMesaView(xu);
-    else if(xu.role==='delegado')showDelegadoView(xu);
     return;
   }
+  // Check delegados desde Supabase
+  try{
+    const {data:club}=await supa.from('clubes')
+      .select('*, liga:ligas(nombre,deporte)')
+      .eq('delegado_email',email).eq('delegado_pass',pass).single();
+    if(club){showDelegadoView(club);return;}
+  }catch(e){}
   // Wrong credentials
   document.getElementById('login-error').style.display='block';
 }
@@ -1811,7 +1872,7 @@ function goAdmin(page){
   if(page==='players')renderAdminPlayers();
   if(page==='matches')renderAdminMatches();
   if(page==='torneos')loadAdminTorneos();
-  // 'division' no necesita carga aquí, se carga en openDivisionFromAdmin
+  if(page==='clubes')loadAdminClubes();
 }
 function renderAdminTeams(){
   document.getElementById('teamsList').innerHTML=teamsData.map(t=>`
@@ -2151,15 +2212,146 @@ function endPeriod(){
 }
 
 // ═══ DELEGADO ═══
-function showDelegadoView(user){
+let delegadoClub=null;
+
+function showDelegadoView(club){
+  delegadoClub=club;
+  const nombre=club.nombre||club.name||'Mi Club';
+  const abrev=club.abreviacion||nombre.slice(0,2).toUpperCase();
+  const color=club.color_principal||'#1a2150';
+  const ligaNombre=club.liga?.nombre||club.league||'';
+  const ligaDeporte=club.liga?.deporte||'';
+  document.getElementById('deleg-club-name').textContent=nombre;
+  document.getElementById('deleg-name2').textContent=nombre;
+  document.getElementById('deleg-liga-info').textContent=[ligaNombre,ligaDeporte].filter(Boolean).join(' · ')||'—';
+  document.getElementById('deleg-email-label').textContent=club.delegado_email||'';
+  document.getElementById('deleg-subtitle').textContent='Delegado'+(ligaNombre?' · '+ligaNombre:'');
+  const shield=document.getElementById('deleg-shield');
+  shield.textContent=abrev;
+  shield.style.background=color;
   showView('view-delegado');
-  showToast('Bienvenido, '+user.name,'success');
+  switchDelegTab('plantel',document.getElementById('dtab-plantel'));
+  showToast('Bienvenido, '+nombre,'success');
 }
-function showTransferModal(){document.getElementById('transferModal').classList.add('open');}
-function closeTransfer(e,force){
-  if(force||e.target===document.getElementById('transferModal'))
-    document.getElementById('transferModal').classList.remove('open');
+
+function switchDelegTab(tab,el){
+  ['plantel','partidos'].forEach(t=>{
+    document.getElementById('deleg-tab-'+t).style.display=t===tab?'':'none';
+    const tabEl=document.getElementById('dtab-'+t);
+    tabEl.style.color=t===tab?'var(--accent)':'var(--text3)';
+    tabEl.style.borderBottomColor=t===tab?'var(--accent)':'transparent';
+  });
+  if(tab==='plantel')loadDelegPlantel();
+  if(tab==='partidos')loadDelegPartidos();
 }
+
+async function loadDelegPlantel(){
+  const el=document.getElementById('deleg-plantel-list');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    // Obtener equipos del club
+    const {data:equipos}=await supa.from('equipos').select('id,nombre,division_id').eq('club_id',delegadoClub.id);
+    if(!equipos||!equipos.length){
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">El club no tiene equipos inscriptos en ninguna división aún.</div>';
+      document.getElementById('deleg-plantel-count').textContent='0 jugadores';
+      delegadoClub._equipos=[];
+      return;
+    }
+    delegadoClub._equipos=equipos;
+    const equipoIds=equipos.map(e=>e.id);
+    const {data:jugadores}=await supa.from('jugadores')
+      .select('*, equipo:equipos(nombre)')
+      .in('equipo_id',equipoIds).order('equipo_id').order('numero');
+    const list=jugadores||[];
+    document.getElementById('deleg-plantel-count').textContent=list.length+' jugador'+(list.length!==1?'es':'');
+    if(!list.length){
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin jugadores. Tocá + Agregar jugador.</div>';
+      return;
+    }
+    el.innerHTML=list.map(j=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:${delegadoClub.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${j.numero||'—'}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${escHtml(j.nombre)}</div>
+          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')}</div>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarJugadorDeleg(${j.id},'${escHtml(j.nombre)}')">✕</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+
+async function loadDelegPartidos(){
+  const el=document.getElementById('deleg-partidos-list');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const equipos=delegadoClub._equipos||[];
+    if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin equipos inscriptos aún.</div>';return;}
+    const ids=equipos.map(e=>e.id);
+    const {data}=await supa.from('partidos')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .or(ids.map(id=>`equipo_local_id.eq.${id},equipo_visita_id.eq.${id}`).join(','))
+      .order('fecha').order('hora');
+    const list=data||[];
+    if(!list.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
+    const estadoLabel={programado:'⏳ Programado',en_curso:'🟢 En vivo',finalizado:'✓ Finalizado'};
+    el.innerHTML=list.map(p=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''} · <span style="color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||p.estado||''}</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;text-align:right;font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
+          <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
+          <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
+        </div>
+        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+
+function openDelegAgregarJugador(){
+  if(!delegadoClub?._equipos?.length){showToast('El club no tiene equipos inscriptos','error');return;}
+  document.getElementById('dj-nombre').value='';
+  document.getElementById('dj-numero').value='';
+  document.getElementById('dj-posicion').value='Mediocampista';
+  document.getElementById('dj-error').style.display='none';
+  document.getElementById('dj-preview-nombre').textContent='Sin nombre';
+  document.getElementById('dj-equipo').innerHTML=delegadoClub._equipos.map(e=>`<option value="${e.id}">${escHtml(e.nombre)}</option>`).join('');
+  document.getElementById('dj-save-btn').disabled=false;
+  document.getElementById('dj-save-btn').textContent='Agregar';
+  document.getElementById('delegJugadorModal').classList.add('open');
+  setTimeout(()=>document.getElementById('dj-nombre').focus(),300);
+}
+function closeDelegJugador(e,force){
+  if(force||e.target===document.getElementById('delegJugadorModal'))
+    document.getElementById('delegJugadorModal').classList.remove('open');
+}
+async function saveDelegJugador(){
+  const nombre=document.getElementById('dj-nombre').value.trim();
+  const numero=parseInt(document.getElementById('dj-numero').value)||null;
+  const posicion=document.getElementById('dj-posicion').value;
+  const equipoId=parseInt(document.getElementById('dj-equipo').value)||null;
+  const errEl=document.getElementById('dj-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(!equipoId){errEl.textContent='Seleccioná un equipo';errEl.style.display='';return;}
+  const btn=document.getElementById('dj-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion});
+    if(error)throw error;
+    closeDelegJugador(null,true);
+    showToast('"'+nombre+'" agregado ✓','success');
+    await loadDelegPlantel();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Agregar';}
+}
+async function confirmarEliminarJugadorDeleg(id,nombre){
+  if(!confirm('¿Eliminar al jugador "'+nombre+'"?'))return;
+  try{
+    await supa.from('jugadores').delete().eq('id',id);
+    showToast('Jugador eliminado','error');
+    await loadDelegPlantel();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+function showTransferModal(){showToast('Transferencias — próximamente','');}
+function closeTransfer(e,force){}
 
 // ─── TORNEOS (ADMIN) ───
 const estadoBadge={planificacion:'📋 Planificación',activo:'🟢 Activo',finalizado:'🏁 Finalizado'};
@@ -2237,6 +2429,95 @@ async function loadAdminDivisiones(){
 
 function escHtml(s){return (s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 
+// ─── CLUBES (ADMIN) ───
+let adminLigaClubes=[];
+
+async function loadAdminClubes(){
+  const el=document.getElementById('adminClubesList');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('clubes').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    if(error)throw error;
+    adminLigaClubes=data||[];
+    if(!adminLigaClubes.length){
+      el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">Sin clubes aún.<br>Tocá + Nuevo para agregar.</div>';
+      return;
+    }
+    el.innerHTML=adminLigaClubes.map(c=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:${c.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(c.abreviacion||'CL')}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">${escHtml(c.nombre)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.delegado_email||'Sin delegado asignado'}</div>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+
+let ncColorSel='#1a2150';
+function openNuevoClub(){
+  ncColorSel='#1a2150';
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('nc-abrev').value='';
+  document.getElementById('nc-email').value='';
+  document.getElementById('nc-pass').value='';
+  document.getElementById('nc-error').style.display='none';
+  document.getElementById('nc-preview-nombre').textContent='Sin nombre';
+  document.getElementById('nc-preview-icon').textContent='CL';
+  document.getElementById('nc-preview-icon').style.background='#1a2150';
+  document.querySelectorAll('#nc-colores .nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.getElementById('nc-save-btn').disabled=false;
+  document.getElementById('nc-save-btn').textContent='Crear Club';
+  document.getElementById('nuevoClubModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
+}
+function closeNuevoClub(e,force){
+  if(force||e.target===document.getElementById('nuevoClubModal'))
+    document.getElementById('nuevoClubModal').classList.remove('open');
+}
+function ncUpdatePreview(){
+  const n=document.getElementById('nc-nombre').value.trim();
+  const a=document.getElementById('nc-abrev').value.trim().toUpperCase();
+  document.getElementById('nc-preview-nombre').textContent=n||'Sin nombre';
+  document.getElementById('nc-preview-icon').textContent=a||'CL';
+}
+function ncSelectColor(el,color){
+  ncColorSel=color;
+  document.querySelectorAll('#nc-colores .nl-color-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nc-preview-icon').style.background=color;
+}
+async function saveNuevoClub(){
+  const nombre=document.getElementById('nc-nombre').value.trim();
+  const abrev=document.getElementById('nc-abrev').value.trim().toUpperCase();
+  const email=document.getElementById('nc-email').value.trim();
+  const pass=document.getElementById('nc-pass').value.trim();
+  const errEl=document.getElementById('nc-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('nc-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const {error}=await supa.from('clubes').insert({
+      liga_id:currentAdminLeagueId, nombre, abreviacion:abrev||null,
+      color_principal:ncColorSel, color_texto:'#ffffff',
+      delegado_email:email||null, delegado_pass:pass||null
+    });
+    if(error)throw error;
+    closeNuevoClub(null,true);
+    showToast('"'+nombre+'" creado ✓','success');
+    await loadAdminClubes();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Crear Club';}
+}
+async function confirmarEliminarClub(id,nombre){
+  if(!confirm('¿Eliminar el club "'+nombre+'"?'))return;
+  try{
+    await supa.from('clubes').delete().eq('id',id);
+    showToast('Club eliminado','error');
+    await loadAdminClubes();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
 // ─── GESTIÓN DE DIVISIÓN ───
 let currentAdminDivisionId=null, adminDivEquipos=[];
 
@@ -2282,47 +2563,61 @@ async function loadAdminEquipos(){
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
-let neColorSel='#1a2150';
-function openNuevoEquipo(){
-  neColorSel='#1a2150';
+async function openNuevoEquipo(){
   document.getElementById('ne-nombre').value='';
-  document.getElementById('ne-abrev').value='';
   document.getElementById('ne-error').style.display='none';
   document.getElementById('ne-preview-nombre').textContent='Sin nombre';
   document.getElementById('ne-preview-icon').textContent='EQ';
   document.getElementById('ne-preview-icon').style.background='#1a2150';
-  document.querySelectorAll('#ne-colores .nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   document.getElementById('ne-save-btn').disabled=false;
   document.getElementById('ne-save-btn').textContent='Agregar Equipo';
+  // Cargar clubes de la liga
+  if(!adminLigaClubes.length) await loadAdminClubesQuiet();
+  const clubSel=document.getElementById('ne-club');
+  clubSel.innerHTML='<option value="">Seleccionar club...</option>'
+    +adminLigaClubes.map(c=>`<option value="${c.id}" data-nombre="${escHtml(c.nombre)}" data-abrev="${escHtml(c.abreviacion||'')}" data-color="${c.color_principal||'#1a2150'}">${escHtml(c.nombre)}</option>`).join('');
   document.getElementById('nuevoEquipoModal').classList.add('open');
-  setTimeout(()=>document.getElementById('ne-nombre').focus(),300);
+}
+async function loadAdminClubesQuiet(){
+  try{
+    const {data}=await supa.from('clubes').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    adminLigaClubes=data||[];
+  }catch(e){}
 }
 function closeNuevoEquipo(e,force){
   if(force||e.target===document.getElementById('nuevoEquipoModal'))
     document.getElementById('nuevoEquipoModal').classList.remove('open');
 }
+function neOnClubChange(){
+  const sel=document.getElementById('ne-club');
+  const opt=sel.options[sel.selectedIndex];
+  if(opt&&opt.value){
+    const nombre=opt.dataset.nombre||'';
+    const abrev=opt.dataset.abrev||'';
+    const color=opt.dataset.color||'#1a2150';
+    document.getElementById('ne-preview-nombre').textContent=nombre;
+    document.getElementById('ne-preview-icon').textContent=abrev||nombre.slice(0,2).toUpperCase();
+    document.getElementById('ne-preview-icon').style.background=color;
+  }
+}
 function neUpdatePreview(){
   const n=document.getElementById('ne-nombre').value.trim();
-  const a=document.getElementById('ne-abrev').value.trim().toUpperCase();
-  document.getElementById('ne-preview-nombre').textContent=n||'Sin nombre';
-  document.getElementById('ne-preview-icon').textContent=a||'EQ';
-}
-function neSelectColor(el,color){
-  neColorSel=color;
-  document.querySelectorAll('#ne-colores .nl-color-btn').forEach(b=>b.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('ne-preview-icon').style.background=color;
+  if(n)document.getElementById('ne-preview-nombre').textContent=n;
 }
 async function saveNuevoEquipo(){
-  const nombre=document.getElementById('ne-nombre').value.trim();
-  const abrev=document.getElementById('ne-abrev').value.trim().toUpperCase();
+  const clubId=parseInt(document.getElementById('ne-club').value)||null;
+  const nombreOverride=document.getElementById('ne-nombre').value.trim();
   const errEl=document.getElementById('ne-error');
-  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(!clubId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
+  const club=adminLigaClubes.find(c=>c.id===clubId);
+  const nombre=nombreOverride||club?.nombre||'';
   const btn=document.getElementById('ne-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
     const {error}=await supa.from('equipos').insert({
-      division_id:currentAdminDivisionId, nombre, abreviacion:abrev||null, color_principal:neColorSel, color_texto:'#ffffff'
+      division_id:currentAdminDivisionId, club_id:clubId,
+      nombre, abreviacion:club?.abreviacion||null,
+      color_principal:club?.color_principal||'#1a2150', color_texto:'#ffffff'
     });
     if(error)throw error;
     closeNuevoEquipo(null,true);
