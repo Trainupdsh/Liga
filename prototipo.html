@@ -1532,6 +1532,29 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- EN VIVO MODAL (delegado visitante) -->
+<div class="modal-overlay" id="enVivoModal" onclick="closeEnVivo(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border);text-align:center">
+      <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px" id="envivo-status">🟢 EN VIVO</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0">
+        <div style="flex:1;text-align:right;font-size:15px;font-weight:800" id="envivo-local-name">Local</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:52px;font-weight:900;color:var(--accent)" id="envivo-local-score">0</div>
+          <div style="font-size:24px;color:var(--text3)">-</div>
+          <div style="font-size:52px;font-weight:900;color:var(--accent)" id="envivo-visita-score">0</div>
+        </div>
+        <div style="flex:1;font-size:15px;font-weight:800" id="envivo-visita-name">Visitante</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">Actualización en tiempo real</div>
+    </div>
+    <div style="padding:16px">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeEnVivo(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TV MODE OVERLAY -->
 <div id="tv-overlay" onclick="closeTVMode()">
   <div style="position:absolute;top:16px;right:16px;opacity:.4;font-size:13px;color:#fff">Toca para salir · ESC</div>
@@ -2872,6 +2895,7 @@ function showDelegadoView(club){
   const color=club.color_principal||'#1a2150';
   const ligaNombre=club.liga?.nombre||club.league||'';
   const ligaDeporte=club.liga?.deporte||'';
+  delegadoClub._ligaNombre=ligaNombre;
   document.getElementById('deleg-club-name').textContent=nombre;
   document.getElementById('deleg-name2').textContent=nombre;
   document.getElementById('deleg-liga-info').textContent=[ligaNombre,ligaDeporte].filter(Boolean).join(' · ')||'—';
@@ -2943,22 +2967,39 @@ async function loadDelegPartidos(){
     if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin equipos inscriptos aún.</div>';return;}
     const ids=equipos.map(e=>e.id);
     const {data}=await supa.from('partidos')
-      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
       .or(ids.map(id=>`equipo_local_id.eq.${id},equipo_visita_id.eq.${id}`).join(','))
       .order('fecha').order('hora');
     const list=data||[];
     if(!list.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
     const estadoLabel={programado:'⏳ Programado',en_curso:'🟢 En vivo',finalizado:'✓ Finalizado'};
-    el.innerHTML=list.map(p=>`
+    el.innerHTML=list.map(p=>{
+      const esLocal=ids.includes(p.equipo_local_id);
+      const esVisita=ids.includes(p.equipo_visita_id);
+      const puedeOperar=esLocal&&p.estado!=='finalizado';
+      const puedeVerEnVivo=esVisita&&p.estado==='en_curso';
+      return `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''} · <span style="color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||p.estado||''}</span></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;text-align:right;font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
-          <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
-          <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--text2)">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''}</span>
+          <span style="font-size:11px;font-weight:700;color:${p.estado==='en_curso'?'var(--green)':p.estado==='finalizado'?'var(--text3)':'var(--accent)'}">${estadoLabel[p.estado]||p.estado||''}</span>
         </div>
-        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
-      </div>`).join('');
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${puedeOperar||puedeVerEnVivo?'10':'0'}px">
+          <div style="flex:1;text-align:right;font-size:13px;font-weight:${esLocal?'900':'700'};color:${esLocal?'var(--accent)':'inherit'}">${escHtml(p.local?.nombre||'Local')}${esLocal?' 🏠':''}</div>
+          <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
+          <div style="flex:1;font-size:13px;font-weight:${esVisita?'900':'700'};color:${esVisita?'var(--accent)':'inherit'}">${esVisita?' 🏠':''}${escHtml(p.visita?.nombre||'Visitante')}</div>
+        </div>
+        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px">📍 ${escHtml(p.cancha)}</div>`:''}
+        ${puedeOperar?`
+        <button class="btn" style="width:100%;background:var(--green);color:#fff;font-size:13px" onclick="delegadoAbrirMesa(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}',${p.jornada||'null'})">
+          🎮 Operar Mesa — soy local
+        </button>`:''}
+        ${puedeVerEnVivo?`
+        <button class="btn btn-secondary" style="width:100%;font-size:13px" onclick="delegadoVerEnVivo(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}')">
+          👁️ Ver en vivo
+        </button>`:''}
+      </div>`;
+    }).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
@@ -4455,6 +4496,55 @@ async function saveInscripcion(){
 }
 
 // ═══ CUERPO TÉCNICO ═══
+// ═══ DELEGADO → MESA ═══
+function delegadoAbrirMesa(partidoId, localNombre, visitaNombre, jornada){
+  const user={
+    name: delegadoClub.nombre,
+    league: delegadoClub._ligaNombre||'Liga',
+    role: 'mesa'
+  };
+  showMesaView(user);
+  // pre-seleccionar el partido directamente
+  setTimeout(()=>selectMesaMatch(partidoId), 400);
+}
+
+// ═══ DELEGADO VISITANTE → VER EN VIVO ═══
+let _enVivoSub=null;
+function delegadoVerEnVivo(partidoId, localNombre, visitaNombre){
+  document.getElementById('envivo-local-name').textContent=localNombre;
+  document.getElementById('envivo-visita-name').textContent=visitaNombre;
+  document.getElementById('envivo-local-score').textContent='—';
+  document.getElementById('envivo-visita-score').textContent='—';
+  document.getElementById('enVivoModal').classList.add('open');
+  // cargar score actual
+  supa.from('partidos').select('goles_local,goles_visita,estado').eq('id',partidoId).single()
+    .then(({data})=>{
+      if(data){
+        document.getElementById('envivo-local-score').textContent=data.goles_local??0;
+        document.getElementById('envivo-visita-score').textContent=data.goles_visita??0;
+      }
+    });
+  // suscribir a cambios en tiempo real
+  if(_enVivoSub)supa.removeChannel(_enVivoSub);
+  _enVivoSub=supa.channel('envivo-'+partidoId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'partidos',filter:'id=eq.'+partidoId},(payload)=>{
+      const d=payload.new;
+      document.getElementById('envivo-local-score').textContent=d.goles_local??0;
+      document.getElementById('envivo-visita-score').textContent=d.goles_visita??0;
+      if(d.estado==='finalizado'){
+        document.getElementById('envivo-status').textContent='FINALIZADO';
+        document.getElementById('envivo-status').style.color='var(--text3)';
+      }
+    })
+    .subscribe();
+}
+function closeEnVivo(e,force){
+  if(force||e?.target===document.getElementById('enVivoModal')){
+    document.getElementById('enVivoModal').classList.remove('open');
+    if(_enVivoSub){supa.removeChannel(_enVivoSub);_enVivoSub=null;}
+  }
+}
+
 function openNuevoCT(){
   document.getElementById('ct-nombre').value='';
   document.getElementById('ct-rol').value='Director Técnico';
