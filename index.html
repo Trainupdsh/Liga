@@ -255,6 +255,42 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
+/* CREDENCIAL */
+.cred-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.cred-overlay.open{opacity:1;pointer-events:all;}
+.cred-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);padding-bottom:32px;}
+.cred-overlay.open .cred-sheet{transform:translateY(0);}
+.cred-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
+.cred-card{margin:20px 20px 16px;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.cred-header{padding:24px 20px 20px;position:relative;overflow:hidden;}
+.cred-header::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.08);}
+.cred-header::after{content:'';position:absolute;left:-20px;bottom:-40px;width:120px;height:120px;border-radius:50%;background:rgba(0,0,0,0.15);}
+.cred-league-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;position:relative;z-index:1;}
+.cred-league-name{font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.8);}
+.cred-season{font-size:10px;color:rgba(255,255,255,0.5);margin-left:auto;}
+.cred-photo{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin-bottom:12px;position:relative;z-index:1;}
+.cred-name{font-size:20px;font-weight:900;color:#fff;position:relative;z-index:1;margin-bottom:2px;}
+.cred-number{font-size:13px;font-weight:700;color:rgba(255,255,255,0.7);position:relative;z-index:1;}
+.cred-body{background:var(--card);padding:16px 20px;}
+.cred-status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cred-status{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;letter-spacing:0.5px;}
+.cred-status.ok{color:var(--green);}
+.cred-status.suspended{color:var(--red);}
+.cred-status-dot{width:8px;height:8px;border-radius:50%;}
+.cred-status.ok .cred-status-dot{background:var(--green);box-shadow:0 0 8px var(--green);}
+.cred-status.suspended .cred-status-dot{background:var(--red);box-shadow:0 0 8px var(--red);}
+.cred-id{font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:1px;}
+.cred-details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.cred-detail{background:var(--card2);border-radius:10px;padding:10px 12px;}
+.cred-detail-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;}
+.cred-detail-value{font-size:13px;font-weight:700;}
+.cred-qr-row{display:flex;align-items:center;gap:16px;}
+.cred-qr{width:80px;height:80px;flex-shrink:0;border-radius:10px;overflow:hidden;background:#fff;padding:6px;}
+.cred-qr svg{width:100%;height:100%;}
+.cred-share-col{flex:1;}
+.cred-share-text{font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.4;}
+.cred-share-btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:10px;cursor:pointer;border:none;}
+.suspended-stamp{position:absolute;bottom:12px;right:12px;border:3px solid var(--red);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:900;color:var(--red);letter-spacing:1px;transform:rotate(-8deg);opacity:0.9;z-index:2;}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;z-index:500;transition:transform 0.3s;box-shadow:0 8px 32px var(--shadow);}
 .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
@@ -566,6 +602,48 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- CREDENCIAL MODAL -->
+<div class="cred-overlay" id="credModal" onclick="closeCredModal(event)">
+  <div class="cred-sheet">
+    <div class="cred-handle"></div>
+    <div class="cred-card" id="credCard">
+      <div class="cred-header" id="credHeader">
+        <div class="cred-league-row">
+          <span id="cred-league-icon" style="font-size:16px">🤾</span>
+          <span class="cred-league-name" id="cred-league-name">LIGA BAIRES</span>
+          <span class="cred-season" id="cred-season">2025</span>
+        </div>
+        <div class="cred-photo" id="cred-photo">MG</div>
+        <div class="cred-name" id="cred-name">Martín García</div>
+        <div class="cred-number" id="cred-number">Camiseta #7 · Los Andes</div>
+        <div class="suspended-stamp" id="cred-stamp" style="display:none">SUSPENDIDO</div>
+      </div>
+      <div class="cred-body">
+        <div class="cred-status-row">
+          <div class="cred-status ok" id="cred-status">
+            <div class="cred-status-dot"></div>
+            <span id="cred-status-text">HABILITADO</span>
+          </div>
+          <div class="cred-id" id="cred-id">ID: LB-2025-001</div>
+        </div>
+        <div class="cred-details">
+          <div class="cred-detail"><div class="cred-detail-label">Equipo</div><div class="cred-detail-value" id="cred-team">Los Andes</div></div>
+          <div class="cred-detail"><div class="cred-detail-label">Goles</div><div class="cred-detail-value" id="cred-goals">12</div></div>
+          <div class="cred-detail"><div class="cred-detail-label">Amarillas</div><div class="cred-detail-value" id="cred-yellows" style="color:var(--yellow)">1 🟡</div></div>
+          <div class="cred-detail"><div class="cred-detail-label">Rojas</div><div class="cred-detail-value" id="cred-reds" style="color:var(--red)">0 🔴</div></div>
+        </div>
+        <div class="cred-qr-row">
+          <div class="cred-qr"><svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" id="cred-qr-svg"></svg></div>
+          <div class="cred-share-col">
+            <div class="cred-share-text">Mostrá este código al árbitro para verificar tu habilitación</div>
+            <button class="cred-share-btn" onclick="showToast('Link copiado al portapapeles','success')">📤 Compartir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 </div>
 
@@ -804,7 +882,9 @@ function renderScorers(){
   const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
+    const card=playerCards.find(x=>x.id===p.id)||{};
+    const statusDot=card.suspended?'<span style="font-size:9px;color:var(--red);font-weight:700;margin-left:4px">SUSP.</span>':'';
+    return `<div class="scorer-card" onclick="openCred(${p.id})" style="cursor:pointer"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}${statusDot}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
   }).join('');
 }
 let st2;
@@ -816,7 +896,8 @@ function searchPlayers(q){
     const found=players.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
     results.innerHTML=found.length?found.map(p=>{
       const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-      return `<div class="player-card"><div class="player-avatar" style="color:${t.text};border:2px solid ${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
+      const card=playerCards.find(x=>x.id===p.id)||{};
+      return `<div class="player-card" onclick="openCred(${p.id})" style="cursor:pointer"><div class="player-avatar" style="color:${t.text};border:2px solid ${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}${card.suspended?'<span style="font-size:9px;color:var(--red);font-weight:700;margin-left:6px">SUSP.</span>':''}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
     }).join(''):'<div class="empty-state">No se encontraron jugadores</div>';
   },300);
 }
@@ -862,6 +943,74 @@ function openResultModal(id){
 function addScorer(){scorers.push({team:document.getElementById('scorerTeamSel').value,player:document.getElementById('scorerPlayerSel').value});renderScorerTags();}
 function removeScorer(i){scorers.splice(i,1);renderScorerTags();}
 function renderScorerTags(){document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');}
+// ═══ CREDENCIAL ═══
+const playerCards=[
+  {id:1,yellows:1,reds:0,suspended:false},
+  {id:2,yellows:2,reds:0,suspended:false},
+  {id:3,yellows:0,reds:1,suspended:true},
+  {id:4,yellows:1,reds:0,suspended:false},
+  {id:5,yellows:0,reds:0,suspended:false},
+  {id:6,yellows:3,reds:0,suspended:false},
+  {id:7,yellows:1,reds:0,suspended:false},
+  {id:8,yellows:0,reds:0,suspended:false},
+  {id:9,yellows:2,reds:1,suspended:true},
+  {id:10,yellows:0,reds:0,suspended:false},
+  {id:11,yellows:1,reds:0,suspended:false},
+  {id:12,yellows:0,reds:0,suspended:false},
+  {id:13,yellows:1,reds:0,suspended:false},
+  {id:14,yellows:0,reds:0,suspended:false},
+  {id:15,yellows:2,reds:0,suspended:false},
+  {id:16,yellows:0,reds:0,suspended:false},
+];
+function openCred(playerId){
+  const p=players.find(x=>x.id===playerId);
+  const t=getTeam(p.team);
+  const card=playerCards.find(x=>x.id===playerId)||{yellows:0,reds:0,suspended:false};
+  const l=leagues[0];
+  const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+  // header color
+  document.getElementById('credHeader').style.background=`linear-gradient(135deg,${t.color},${t.color}dd)`;
+  document.getElementById('cred-photo').textContent=initials;
+  document.getElementById('cred-photo').style.background=`rgba(255,255,255,0.15)`;
+  document.getElementById('cred-name').textContent=p.name;
+  document.getElementById('cred-number').textContent=`Camiseta #${p.jersey} · ${t.name}`;
+  document.getElementById('cred-league-icon').textContent=l.icon;
+  document.getElementById('cred-league-name').textContent=l.name.toUpperCase();
+  document.getElementById('cred-season').textContent=l.season;
+  document.getElementById('cred-team').textContent=t.name;
+  document.getElementById('cred-goals').textContent=p.goals;
+  document.getElementById('cred-yellows').textContent=card.yellows+' 🟡';
+  document.getElementById('cred-reds').textContent=card.reds+' 🔴';
+  document.getElementById('cred-id').textContent='ID: LB-2025-'+String(p.id).padStart(3,'0');
+  const statusEl=document.getElementById('cred-status');
+  const stamp=document.getElementById('cred-stamp');
+  if(card.suspended){
+    statusEl.className='cred-status suspended';
+    document.getElementById('cred-status-text').textContent='SUSPENDIDO';
+    stamp.style.display='';
+  } else {
+    statusEl.className='cred-status ok';
+    document.getElementById('cred-status-text').textContent='HABILITADO';
+    stamp.style.display='none';
+  }
+  // QR pattern
+  document.getElementById('cred-qr-svg').innerHTML=generateQR(p.id);
+  document.getElementById('credModal').classList.add('open');
+}
+function closeCredModal(e){if(e.target===document.getElementById('credModal'))document.getElementById('credModal').classList.remove('open');}
+function generateQR(seed){
+  // Simple deterministic pixel pattern that looks like a QR
+  const size=21;let cells='';
+  const r=(n)=>{let x=n;return ()=>{x=((x*1103515245)+12345)&0x7fffffff;return x%2===0;};};
+  const rand=r(seed*997);
+  const fixed=[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[0,1],[6,1],[0,2],[2,2],[3,2],[4,2],[6,2],[0,3],[2,3],[3,3],[4,3],[6,3],[0,4],[2,4],[3,4],[4,4],[6,4],[0,5],[6,5],[0,6],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],[14,0],[15,0],[16,0],[17,0],[18,0],[19,0],[20,0],[14,1],[20,1],[14,2],[16,2],[17,2],[18,2],[20,2],[14,3],[16,3],[17,3],[18,3],[20,3],[14,4],[16,4],[17,4],[18,4],[20,4],[14,5],[20,5],[14,6],[15,6],[16,6],[17,6],[18,6],[19,6],[20,6],[0,14],[1,14],[2,14],[3,14],[4,14],[5,14],[6,14],[0,15],[6,15],[0,16],[2,16],[3,16],[4,16],[6,16],[0,17],[2,17],[3,17],[4,17],[6,17],[0,18],[2,18],[3,18],[4,18],[6,18],[0,19],[6,19],[0,20],[1,20],[2,20],[3,20],[4,20],[5,20],[6,20]];
+  const fixedSet=new Set(fixed.map(([x,y])=>x+','+y));
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+    const on=fixedSet.has(x+','+y)?true:rand();
+    if(on)cells+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#000"/>`;
+  }
+  return `<rect width="21" height="21" fill="#fff"/>${cells}`;
+}
 function showToast(msg,type=''){
   const t=document.getElementById('toast');t.textContent=msg;
   t.className='toast'+(type?' '+type:'');t.classList.add('show');
