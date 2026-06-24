@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<title>Ligas Deportivas</title>
+<title>FIXTAR</title>
 <style>
 :root[data-theme="dark"] {
   --bg: #0d1117; --bg2: #0a0e14; --card: #161b27; --card2: #1d2438;
@@ -471,7 +471,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-home" class="view active">
   <header>
     <div class="logo-circle">We</div>
-    <div style="flex:1"><h1>Ligas Deportivas</h1><span class="subtitle">Encontrá tu liga</span></div>
+    <div style="flex:1"><h1>FIXTAR</h1><span class="subtitle">Encontrá tu liga</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:24px">
@@ -4121,7 +4121,7 @@ function openCredFromProfile(){
 }
 function sharePlayerProfile(){
   const name=document.getElementById('pp-name')?.textContent||'Jugador';
-  const text=`Perfil de ${name} — Liga App`;
+  const text=`Perfil de ${name} — FIXTAR`;
   if(navigator.share){navigator.share({title:text,text});}
   else{navigator.clipboard?.writeText(text);showToast('Copiado al portapapeles','success');}
 }
@@ -4135,7 +4135,7 @@ function openActaDigital(){
 
 // ═══ SHARE RESULT ═══
 function shareResultText(text){
-  if(navigator.share){navigator.share({title:'Resultado Liga App',text});}
+  if(navigator.share){navigator.share({title:'Resultado FIXTAR',text});}
   else{navigator.clipboard?.writeText(text)||document.execCommand('copy');showToast('Copiado ✓','success');}
 }
 function shareResult(matchEl){
