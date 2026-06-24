@@ -585,8 +585,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
         </div>
       </div>
       <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email del administrador (opcional)</label>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email del administrador</label>
         <input class="form-input" id="nl-email" type="email" placeholder="admin@miliga.com" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Contraseña del administrador</label>
+        <input class="form-input" id="nl-pass" type="text" placeholder="Ej: miliga2025" style="width:100%">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">El admin va a usar este email y contraseña para ingresar</div>
       </div>
       <div id="nl-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px;margin-top:4px">
@@ -1441,7 +1446,7 @@ async function loadSuperLeagues(){
       leagues=ls.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
-        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:'ligabaires2025'
+        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025'
       }));
       const activas=ls.filter(l=>l.activa).length;
       const torneosCount=ts?ts.length:0;
@@ -1479,6 +1484,7 @@ function openNuevaLiga(){
   nlIconSel='⚽'; nlColorSel='#1a2150';
   document.getElementById('nl-nombre').value='';
   document.getElementById('nl-email').value='';
+  document.getElementById('nl-pass').value='';
   document.getElementById('nl-deporte').value='Fútbol';
   document.getElementById('nl-error').style.display='none';
   document.getElementById('nl-preview-name').textContent='Sin nombre';
@@ -1515,6 +1521,7 @@ async function saveNuevaLiga(){
   const nombre=document.getElementById('nl-nombre').value.trim();
   const deporte=document.getElementById('nl-deporte').value;
   const email=document.getElementById('nl-email').value.trim();
+  const pass=document.getElementById('nl-pass').value.trim();
   const errEl=document.getElementById('nl-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
   const btn=document.getElementById('nl-save-btn');
@@ -1523,7 +1530,8 @@ async function saveNuevaLiga(){
     const {data,error}=await supa.from('ligas').insert({
       nombre,deporte,icon:nlIconSel,color:nlColorSel,
       color_texto:'#ffffff',activa:true,
-      admin_email:email||null
+      admin_email:email||null,
+      admin_pass:pass||null
     }).select().single();
     if(error)throw error;
     closeNuevaLiga(null,true);
@@ -2054,7 +2062,7 @@ async function loadAdminDivisiones(){
           <div style="font-size:13px;font-weight:700">${escHtml(d.nombre)}</div>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">${d.categoria||''}${d.categoria&&d.genero?' · ':''}${d.genero||''}</div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="showToast('${escHtml(d.nombre)} seleccionada','')">Gestionar</button>
+        <button class="btn btn-secondary btn-sm" onclick="openDivisionFromAdmin(${d.id})">Gestionar</button>
       </div>`).join('');
   }catch(e){
     el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar divisiones</div>';
@@ -2062,6 +2070,7 @@ async function loadAdminDivisiones(){
 }
 
 function escHtml(s){return (s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+function openDivisionFromAdmin(divId){openDivision(divId);}
 
 // — Nuevo Torneo —
 function openNuevoTorneo(){
@@ -2158,9 +2167,9 @@ function showToast(msg,type=''){
     if(data&&data.length){
       leagues=data.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
-        sport:l.deporte,season:'2025',icon:l.icon,color:l.color,text:l.color_texto,
+        sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,
-        adminEmail:'admin@liga-baires.com',adminPass:'ligabaires2025'
+        adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025'
       }));
       renderLeagues(leagues);
       console.log('✓ Ligas cargadas desde Supabase:',leagues.length);
