@@ -42,11 +42,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .home-banner .sport-icons{font-size:28px;margin-bottom:12px;}
 .section-title{padding:16px 16px 10px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
 .leagues-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
-.league-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;transition:all 0.18s;position:relative;}
+.league-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;transition:all 0.18s;position:relative;cursor:pointer;}
+.league-card:active{transform:scale(0.98);}
 .league-card:hover{border-color:var(--accent);}
-.league-card-main{display:flex;align-items:center;gap:14px;cursor:pointer;position:relative;}
+.league-card-main{display:flex;align-items:center;gap:14px;position:relative;}
 .league-card-main::after{content:'›';position:absolute;right:0;font-size:22px;color:var(--text3);}
-.league-card-main:active{opacity:0.8;}
 .league-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
 .league-info{flex:1;}
 .league-name{font-size:15px;font-weight:800;margin-bottom:2px;}
@@ -56,10 +56,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .tag-active{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
 .tag-sport{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(91,110,245,0.3);}
 .tag-teams{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
-.league-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
-.league-url{font-size:11px;color:var(--text3);}
-.admin-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text3);padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);cursor:pointer;transition:all 0.15s;}
-.admin-link:active{color:var(--accent);border-color:var(--accent);}
+.admin-entry{display:block;text-align:center;padding:16px;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:none;}
+.admin-entry:active{color:var(--accent);}
 .search-home{margin:0 16px 12px;position:relative;}
 .search-home input{width:100%;padding:12px 16px 12px 42px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;outline:none;}
 .search-home input:focus{border-color:var(--accent);}
@@ -190,7 +188,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .info-row:last-child{border-bottom:none;}
 .info-label{font-size:12px;color:var(--text2);}
 .info-value{font-size:13px;font-weight:600;}
-/* LOGIN MODAL */
+/* LOGIN VIEW */
+.login-view{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;gap:10px;}
 .login-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;}
 .demo-creds{background:var(--accent-dim);border:1px solid rgba(91,110,245,0.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--text2);}
 .demo-creds strong{color:var(--accent);}
@@ -268,7 +267,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- HOME -->
 <div id="view-home" class="view active">
   <header>
-    <div class="logo-circle" onclick="showSuperAdmin()">We</div>
+    <div class="logo-circle">We</div>
     <div style="flex:1"><h1>Ligas Deportivas</h1><span class="subtitle">Encontrá tu liga</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
@@ -285,6 +284,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="section-title">LIGAS</div>
     <div class="leagues-list" id="leaguesList"></div>
+    <div onclick="showAdminLogin()" class="admin-entry">Acceso administradores</div>
   </div>
 </div>
 
@@ -296,7 +296,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <h1 id="league-header-name">Liga Baires</h1>
       <span class="subtitle" id="league-header-sub">Handball · 2025</span>
     </div>
-    <button class="theme-btn" style="font-size:16px" onclick="openLoginForCurrent()">🔐</button>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div class="content">
@@ -351,15 +350,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div style="flex:1"><h1>Super Admin</h1><span class="subtitle">Panel maestro</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
-  <div id="superadmin-login" style="padding:32px 24px;display:flex;flex-direction:column;gap:10px;align-items:center">
-    <div style="font-size:56px;margin-bottom:4px">👑</div>
-    <div style="font-size:20px;font-weight:900;text-align:center">Acceso Maestro</div>
-    <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Solo para el administrador de la plataforma</div>
-    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="superadmin@ligas.com"></div>
-    <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" value="admin2025"></div>
-    <div class="demo-creds" style="width:100%;margin-bottom:4px">🔑 <strong>Demo:</strong> <code>superadmin@ligas.com</code> / <code>admin2025</code></div>
-    <button class="btn btn-primary" onclick="goSuperAdminDash()">Ingresar como Super Admin</button>
-  </div>
+  <div id="superadmin-login" style="display:none"></div>
   <div id="superadmin-dashboard" style="display:none">
     <div class="crown-banner">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
@@ -454,22 +445,27 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
-<!-- LOGIN MODAL (admin de liga) -->
-<div class="modal-overlay" id="loginModal" onclick="closeLoginModal(event)">
-  <div class="modal-sheet" style="padding-bottom:28px">
-    <div class="modal-handle"></div>
-    <div style="padding:20px 20px 16px;text-align:center">
-      <div class="login-icon" id="login-league-icon">🤾</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px" id="login-league-name">Liga Baires</div>
-      <div style="font-size:13px;color:var(--text2)">Panel de administración</div>
+<!-- LOGIN VIEW (panel único) -->
+<div id="view-login" class="view">
+  <header>
+    <span class="back-link" onclick="goHome()">‹</span>
+    <div style="flex:1"><h1>Acceso Admin</h1></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+  <div class="login-view">
+    <div style="font-size:52px;margin-bottom:4px">🔐</div>
+    <div style="font-size:20px;font-weight:900;text-align:center">Panel de Administración</div>
+    <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Ingresá con las credenciales que te asignaron</div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" placeholder="tu@email.com" autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
+    <div class="demo-creds" style="width:100%">
+      🔑 <strong>Probá con:</strong><br>
+      Liga Baires → <code>admin@liga-baires.com</code> / <code>ligabaires2025</code><br>
+      Liga Norte → <code>admin@liga-norte.com</code> / <code>liganorte2025</code><br>
+      Super Admin → <code>superadmin@ligas.com</code> / <code>admin2025</code>
     </div>
-    <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px">
-      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" autocomplete="off"></div>
-      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
-      <div class="demo-creds">🔑 <strong>Demo —</strong> email: <code id="login-demo-email">admin@liga-baires.com</code><br>contraseña: <code id="login-demo-pass">ligabaires2025</code></div>
-      <button class="btn btn-primary" onclick="doAdminLogin()" style="margin-top:4px">Ingresar al Panel</button>
-      <button class="btn btn-secondary" onclick="closeLoginModal(null,true)">Cancelar</button>
-    </div>
+    <button class="btn btn-primary" onclick="doAdminLogin()" style="margin-top:4px;width:100%">Ingresar</button>
+    <div id="login-error" style="color:var(--red);font-size:13px;text-align:center;display:none">Email o contraseña incorrectos</div>
   </div>
 </div>
 
@@ -629,8 +625,8 @@ function toggleTheme(){
 
 function renderLeagues(list){
   document.getElementById('leaguesList').innerHTML=list.map(l=>`
-    <div class="league-card">
-      <div class="league-card-main" onclick="openLeague(${l.id})">
+    <div class="league-card" onclick="openLeague(${l.id})">
+      <div class="league-card-main">
         <div class="league-icon" style="background:${l.color}">${l.icon}</div>
         <div class="league-info">
           <div class="league-name">${l.name}</div>
@@ -641,10 +637,6 @@ function renderLeagues(list){
             <span class="tag tag-teams">${l.teams||0} equipos</span>
           </div>
         </div>
-      </div>
-      <div class="league-card-footer">
-        <span class="league-url">${l.slug}.tuapp.com</span>
-        <div class="admin-link" onclick="openLoginModal(${l.id},event)">🔐 Admin</div>
       </div>
     </div>`).join('');
 }
@@ -662,7 +654,7 @@ function openLeague(id){
   switchTab('partidos',document.querySelector('.nav-item'));
   buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
-function openLoginForCurrent(){openLoginModal(currentLeagueId,null);}
+
 function goHome(){showView('view-home');document.getElementById('view-admin').style.display='none';}
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -672,28 +664,26 @@ function showView(id){
   setTimeout(()=>v.classList.remove('slide'),300);
 }
 
-let loginLeagueId=1;
-function openLoginModal(leagueId,event){
-  if(event)event.stopPropagation();
-  loginLeagueId=leagueId;
-  const l=leagues.find(x=>x.id===leagueId);
-  const icon=document.getElementById('login-league-icon');
-  icon.textContent=l.icon;icon.style.background=l.color;
-  document.getElementById('login-league-name').textContent=l.name;
-  document.getElementById('login-demo-email').textContent=l.adminEmail;
-  document.getElementById('login-demo-pass').textContent=l.adminPass;
-  document.getElementById('login-email').value=l.adminEmail;
+const SUPERADMIN={email:'superadmin@ligas.com',pass:'admin2025'};
+function showAdminLogin(){
+  document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
-  document.getElementById('loginModal').classList.add('open');
-}
-function closeLoginModal(event,force){
-  if(force||(event&&event.target===document.getElementById('loginModal')))
-    document.getElementById('loginModal').classList.remove('open');
+  document.getElementById('login-error').style.display='none';
+  showView('view-login');
 }
 function doAdminLogin(){
-  const l=leagues.find(x=>x.id===loginLeagueId);
-  document.getElementById('loginModal').classList.remove('open');
-  setTimeout(()=>showAdminForLeague(l),300);
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  document.getElementById('login-error').style.display='none';
+  // Check super admin
+  if(email===SUPERADMIN.email&&pass===SUPERADMIN.pass){
+    showSuperAdminDash();return;
+  }
+  // Check league admin
+  const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
+  if(league){showAdminForLeague(league);return;}
+  // Wrong credentials
+  document.getElementById('login-error').style.display='block';
 }
 function showAdminForLeague(l){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -706,19 +696,16 @@ function showAdminForLeague(l){
   goAdmin('dashboard');
   showToast('Bienvenido, '+l.name,'success');
 }
-function logoutAdmin(){goHome();showToast('Sesión cerrada','');}
+function logoutAdmin(){showView('view-home');showToast('Sesión cerrada','');}
 
-function showSuperAdmin(){
+function showSuperAdminDash(){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='none';
   document.getElementById('view-superadmin').classList.add('active');
-  document.getElementById('superadmin-login').style.display='';
-  document.getElementById('superadmin-dashboard').style.display='none';
-}
-function goSuperAdminDash(){
   document.getElementById('superadmin-login').style.display='none';
   document.getElementById('superadmin-dashboard').style.display='';
   renderSuperLeagues();
+  showToast('Super Admin 👑','success');
 }
 function renderSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML=leagues.map(l=>`
