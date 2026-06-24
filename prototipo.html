@@ -580,7 +580,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="crown-banner">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <div style="font-size:32px">👑</div>
-        <div><div style="font-size:16px;font-weight:900">Panel Maestro</div><div style="font-size:12px;color:var(--text2)">superadmin@ligas.com</div></div>
+        <div><div style="font-size:16px;font-weight:900">Panel Maestro</div><div style="font-size:12px;color:var(--text2)">superadmin@fixtar.com</div></div>
         <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="goHome()">Salir</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -773,11 +773,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
     <div class="demo-creds" style="width:100%">
       🔑 <strong>Probá con:</strong><br>
-      Liga Admin → <code>admin@liga-baires.com</code> / <code>ligabaires2025</code><br>
-      Árbitro → <code>arbitro@ligas.com</code> / <code>arbitro2025</code><br>
-      Mesa de control → <code>mesa@ligabaires.com</code> / <code>mesa2025</code><br>
-      Delegado → <code>delegado@losandes.com</code> / <code>losandes2025</code><br>
-      Super Admin → <code>superadmin@ligas.com</code> / <code>admin2025</code>
+      Liga Admin → <code>admin@fixtar.com</code> / <code>1234</code><br>
+      Árbitro → <code>arbitro@fixtar.com</code> / <code>1234</code><br>
+      Mesa de control → <code>mesa@fixtar.com</code> / <code>1234</code><br>
+      Delegado → <code>delegado@fixtar.com</code> / <code>1234</code><br>
+      Super Admin → <code>superadmin@fixtar.com</code> / <code>1234</code>
     </div>
     <button class="btn btn-primary" onclick="doAdminLogin()" style="margin-top:4px;width:100%">Ingresar</button>
     <div id="login-error" style="color:var(--red);font-size:13px;text-align:center;display:none">Email o contraseña incorrectos</div>
@@ -1836,11 +1836,11 @@ let mesaRealtimeSub=null;
 
 // Hardcoded fallback (se sobreescribe con datos de Supabase)
 let leagues=[
-  {id:1,name:'Liga Baires',slug:'liga-baires',sport:'Handball',season:'2025',icon:'🤾',color:'#1a2150',text:'#5b6ef5',teams:8,active:true,adminEmail:'admin@liga-baires.com',adminPass:'ligabaires2025'},
-  {id:2,name:'Liga Norte Fútbol',slug:'liga-norte',sport:'Fútbol',season:'Clausura 2025',icon:'⚽',color:'#1a3d20',text:'#22c55e',teams:12,active:true,adminEmail:'admin@liga-norte.com',adminPass:'liganorte2025'},
-  {id:3,name:'Liga Sur Básquet',slug:'liga-sur',sport:'Básquet',season:'2025',icon:'🏀',color:'#3d2f1a',text:'#f59e0b',teams:6,active:true,adminEmail:'admin@liga-sur.com',adminPass:'ligasur2025'},
-  {id:4,name:'Club Voley Centro',slug:'voley-centro',sport:'Vóley',season:'Apertura 2025',icon:'🏐',color:'#2f1a3d',text:'#a855f7',teams:8,active:false,adminEmail:'admin@voley-centro.com',adminPass:'voley2025'},
-  {id:5,name:'Pádel Palermo',slug:'padel-palermo',sport:'Pádel',season:'2025',icon:'🎾',color:'#1a3d3d',text:'#14b8a6',teams:16,active:true,adminEmail:'admin@padel-palermo.com',adminPass:'padel2025'},
+  {id:1,name:'Liga Baires',slug:'liga-baires',sport:'Handball',season:'2025',icon:'🤾',color:'#1a2150',text:'#5b6ef5',teams:8,active:true,adminEmail:'admin@fixtar.com',adminPass:'1234'},
+  {id:2,name:'Liga Norte Fútbol',slug:'liga-norte',sport:'Fútbol',season:'Clausura 2025',icon:'⚽',color:'#1a3d20',text:'#22c55e',teams:12,active:true,adminEmail:'admin2@fixtar.com',adminPass:'1234'},
+  {id:3,name:'Liga Sur Básquet',slug:'liga-sur',sport:'Básquet',season:'2025',icon:'🏀',color:'#3d2f1a',text:'#f59e0b',teams:6,active:true,adminEmail:'admin3@fixtar.com',adminPass:'1234'},
+  {id:4,name:'Club Voley Centro',slug:'voley-centro',sport:'Vóley',season:'Apertura 2025',icon:'🏐',color:'#2f1a3d',text:'#a855f7',teams:8,active:false,adminEmail:'admin4@fixtar.com',adminPass:'1234'},
+  {id:5,name:'Pádel Palermo',slug:'padel-palermo',sport:'Pádel',season:'2025',icon:'🎾',color:'#1a3d3d',text:'#14b8a6',teams:16,active:true,adminEmail:'admin5@fixtar.com',adminPass:'1234'},
 ];
 const teamsData=[
   {id:1,name:'Los Andes',short:'LA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
@@ -2066,11 +2066,11 @@ function showView(id){
   setTimeout(()=>v.classList.remove('slide'),300);
 }
 
-const SUPERADMIN={email:'superadmin@ligas.com',pass:'admin2025'};
+const SUPERADMIN={email:'superadmin@fixtar.com',pass:'1234'};
 const extraUsers=[
-  {email:'arbitro@ligas.com',pass:'arbitro2025',role:'arbitro',name:'Carlos Medina',league:'Liga Baires'},
-  {email:'mesa@ligabaires.com',pass:'mesa2025',role:'mesa',name:'Mesa Partido 5',league:'Liga Baires'},
-  {email:'delegado@losandes.com',pass:'losandes2025',role:'delegado',name:'Los Andes',league:'Liga Baires'},
+  {email:'arbitro@fixtar.com',pass:'1234',role:'arbitro',name:'Carlos Medina',league:'Liga Baires'},
+  {email:'mesa@fixtar.com',pass:'1234',role:'mesa',name:'Mesa Partido 5',league:'Liga Baires'},
+  {email:'delegado@fixtar.com',pass:'1234',role:'delegado',name:'Los Andes',league:'Liga Baires'},
 ];
 function showAdminLogin(){
   document.getElementById('login-email').value='';
