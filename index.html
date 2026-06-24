@@ -3,606 +3,559 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Liga Baires - Handball</title>
+<title>Ligas Deportivas</title>
 <style>
 :root[data-theme="dark"] {
-  --bg: #0d1117;
-  --bg2: #0a0e14;
-  --card: #161b27;
-  --card2: #1d2438;
-  --accent: #5b6ef5;
-  --accent-dim: #1a2150;
-  --accent-glow: rgba(91,110,245,0.15);
-  --text: #ffffff;
-  --text2: #8892a4;
-  --text3: #4a5568;
-  --border: #252d3d;
-  --green: #22c55e;
-  --red: #ef4444;
-  --yellow: #eab308;
-  --gold: #f59e0b;
-  --silver: #94a3b8;
-  --bronze: #b45309;
-  --shadow: rgba(0,0,0,0.4);
-  --input-bg: #1d2438;
-  --overlay: rgba(0,0,0,0.7);
+  --bg: #0d1117; --bg2: #0a0e14; --card: #161b27; --card2: #1d2438;
+  --accent: #5b6ef5; --accent-dim: #1a2150;
+  --text: #ffffff; --text2: #8892a4; --text3: #4a5568;
+  --border: #252d3d; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  --gold: #f59e0b; --silver: #94a3b8; --bronze: #b45309;
+  --shadow: rgba(0,0,0,0.4); --input-bg: #1d2438; --overlay: rgba(0,0,0,0.7);
 }
 :root[data-theme="light"] {
-  --bg: #f0f2f7;
-  --bg2: #e5e8ef;
-  --card: #ffffff;
-  --card2: #f8f9fc;
-  --accent: #5b6ef5;
-  --accent-dim: #e8eaff;
-  --accent-glow: rgba(91,110,245,0.1);
-  --text: #0d1117;
-  --text2: #4a5568;
-  --text3: #8892a4;
-  --border: #e2e5ef;
-  --green: #16a34a;
-  --red: #dc2626;
-  --yellow: #ca8a04;
-  --gold: #d97706;
-  --silver: #64748b;
-  --bronze: #92400e;
-  --shadow: rgba(0,0,0,0.1);
-  --input-bg: #f0f2f7;
-  --overlay: rgba(0,0,0,0.5);
+  --bg: #f0f2f7; --bg2: #e5e8ef; --card: #ffffff; --card2: #f8f9fc;
+  --accent: #5b6ef5; --accent-dim: #e8eaff;
+  --text: #0d1117; --text2: #4a5568; --text3: #8892a4;
+  --border: #e2e5ef; --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
+  --gold: #d97706; --silver: #64748b; --bronze: #92400e;
+  --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f7; --overlay: rgba(0,0,0,0.5);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
 
-/* LAYOUT */
-#app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; background: var(--bg); }
-header { position: sticky; top: 0; z-index: 100; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; gap: 12px; height: 58px; }
-.logo-circle { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #1a6b5c, #0d3d34); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0; letter-spacing: -0.5px; }
-header h1 { font-size: 17px; font-weight: 700; flex: 1; }
-header span.season { font-size: 12px; color: var(--text2); }
-.theme-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--card2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: all 0.2s; }
-.theme-btn:hover { background: var(--accent-dim); }
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
+.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a6b5c,#0d3d34);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
+header h1{font-size:17px;font-weight:700;flex:1;}
+header .subtitle{font-size:12px;color:var(--text2);}
+.theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
+.back-link{color:var(--accent);font-size:22px;cursor:pointer;padding:4px;line-height:1;}
 
-/* BOTTOM NAV */
-.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 8px; cursor: pointer; gap: 3px; transition: all 0.2s; }
-.nav-item .nav-icon { font-size: 20px; }
-.nav-item .nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text3); }
-.nav-item.active .nav-label { color: var(--accent); }
-.nav-item.active .nav-icon { transform: translateY(-1px); }
+/* VIEWS */
+.view{display:none;}
+.view.active{display:block;}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+.view.slide{animation:slideIn 0.25s ease;}
 
-.content { padding-bottom: 80px; min-height: calc(100vh - 58px); }
-.screen { display: none; animation: fadeIn 0.2s ease; }
-.screen.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+/* HOME */
+.home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a2150,#0d3d34);padding:24px 20px;position:relative;overflow:hidden;}
+.home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(91,110,245,0.15);}
+.home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,0.1);}
+.home-banner h2{font-size:22px;font-weight:900;margin-bottom:4px;}
+.home-banner p{font-size:13px;color:rgba(255,255,255,0.7);}
+.home-banner .sport-icons{font-size:28px;margin-bottom:12px;}
 
-/* DATE PICKER */
-.date-strip { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); }
-.date-strip::-webkit-scrollbar { display: none; }
-.date-pill { display: flex; flex-direction: column; align-items: center; padding: 8px 14px; border-radius: 20px; cursor: pointer; min-width: 52px; background: var(--card2); border: 1px solid var(--border); transition: all 0.2s; flex-shrink: 0; }
-.date-pill.active { background: var(--accent); border-color: var(--accent); }
-.date-pill .day-name { font-size: 10px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.3px; }
-.date-pill.active .day-name { color: rgba(255,255,255,0.8); }
-.date-pill .day-num { font-size: 16px; font-weight: 700; }
-.date-pill.active .day-num { color: #fff; }
+.section-title{padding:16px 16px 10px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
+.leagues-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
 
-/* FILTER TABS */
-.filter-tabs { display: flex; padding: 12px 16px; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-.filter-tabs::-webkit-scrollbar { display: none; }
-.filter-tab { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; cursor: pointer; white-space: nowrap; background: var(--card2); border: 1px solid var(--border); color: var(--text2); transition: all 0.2s; }
-.filter-tab.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.league-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.league-card:active{transform:scale(0.98);}
+.league-card:hover{border-color:var(--accent);background:var(--card2);}
+.league-card::after{content:'›';position:absolute;right:16px;font-size:22px;color:var(--text3);}
+.league-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.league-info{flex:1;}
+.league-name{font-size:15px;font-weight:800;margin-bottom:2px;}
+.league-meta{font-size:12px;color:var(--text2);margin-bottom:6px;}
+.league-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;letter-spacing:0.3px;}
+.tag-active{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.tag-sport{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(91,110,245,0.3);}
+.tag-teams{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
 
-/* MATCH GROUPS */
-.match-group { margin: 8px 16px 16px; border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--border); }
-.group-header { padding: 10px 14px; display: flex; align-items: center; gap: 8px; background: var(--card2); border-bottom: 1px solid var(--border); }
-.group-header .sport-icon { font-size: 16px; }
-.group-header .tournament-name { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.3px; flex: 1; }
-.group-header .round-badge { background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.search-home{margin:0 16px 12px;position:relative;}
+.search-home input{width:100%;padding:12px 16px 12px 42px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;outline:none;}
+.search-home input:focus{border-color:var(--accent);}
+.search-home input::placeholder{color:var(--text3);}
+.search-home .si{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none;}
 
-.match-item { padding: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border); }
-.match-item:last-child { border-bottom: none; }
-.match-item:hover, .match-item:active { background: var(--card2); }
-.match-time { width: 44px; text-align: center; flex-shrink: 0; }
-.match-time .time { font-size: 12px; font-weight: 700; color: var(--accent); }
-.match-time .status-dot { width: 6px; height: 6px; border-radius: 50%; margin: 0 auto 2px; }
-.match-time .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1s infinite; }
-.match-time .status-dot.done { background: var(--text3); }
-.match-time .status-dot.upcoming { background: var(--accent); }
-@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-.match-teams { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.match-team-row { display: flex; align-items: center; gap: 8px; }
-.shield { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0; }
-.match-team-name { font-size: 13px; font-weight: 600; flex: 1; }
-.match-team-name.winner { color: var(--text); }
-.match-team-name.loser { color: var(--text2); }
-.match-score { width: 28px; text-align: center; font-size: 18px; font-weight: 800; }
-.match-score.winner { color: var(--text); }
-.match-score.loser { color: var(--text2); }
-.match-score.upcoming { color: var(--text3); font-size: 14px; }
-.chevron { color: var(--text3); font-size: 14px; flex-shrink: 0; }
+/* LEAGUE VIEW */
+.content{padding-bottom:80px;min-height:calc(100vh - 58px);}
+.screen{display:none;animation:fadeIn 0.2s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
-/* STANDINGS */
-.section-title { padding: 16px 16px 8px; font-size: 13px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
-.standings-card { margin: 0 16px; border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--border); }
-.standings-header { display: flex; align-items: center; padding: 10px 14px; background: var(--card2); border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; }
-.standings-header .col-pos { width: 30px; }
-.standings-header .col-team { flex: 1; }
-.standings-header .col-stat { width: 32px; text-align: center; }
-.standings-header .col-pts { width: 36px; text-align: center; color: var(--accent); }
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;gap:3px;transition:all 0.2s;}
+.nav-item .nav-icon{font-size:20px;}
+.nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
+.nav-item.active .nav-label{color:var(--accent);}
+.nav-item.active .nav-icon{transform:translateY(-1px);}
 
-.standing-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; }
-.standing-row:last-child { border-bottom: none; }
-.standing-row:hover { background: var(--card2); }
-.pos-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; margin-right: 6px; flex-shrink: 0; }
-.pos-badge.gold { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
-.pos-badge.silver { background: rgba(148,163,184,0.15); color: var(--silver); border: 1px solid rgba(148,163,184,0.3); }
-.pos-badge.bronze { background: rgba(180,83,9,0.15); color: var(--bronze); border: 1px solid rgba(180,83,9,0.3); }
-.pos-badge.normal { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
-.col-team-cell { flex: 1; display: flex; align-items: center; gap: 8px; }
-.col-team-name { font-size: 13px; font-weight: 600; }
-.col-stat-val { width: 32px; text-align: center; font-size: 12px; color: var(--text2); }
-.col-pts-val { width: 36px; text-align: center; font-size: 14px; font-weight: 800; color: var(--accent); }
+.date-strip{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
+.date-strip::-webkit-scrollbar{display:none;}
+.date-pill{display:flex;flex-direction:column;align-items:center;padding:8px 14px;border-radius:20px;cursor:pointer;min-width:52px;background:var(--card2);border:1px solid var(--border);transition:all 0.2s;flex-shrink:0;}
+.date-pill.active{background:var(--accent);border-color:var(--accent);}
+.date-pill .day-name{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;}
+.date-pill.active .day-name{color:rgba(255,255,255,0.8);}
+.date-pill .day-num{font-size:16px;font-weight:700;}
+.date-pill.active .day-num{color:#fff;}
 
-/* SCORERS */
-.scorer-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
-.scorer-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; }
-.scorer-card:hover { background: var(--card2); transform: translateX(2px); }
-.scorer-rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-.scorer-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--text2); border: 2px solid var(--border); flex-shrink: 0; overflow: hidden; }
-.scorer-info { flex: 1; }
-.scorer-name { font-size: 14px; font-weight: 700; }
-.scorer-team { font-size: 12px; color: var(--text2); }
-.scorer-goals { display: flex; flex-direction: column; align-items: center; }
-.goals-num { font-size: 24px; font-weight: 900; color: var(--accent); line-height: 1; }
-.goals-label { font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.filter-tabs{display:flex;padding:12px 16px;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.filter-tabs::-webkit-scrollbar{display:none;}
+.filter-tab{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.4px;cursor:pointer;white-space:nowrap;background:var(--card2);border:1px solid var(--border);color:var(--text2);transition:all 0.2s;}
+.filter-tab.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
 
-/* SEARCH */
-.search-wrap { padding: 16px; }
-.search-input-wrap { position: relative; }
-.search-input { width: 100%; padding: 12px 16px 12px 44px; border-radius: 14px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; }
-.search-input::placeholder { color: var(--text3); }
-.search-input:focus { border-color: var(--accent); }
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text3); pointer-events: none; }
-.search-results { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
-.player-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; }
-.player-card:hover { background: var(--card2); }
-.player-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent); border: 2px solid var(--accent-dim); flex-shrink: 0; }
-.player-info { flex: 1; }
-.player-name { font-size: 14px; font-weight: 700; }
-.player-meta { font-size: 12px; color: var(--text2); }
-.jersey-badge { background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; }
-.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 14px; }
+.match-group{margin:8px 16px 16px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);}
+.group-header{padding:10px 14px;display:flex;align-items:center;gap:8px;background:var(--card2);border-bottom:1px solid var(--border);}
+.group-header .sport-icon{font-size:16px;}
+.group-header .tournament-name{font-size:12px;font-weight:700;color:var(--text2);flex:1;}
+.round-badge{background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
 
-/* MATCH DETAIL MODAL */
-.modal-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-sheet { width: 100%; max-width: 480px; background: var(--card); border-radius: 24px 24px 0 0; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
-.modal-overlay.open .modal-sheet { transform: translateY(0); }
-.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
-.modal-header { padding: 16px; background: var(--card2); border-bottom: 1px solid var(--border); }
-.modal-tournament { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; text-align: center; text-transform: uppercase; margin-bottom: 12px; }
-.modal-teams { display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
-.modal-team { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
-.modal-shield { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; border: 3px solid var(--border); }
-.modal-team-name { font-size: 13px; font-weight: 700; text-align: center; }
-.modal-score-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 12px; }
-.modal-score { font-size: 48px; font-weight: 900; letter-spacing: -2px; }
-.modal-status-tag { background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; letter-spacing: 0.4px; }
-.modal-status-tag.live { background: rgba(34,197,94,0.15); color: var(--green); }
+.match-item{padding:14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border);}
+.match-item:last-child{border-bottom:none;}
+.match-item:active{background:var(--card2);}
+.match-time{width:44px;text-align:center;flex-shrink:0;}
+.match-time .time{font-size:12px;font-weight:700;color:var(--accent);}
+.status-dot{width:6px;height:6px;border-radius:50%;margin:0 auto 2px;}
+.status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1s infinite;}
+.status-dot.done{background:var(--text3);}
+.status-dot.upcoming{background:var(--accent);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.match-teams{flex:1;display:flex;flex-direction:column;gap:8px;}
+.match-team-row{display:flex;align-items:center;gap:8px;}
+.shield{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;}
+.match-team-name{font-size:13px;font-weight:600;flex:1;}
+.match-team-name.winner{color:var(--text);}
+.match-team-name.loser{color:var(--text2);}
+.match-score{width:28px;text-align:center;font-size:18px;font-weight:800;}
+.match-score.winner{color:var(--text);}
+.match-score.loser{color:var(--text2);}
+.match-score.upcoming{color:var(--text3);font-size:14px;}
+.chevron{color:var(--text3);font-size:14px;flex-shrink:0;}
 
-.modal-tabs { display: flex; border-bottom: 1px solid var(--border); }
-.modal-tab { flex: 1; padding: 14px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; transition: all 0.2s; }
-.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.modal-body { padding: 16px; }
-.modal-pane { display: none; }
-.modal-pane.active { display: block; }
+.section-title-sm{padding:16px 16px 8px;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;}
+.standings-card{margin:0 16px;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);margin-bottom:16px;}
+.standings-header{display:flex;align-items:center;padding:10px 14px;background:var(--card2);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.5px;}
+.standings-header .col-pos{width:30px;}
+.standings-header .col-team{flex:1;}
+.standings-header .col-stat{width:32px;text-align:center;}
+.standings-header .col-pts{width:36px;text-align:center;color:var(--accent);}
+.standing-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.standing-row:last-child{border-bottom:none;}
+.pos-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:6px;flex-shrink:0;}
+.pos-badge.gold{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);}
+.pos-badge.silver{background:rgba(148,163,184,0.15);color:var(--silver);border:1px solid rgba(148,163,184,0.3);}
+.pos-badge.bronze{background:rgba(180,83,9,0.15);color:var(--bronze);border:1px solid rgba(180,83,9,0.3);}
+.pos-badge.normal{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
+.col-team-cell{flex:1;display:flex;align-items:center;gap:8px;}
+.col-team-name{font-size:13px;font-weight:600;}
+.col-stat-val{width:32px;text-align:center;font-size:12px;color:var(--text2);}
+.col-pts-val{width:36px;text-align:center;font-size:14px;font-weight:800;color:var(--accent);}
 
-/* EVENTS */
-.events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.event-col { display: flex; flex-direction: column; gap: 4px; }
-.event-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: var(--card2); }
-.event-item.home { justify-content: flex-start; }
-.event-item.away { justify-content: flex-end; flex-direction: row-reverse; }
-.event-icon { font-size: 14px; flex-shrink: 0; }
-.event-player { font-size: 11px; font-weight: 600; }
-.event-min { font-size: 10px; color: var(--text3); }
-.events-separator { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.events-separator span { font-size: 11px; color: var(--text3); font-weight: 700; }
-.events-separator hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+.scorer-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:16px;}
+.scorer-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.scorer-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.scorer-avatar{width:44px;height:44px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--text2);border:2px solid var(--border);flex-shrink:0;}
+.scorer-info{flex:1;}
+.scorer-name{font-size:14px;font-weight:700;}
+.scorer-team{font-size:12px;color:var(--text2);}
+.scorer-goals{display:flex;flex-direction:column;align-items:center;}
+.goals-num{font-size:24px;font-weight:900;color:var(--accent);line-height:1;}
+.goals-label{font-size:9px;color:var(--text3);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
 
-/* MATCH INFO */
-.info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.info-row:last-child { border-bottom: none; }
-.info-label { font-size: 12px; color: var(--text2); }
-.info-value { font-size: 13px; font-weight: 600; }
+.search-wrap{padding:16px;}
+.search-input-wrap{position:relative;}
+.search-input{width:100%;padding:12px 16px 12px 44px;border-radius:14px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;outline:none;}
+.search-input::placeholder{color:var(--text3);}
+.search-input:focus{border-color:var(--accent);}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3);pointer-events:none;}
+.search-results{padding:0 16px;display:flex;flex-direction:column;gap:10px;}
+.player-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.player-avatar{width:44px;height:44px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--accent);border:2px solid var(--accent-dim);flex-shrink:0;}
+.player-info{flex:1;}
+.player-name{font-size:14px;font-weight:700;}
+.player-meta{font-size:12px;color:var(--text2);}
+.jersey-badge{background:var(--accent-dim);color:var(--accent);font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;}
 
-/* ADMIN PANEL */
-.admin-screen { background: var(--bg); min-height: 100vh; }
-.admin-login { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; gap: 8px; }
-.admin-login .logo-big { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1a6b5c, #0d3d34); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 28px; color: #fff; margin-bottom: 8px; }
-.admin-login h2 { font-size: 22px; font-weight: 800; }
-.admin-login p { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
-.form-group { width: 100%; display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.3px; }
-.form-input { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; }
-.form-input:focus { border-color: var(--accent); }
-.form-select { appearance: none; cursor: pointer; }
-.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(91,110,245,0.4); }
-.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
-.btn-sm { padding: 8px 16px; width: auto; font-size: 13px; border-radius: 10px; }
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
+.modal-header{padding:16px;background:var(--card2);border-bottom:1px solid var(--border);}
+.modal-tournament{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-align:center;text-transform:uppercase;margin-bottom:12px;}
+.modal-teams{display:flex;align-items:center;justify-content:space-between;padding:0 8px;}
+.modal-team{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;}
+.modal-shield{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;border:3px solid var(--border);}
+.modal-team-name{font-size:13px;font-weight:700;text-align:center;}
+.modal-score-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 12px;}
+.modal-score{font-size:48px;font-weight:900;letter-spacing:-2px;}
+.modal-status-tag{background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;}
+.modal-status-tag.live{background:rgba(34,197,94,0.15);color:var(--green);}
+.modal-tabs{display:flex;border-bottom:1px solid var(--border);}
+.modal-tab{flex:1;padding:14px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all 0.2s;}
+.modal-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.modal-body{padding:16px;}
+.modal-pane{display:none;}
+.modal-pane.active{display:block;}
+.events-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.event-col{display:flex;flex-direction:column;gap:4px;}
+.event-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:10px;background:var(--card2);}
+.event-item.away{justify-content:flex-end;flex-direction:row-reverse;}
+.event-icon{font-size:14px;flex-shrink:0;}
+.event-player{font-size:11px;font-weight:600;}
+.event-min{font-size:10px;color:var(--text3);}
+.events-separator{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.events-separator span{font-size:11px;color:var(--text3);font-weight:700;}
+.events-separator hr{flex:1;border:none;border-top:1px solid var(--border);}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.info-label{font-size:12px;color:var(--text2);}
+.info-value{font-size:13px;font-weight:600;}
 
-.admin-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50; }
-.admin-header h2 { font-size: 17px; font-weight: 700; flex: 1; }
-.back-btn { color: var(--accent); font-size: 14px; cursor: pointer; font-weight: 600; }
-
-.dashboard-grid { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.stat-icon { font-size: 28px; }
-.stat-num { font-size: 28px; font-weight: 900; }
-.stat-label { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.3px; }
-.stat-card.accent { background: linear-gradient(135deg, var(--accent), #7c3aed); border-color: var(--accent); }
-.stat-card.accent .stat-num, .stat-card.accent .stat-label { color: #fff; }
-
-.admin-menu { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.menu-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; }
-.menu-item:hover { background: var(--card2); border-color: var(--accent); }
-.menu-item .menu-icon { font-size: 24px; width: 44px; height: 44px; background: var(--accent-dim); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.menu-item .menu-text h3 { font-size: 15px; font-weight: 700; }
-.menu-item .menu-text p { font-size: 12px; color: var(--text2); }
-.menu-item .menu-chevron { margin-left: auto; color: var(--text3); }
-
-.admin-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-.list-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
-.list-item-info { flex: 1; }
-.list-item-name { font-size: 14px; font-weight: 700; }
-.list-item-meta { font-size: 12px; color: var(--text2); }
-.list-actions { display: flex; gap: 6px; }
-.icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--card2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.15s; }
-.icon-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+/* ADMIN */
+.admin-screen{background:var(--bg);min-height:100vh;}
+.admin-login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:8px;}
+.logo-big{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1a6b5c,#0d3d34);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#fff;margin-bottom:8px;}
+.form-group{width:100%;display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:12px;font-weight:700;color:var(--text2);}
+.form-input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:var(--accent);}
+.form-select{appearance:none;cursor:pointer;}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{opacity:0.9;}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn-sm{padding:8px 16px;width:auto;font-size:13px;border-radius:10px;}
+.admin-header-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.admin-header-bar h2{font-size:17px;font-weight:700;flex:1;}
+.dashboard-grid{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;}
+.stat-icon{font-size:28px;}
+.stat-num{font-size:28px;font-weight:900;}
+.stat-label{font-size:11px;color:var(--text2);font-weight:600;}
+.stat-card.accent{background:linear-gradient(135deg,var(--accent),#7c3aed);border-color:var(--accent);}
+.stat-card.accent .stat-num,.stat-card.accent .stat-label{color:#fff;}
+.admin-menu{padding:16px;display:flex;flex-direction:column;gap:10px;}
+.menu-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.15s;}
+.menu-item:active{background:var(--card2);}
+.menu-icon{font-size:24px;width:44px;height:44px;background:var(--accent-dim);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.menu-text h3{font-size:15px;font-weight:700;}
+.menu-text p{font-size:12px;color:var(--text2);}
+.menu-chevron{margin-left:auto;color:var(--text3);font-size:20px;}
+.admin-list{padding:0 16px;display:flex;flex-direction:column;gap:8px;padding-bottom:16px;}
+.list-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.list-item-info{flex:1;}
+.list-item-name{font-size:14px;font-weight:700;}
+.list-item-meta{font-size:12px;color:var(--text2);}
+.list-actions{display:flex;gap:6px;}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
 
 /* RESULT MODAL */
-.result-modal { position: fixed; inset: 0; background: var(--overlay); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-.result-modal.open { opacity: 1; pointer-events: all; }
-.result-sheet { width: 100%; max-width: 480px; background: var(--card); border-radius: 24px 24px 0 0; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); padding: 0 0 24px; }
-.result-modal.open .result-sheet { transform: translateY(0); }
-.result-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 16px; }
-.result-sheet-title { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 4px; }
-.result-sheet-sub { font-size: 12px; color: var(--text2); text-align: center; margin-bottom: 20px; }
-.score-input-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px; padding: 0 16px; }
-.score-team-label { font-size: 12px; font-weight: 700; text-align: center; width: 80px; }
-.score-input { width: 64px; height: 64px; border-radius: 16px; border: 2px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 28px; font-weight: 900; text-align: center; outline: none; transition: border-color 0.2s; }
-.score-input:focus { border-color: var(--accent); }
-.score-dash { font-size: 24px; font-weight: 300; color: var(--text3); }
-.scorers-section { padding: 0 16px; }
-.scorers-section h4 { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 12px; letter-spacing: 0.3px; text-transform: uppercase; }
-.scorer-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
-.scorer-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 20px; margin: 0 4px 6px 0; }
-.scorer-tag .remove { cursor: pointer; font-size: 14px; color: var(--accent); opacity: 0.7; }
-.scorers-tags { margin-bottom: 16px; }
-.result-sheet-btns { padding: 0 16px; display: flex; gap: 10px; }
+.result-modal{position:fixed;inset:0;background:var(--overlay);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.result-modal.open{opacity:1;pointer-events:all;}
+.result-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);padding:0 0 24px;}
+.result-modal.open .result-sheet{transform:translateY(0);}
+.rsh{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px;}
+.rst{font-size:17px;font-weight:800;text-align:center;margin-bottom:4px;}
+.rss{font-size:12px;color:var(--text2);text-align:center;margin-bottom:20px;}
+.score-input-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px;padding:0 16px;}
+.score-team-label{font-size:12px;font-weight:700;text-align:center;width:80px;}
+.score-input{width:64px;height:64px;border-radius:16px;border:2px solid var(--border);background:var(--input-bg);color:var(--text);font-size:28px;font-weight:900;text-align:center;outline:none;}
+.score-input:focus{border-color:var(--accent);}
+.score-dash{font-size:24px;font-weight:300;color:var(--text3);}
+.scorers-section{padding:0 16px;}
+.scorers-section h4{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;}
+.scorer-add-row{display:flex;gap:8px;margin-bottom:12px;}
+.scorer-tag{display:inline-flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;margin:0 4px 6px 0;}
+.scorer-tag .rm{cursor:pointer;font-size:14px;}
+.scorers-tags{margin-bottom:16px;}
+.rsb{padding:0 16px;display:flex;gap:10px;}
 
-/* TOAST */
-.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 600; z-index: 500; transition: transform 0.3s; box-shadow: 0 8px 32px var(--shadow); }
-.toast.show { transform: translateX(-50%) translateY(0); }
-.toast.success { border-color: var(--green); color: var(--green); }
-.toast.error { border-color: var(--red); color: var(--red); }
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;z-index:500;transition:transform 0.3s;box-shadow:0 8px 32px var(--shadow);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <div id="public-view">
-    <header>
-      <div class="logo-circle">We</div>
-      <div style="flex:1">
-        <h1>Liga Baires</h1>
-        <span class="season">Handball · Temporada 2025</span>
-      </div>
-      <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
-    </header>
+<!-- ═══════════════ HOME ═══════════════ -->
+<div id="view-home" class="view active">
+  <header>
+    <div class="logo-circle">We</div>
+    <div style="flex:1"><h1>Ligas Deportivas</h1><span class="subtitle">Encontrá tu liga</span></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
 
-    <div class="content">
-      <div class="screen active" id="screen-partidos">
-        <div class="date-strip" id="dateStrip"></div>
-        <div class="filter-tabs">
-          <div class="filter-tab active" onclick="filterMatches(this,'todos')">TODOS</div>
-          <div class="filter-tab" onclick="filterMatches(this,'live')">EN VIVO</div>
-          <div class="filter-tab" onclick="filterMatches(this,'done')">FINALIZADOS</div>
-          <div class="filter-tab" onclick="filterMatches(this,'upcoming')">PROGRAMADOS</div>
-        </div>
-        <div id="matchesList"></div>
-      </div>
+  <div style="padding-bottom:24px">
+    <div class="home-banner">
+      <div class="sport-icons">🤾 ⚽ 🏀 🏐</div>
+      <h2>Tu liga, online</h2>
+      <p>Resultados, tabla y goleadores en tiempo real</p>
+    </div>
 
-      <div class="screen" id="screen-tabla">
-        <div class="section-title">TABLA DE POSICIONES</div>
-        <div class="standings-card">
-          <div class="standings-header">
-            <span class="col-pos">#</span>
-            <span class="col-team">EQUIPO</span>
-            <span class="col-stat">PJ</span>
-            <span class="col-stat">PG</span>
-            <span class="col-stat">PE</span>
-            <span class="col-stat">PP</span>
-            <span class="col-stat">DIF</span>
-            <span class="col-pts">PTS</span>
-          </div>
-          <div id="standingsList"></div>
-        </div>
-      </div>
+    <div class="section-title">BUSCAR LIGA</div>
+    <div class="search-home">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Buscar liga..." oninput="filterLeagues(this.value)" id="leagueSearch">
+    </div>
 
-      <div class="screen" id="screen-goles">
-        <div class="section-title">TABLA DE GOLEADORES</div>
-        <div class="scorer-list" id="scorersList"></div>
-      </div>
+    <div class="section-title">LIGAS ACTIVAS</div>
+    <div class="leagues-list" id="leaguesList"></div>
+  </div>
+</div>
 
-      <div class="screen" id="screen-buscar">
-        <div class="search-wrap">
-          <div class="search-input-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" placeholder="Buscar jugador..." id="searchInput" oninput="searchPlayers(this.value)">
-          </div>
+<!-- ═══════════════ LIGA DETAIL ═══════════════ -->
+<div id="view-league" class="view">
+  <header id="league-header">
+    <span class="back-link" onclick="goHome()">‹</span>
+    <div style="flex:1">
+      <h1 id="league-header-name">Liga Baires</h1>
+      <span class="subtitle" id="league-header-sub">Handball · 2025</span>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </header>
+
+  <div class="content">
+    <div class="screen active" id="screen-partidos">
+      <div class="date-strip" id="dateStrip"></div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterMatches(this,'todos')">TODOS</div>
+        <div class="filter-tab" onclick="filterMatches(this,'live')">EN VIVO</div>
+        <div class="filter-tab" onclick="filterMatches(this,'done')">FINALIZADOS</div>
+        <div class="filter-tab" onclick="filterMatches(this,'upcoming')">PROGRAMADOS</div>
+      </div>
+      <div id="matchesList"></div>
+    </div>
+
+    <div class="screen" id="screen-tabla">
+      <div class="section-title-sm">TABLA DE POSICIONES</div>
+      <div class="standings-card">
+        <div class="standings-header">
+          <span class="col-pos">#</span><span class="col-team">EQUIPO</span>
+          <span class="col-stat">PJ</span><span class="col-stat">PG</span><span class="col-stat">PE</span><span class="col-stat">PP</span><span class="col-stat">DIF</span><span class="col-pts">PTS</span>
         </div>
-        <div class="search-results" id="searchResults">
-          <div class="empty-state">Escribí un nombre para buscar jugadores</div>
-        </div>
+        <div id="standingsList"></div>
       </div>
     </div>
 
-    <nav class="bottom-nav">
-      <div class="nav-item active" onclick="switchTab('partidos',this)">
-        <span class="nav-icon">⚡</span>
-        <span class="nav-label">PARTIDOS</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('tabla',this)">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">TABLA</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('goles',this)">
-        <span class="nav-icon">⚽</span>
-        <span class="nav-label">GOLES</span>
-      </div>
-      <div class="nav-item" onclick="switchTab('buscar',this)">
-        <span class="nav-icon">🔍</span>
-        <span class="nav-label">BUSCAR</span>
-      </div>
-    </nav>
-  </div>
+    <div class="screen" id="screen-goles">
+      <div class="section-title-sm">TABLA DE GOLEADORES</div>
+      <div class="scorer-list" id="scorersList"></div>
+    </div>
 
-  <div class="modal-overlay" id="matchModal" onclick="closeMatch(event)">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <div class="modal-tournament" id="modal-tournament">Liga Baires Handball · Fecha 5</div>
-        <div class="modal-teams">
-          <div class="modal-team">
-            <div class="modal-shield" id="modal-home-shield" style="background:#1a2150;color:#5b6ef5">LA</div>
-            <div class="modal-team-name" id="modal-home-name">Los Andes</div>
-          </div>
-          <div class="modal-score-wrap">
-            <div class="modal-score" id="modal-score">18 - 14</div>
-            <div class="modal-status-tag" id="modal-status-tag">FINALIZADO</div>
-          </div>
-          <div class="modal-team">
-            <div class="modal-shield" id="modal-away-shield" style="background:#1a3d20;color:#22c55e">RB</div>
-            <div class="modal-team-name" id="modal-away-name">River Baires</div>
-          </div>
+    <div class="screen" id="screen-buscar">
+      <div class="search-wrap">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Buscar jugador..." oninput="searchPlayers(this.value)">
         </div>
       </div>
-      <div class="modal-tabs">
-        <div class="modal-tab active" onclick="switchModalTab('eventos',this)">EVENTOS</div>
-        <div class="modal-tab" onclick="switchModalTab('info',this)">INFO</div>
-      </div>
-      <div class="modal-body">
-        <div class="modal-pane active" id="pane-eventos">
-          <div class="events-separator"><hr><span>PRIMERA PARTE</span><hr></div>
-          <div class="events-grid">
-            <div class="event-col">
-              <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-transform:uppercase">Los Andes</div>
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">3'</div></div></div>
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">López D.</div><div class="event-min">11'</div></div></div>
-              <div class="event-item home"><span class="event-icon">🟡</span><div><div class="event-player">Torres R.</div><div class="event-min">18'</div></div></div>
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">25'</div></div></div>
-            </div>
-            <div class="event-col">
-              <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-align:right;text-transform:uppercase">River Baires</div>
-              <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">7'</div></div></div>
-              <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">15'</div></div></div>
-              <div class="event-item away"><span class="event-icon">🔴</span><div style="text-align:right"><div class="event-player">Gómez L.</div><div class="event-min">28'</div></div></div>
-            </div>
-          </div>
-          <div class="events-separator" style="margin-top:12px"><hr><span>SEGUNDA PARTE</span><hr></div>
-          <div class="events-grid">
-            <div class="event-col">
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">Sánchez K.</div><div class="event-min">33'</div></div></div>
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">Fernández A.</div><div class="event-min">41'</div></div></div>
-              <div class="event-item home"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">55'</div></div></div>
-            </div>
-            <div class="event-col">
-              <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Díaz C.</div><div class="event-min">36'</div></div></div>
-              <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">44'</div></div></div>
-              <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">58'</div></div></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-pane" id="pane-info">
-          <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">Fecha 5</span></div>
-          <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">Polideportivo Baires</span></div>
-          <div class="info-row"><span class="info-label">Árbitro</span><span class="info-value">Carlos Medina</span></div>
-          <div class="info-row"><span class="info-label">Asistencia</span><span class="info-value">350 personas</span></div>
-          <div class="info-row"><span class="info-label">Ganador</span><span class="info-value" style="color:var(--accent)">Los Andes</span></div>
-        </div>
+      <div class="search-results" id="searchResults">
+        <div class="empty-state">Escribí un nombre para buscar jugadores</div>
       </div>
     </div>
   </div>
 
-  <div id="admin-view" style="display:none;">
-    <div id="admin-login" class="admin-screen">
-      <div class="admin-login">
-        <div class="logo-big">We</div>
-        <h2>Panel Admin</h2>
-        <p>Liga Baires Handball</p>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="admin@ligabaires.com" value="admin@ligabaires.com">
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon">⚡</span><span class="nav-label">PARTIDOS</span></div>
+    <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon">📊</span><span class="nav-label">TABLA</span></div>
+    <div class="nav-item" onclick="switchTab('goles',this)"><span class="nav-icon">⚽</span><span class="nav-label">GOLES</span></div>
+    <div class="nav-item" onclick="switchTab('buscar',this)"><span class="nav-icon">🔍</span><span class="nav-label">BUSCAR</span></div>
+  </nav>
+</div>
+
+<!-- MATCH DETAIL MODAL -->
+<div class="modal-overlay" id="matchModal" onclick="closeMatch(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-tournament" id="modal-tournament">Liga Baires Handball · Fecha 5</div>
+      <div class="modal-teams">
+        <div class="modal-team">
+          <div class="modal-shield" id="modal-home-shield" style="background:#1a2150;color:#5b6ef5">LA</div>
+          <div class="modal-team-name" id="modal-home-name">Los Andes</div>
         </div>
-        <div class="form-group" style="margin-top:8px">
-          <label class="form-label">Contraseña</label>
-          <input type="password" class="form-input" placeholder="••••••••" value="••••••••">
+        <div class="modal-score-wrap">
+          <div class="modal-score" id="modal-score">18 - 14</div>
+          <div class="modal-status-tag" id="modal-status-tag">FINALIZADO</div>
         </div>
-        <button class="btn btn-primary" style="margin-top:16px" onclick="goAdmin('dashboard')">Ingresar</button>
-        <div style="margin-top:12px;text-align:center">
-          <a onclick="showPublic()" style="font-size:13px;color:var(--accent);cursor:pointer">← Ver sitio público</a>
+        <div class="modal-team">
+          <div class="modal-shield" id="modal-away-shield" style="background:#1a3d20;color:#22c55e">RB</div>
+          <div class="modal-team-name" id="modal-away-name">River Baires</div>
         </div>
       </div>
     </div>
-
-    <div id="admin-dashboard" class="admin-screen" style="display:none;">
-      <div class="admin-header">
-        <span class="back-btn" onclick="showPublic()">🌐 Ver sitio</span>
-        <h2>Dashboard</h2>
-        <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goAdmin('login')">Salir</span>
-      </div>
-      <div class="dashboard-grid">
-        <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num">8</div><div class="stat-label">EQUIPOS</div></div>
-        <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-num">96</div><div class="stat-label" style="color:var(--text2)">JUGADORES</div></div>
-        <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-num">24</div><div class="stat-label" style="color:var(--text2)">PARTIDOS</div></div>
-        <div class="stat-card"><span class="stat-icon">⚽</span><div class="stat-num">312</div><div class="stat-label" style="color:var(--text2)">GOLES</div></div>
-      </div>
-      <div class="admin-menu">
-        <div class="menu-item" onclick="goAdmin('teams')"><div class="menu-icon">🛡️</div><div class="menu-text"><h3>Equipos</h3><p>Gestionar equipos y escudos</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item" onclick="goAdmin('players')"><div class="menu-icon">👤</div><div class="menu-text"><h3>Jugadores</h3><p>Jugadores y fotos</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item" onclick="goAdmin('matches')"><div class="menu-icon">📅</div><div class="menu-text"><h3>Partidos</h3><p>Fixture y resultados</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item" onclick="goAdmin('fixture')"><div class="menu-icon">🔄</div><div class="menu-text"><h3>Generar Fixture</h3><p>Fixture automático round-robin</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item"><div class="menu-icon">📰</div><div class="menu-text"><h3>Noticias</h3><p>Publicar novedades</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item"><div class="menu-icon">🏟️</div><div class="menu-text"><h3>Canchas</h3><p>Venues y ubicaciones</p></div><span class="menu-chevron">›</span></div>
-        <div class="menu-item"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Liga, puntos, temporada</p></div><span class="menu-chevron">›</span></div>
-      </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchModalTab('eventos',this)">EVENTOS</div>
+      <div class="modal-tab" onclick="switchModalTab('info',this)">INFO</div>
     </div>
-
-    <div id="admin-teams" class="admin-screen" style="display:none;">
-      <div class="admin-header"><span class="back-btn" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Equipos</h2></div>
-      <div style="padding:16px 16px 8px"><button class="btn btn-primary btn-sm" onclick="openAddTeamModal()">+ Agregar equipo</button></div>
-      <div class="admin-list" id="teamsList"></div>
-    </div>
-
-    <div id="admin-players" class="admin-screen" style="display:none;">
-      <div class="admin-header"><span class="back-btn" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Jugadores</h2></div>
-      <div style="padding:16px 16px 8px;display:flex;gap:8px;align-items:center">
-        <select class="form-input form-select" style="flex:1;padding:10px 12px;font-size:13px" onchange="renderAdminPlayers()" id="playerTeamFilter"><option value="">Todos los equipos</option></select>
-        <button class="btn btn-primary btn-sm" onclick="openAddPlayerModal()">+ Jugador</button>
-      </div>
-      <div class="admin-list" id="playersList"></div>
-    </div>
-
-    <div id="admin-matches" class="admin-screen" style="display:none;">
-      <div class="admin-header"><span class="back-btn" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Partidos</h2></div>
-      <div style="padding:16px 16px 8px;display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="openAddMatchModal()">+ Partido</button>
-        <button class="btn btn-secondary btn-sm" onclick="goAdmin('fixture')">Generar Fixture</button>
-      </div>
-      <div class="admin-list" id="adminMatchesList"></div>
-    </div>
-
-    <div id="admin-fixture" class="admin-screen" style="display:none;">
-      <div class="admin-header"><span class="back-btn" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Generar Fixture</h2></div>
-      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-        <div class="form-group"><label class="form-label">Nombre del torneo</label><input class="form-input" type="text" value="Liga Baires 2025 - Clausura"></div>
-        <div class="form-group"><label class="form-label">Formato</label><select class="form-input form-select"><option>Round Robin (todos vs todos)</option><option>Eliminación directa</option><option>Grupos + Playoffs</option></select></div>
-        <div class="form-group"><label class="form-label">Fecha inicio</label><input class="form-input" type="date" value="2025-03-01"></div>
-        <div class="form-group"><label class="form-label">Día de los partidos</label><select class="form-input form-select"><option>Sábados</option><option>Domingos</option><option>Sábados y Domingos</option></select></div>
-        <div class="form-group"><label class="form-label">Equipos participantes</label><div id="fixtureTeamList" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div></div>
-        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa:</div>
-          <div style="font-size:13px;font-weight:700">28 partidos · 7 fechas</div>
-          <div style="font-size:12px;color:var(--text2)">Inicio: 01 Mar · Fin estimado: 12 Abr</div>
+    <div class="modal-body">
+      <div class="modal-pane active" id="pane-eventos">
+        <div class="events-separator"><hr><span>PRIMERA PARTE</span><hr></div>
+        <div class="events-grid">
+          <div class="event-col">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-transform:uppercase">Local</div>
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">3'</div></div></div>
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">López D.</div><div class="event-min">11'</div></div></div>
+            <div class="event-item"><span class="event-icon">🟡</span><div><div class="event-player">Torres R.</div><div class="event-min">18'</div></div></div>
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">25'</div></div></div>
+          </div>
+          <div class="event-col">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-align:right;text-transform:uppercase">Visitante</div>
+            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">7'</div></div></div>
+            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">15'</div></div></div>
+            <div class="event-item away"><span class="event-icon">🔴</span><div style="text-align:right"><div class="event-player">Gómez L.</div><div class="event-min">28'</div></div></div>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="showToast('¡Fixture generado! 28 partidos creados','success')">Generar Fixture Automático</button>
+        <div class="events-separator" style="margin-top:12px"><hr><span>SEGUNDA PARTE</span><hr></div>
+        <div class="events-grid">
+          <div class="event-col">
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">Sánchez K.</div><div class="event-min">33'</div></div></div>
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">Fernández A.</div><div class="event-min">41'</div></div></div>
+            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">55'</div></div></div>
+          </div>
+          <div class="event-col">
+            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Díaz C.</div><div class="event-min">36'</div></div></div>
+            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">44'</div></div></div>
+            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">58'</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-pane" id="pane-info">
+        <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">Fecha 5</span></div>
+        <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">Polideportivo Baires</span></div>
+        <div class="info-row"><span class="info-label">Árbitro</span><span class="info-value">Carlos Medina</span></div>
+        <div class="info-row"><span class="info-label">Asistencia</span><span class="info-value">350 personas</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN ═══════════════ -->
+<div id="view-admin" style="display:none;">
+  <div id="admin-login" class="admin-screen">
+    <div class="admin-login-wrap">
+      <div class="logo-big">We</div>
+      <h2 style="font-size:22px;font-weight:800">Panel Admin</h2>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Ingresá con tu liga</p>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" value="admin@ligabaires.com">
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-input" value="••••••••">
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="goAdmin('dashboard')">Ingresar</button>
+      <div style="margin-top:12px;text-align:center">
+        <a onclick="goHome()" style="font-size:13px;color:var(--accent);cursor:pointer">← Ver ligas públicas</a>
       </div>
     </div>
   </div>
 
-  <div class="result-modal" id="addTeamModal">
-    <div class="result-sheet">
-      <div class="result-sheet-handle"></div>
-      <div class="result-sheet-title">Agregar Equipo</div>
-      <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-top:12px">
-        <div class="form-group"><label class="form-label">Nombre del equipo</label><input class="form-input" type="text" placeholder="Ej: Los Andes FC"></div>
-        <div class="form-group"><label class="form-label">Nombre corto (3-4 letras)</label><input class="form-input" type="text" placeholder="LAF" maxlength="4"></div>
-        <div class="form-group"><label class="form-label">Escudo del equipo</label><div style="background:var(--card2);border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer" onclick="showToast('Seleccioná una imagen','')"><div style="font-size:32px;margin-bottom:8px">🖼️</div><div style="font-size:13px;color:var(--text2)">Subir escudo (PNG, JPG)</div></div></div>
-      </div>
-      <div class="result-sheet-btns" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="closeModal('addTeamModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="showToast('Equipo guardado ✓','success');closeModal('addTeamModal')">Guardar</button>
-      </div>
+  <div id="admin-dashboard" class="admin-screen" style="display:none">
+    <div class="admin-header-bar">
+      <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goHome()">🌐 Ligas</span>
+      <h2>Dashboard</h2>
+      <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goAdmin('login')">Salir</span>
+    </div>
+    <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:10px;background:#1a2150;color:#5b6ef5;display:flex;align-items:center;justify-content:center;font-size:18px">🤾</div>
+      <div><div style="font-size:14px;font-weight:800">Liga Baires</div><div style="font-size:11px;color:var(--text2)">Handball · Temporada 2025</div></div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num">8</div><div class="stat-label">EQUIPOS</div></div>
+      <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-num">96</div><div class="stat-label">JUGADORES</div></div>
+      <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-num">24</div><div class="stat-label">PARTIDOS</div></div>
+      <div class="stat-card"><span class="stat-icon">⚽</span><div class="stat-num">312</div><div class="stat-label">GOLES</div></div>
+    </div>
+    <div class="admin-menu">
+      <div class="menu-item" onclick="goAdmin('teams')"><div class="menu-icon">🛡️</div><div class="menu-text"><h3>Equipos</h3><p>Gestionar equipos y escudos</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="goAdmin('players')"><div class="menu-icon">👤</div><div class="menu-text"><h3>Jugadores</h3><p>Jugadores y fotos</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="goAdmin('matches')"><div class="menu-icon">📅</div><div class="menu-text"><h3>Partidos</h3><p>Fixture y resultados</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="goAdmin('fixture')"><div class="menu-icon">🔄</div><div class="menu-text"><h3>Generar Fixture</h3><p>Round-robin automático</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Nombre, temporada, puntos</p></div><span class="menu-chevron">›</span></div>
     </div>
   </div>
 
-  <div class="result-modal" id="addPlayerModal">
-    <div class="result-sheet">
-      <div class="result-sheet-handle"></div>
-      <div class="result-sheet-title">Agregar Jugador</div>
-      <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-top:12px">
-        <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" type="text" placeholder="Ej: Juan García"></div>
-        <div class="form-group"><label class="form-label">Número de camiseta</label><input class="form-input" type="number" placeholder="7" min="1" max="99"></div>
-        <div class="form-group"><label class="form-label">Equipo</label><select class="form-input form-select"><option>Los Andes</option><option>River Baires</option><option>Club Tigre</option><option>Deportivo Norte</option></select></div>
-        <div class="form-group"><label class="form-label">Foto del jugador</label><div style="background:var(--card2);border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer" onclick="showToast('Seleccioná una imagen','')"><div style="font-size:28px;margin-bottom:6px">📸</div><div style="font-size:12px;color:var(--text2)">Subir foto (opcional)</div></div></div>
-      </div>
-      <div class="result-sheet-btns" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="closeModal('addPlayerModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="showToast('Jugador guardado ✓','success');closeModal('addPlayerModal')">Guardar</button>
-      </div>
-    </div>
+  <div id="admin-teams" class="admin-screen" style="display:none">
+    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Equipos</h2></div>
+    <div style="padding:16px 16px 8px"><button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar equipo','')">+ Agregar equipo</button></div>
+    <div class="admin-list" id="teamsList"></div>
   </div>
 
-  <div class="result-modal" id="addMatchModal">
-    <div class="result-sheet">
-      <div class="result-sheet-handle"></div>
-      <div class="result-sheet-title">Agregar Partido</div>
-      <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-top:12px">
-        <div class="form-group"><label class="form-label">Equipo local</label><select class="form-input form-select"><option>Los Andes</option><option>River Baires</option><option>Club Tigre</option><option>Deportivo Norte</option></select></div>
-        <div class="form-group"><label class="form-label">Equipo visitante</label><select class="form-input form-select"><option>River Baires</option><option>Los Andes</option><option>Club Tigre</option><option>Deportivo Norte</option></select></div>
-        <div class="form-group"><label class="form-label">Fecha y hora</label><input class="form-input" type="datetime-local"></div>
-        <div class="form-group"><label class="form-label">Cancha</label><input class="form-input" type="text" placeholder="Polideportivo Baires"></div>
-        <div class="form-group"><label class="form-label">Jornada</label><input class="form-input" type="number" placeholder="5" min="1"></div>
-      </div>
-      <div class="result-sheet-btns" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="closeModal('addMatchModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="showToast('Partido guardado ✓','success');closeModal('addMatchModal')">Guardar</button>
-      </div>
+  <div id="admin-players" class="admin-screen" style="display:none">
+    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Jugadores</h2></div>
+    <div style="padding:16px 16px 8px;display:flex;gap:8px;align-items:center">
+      <select class="form-input form-select" style="flex:1;padding:10px 12px;font-size:13px" onchange="renderAdminPlayers()" id="playerTeamFilter"><option value="">Todos los equipos</option></select>
+      <button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar jugador','')">+ Jugador</button>
     </div>
+    <div class="admin-list" id="playersList"></div>
   </div>
 
-  <div class="result-modal" id="resultModal">
-    <div class="result-sheet">
-      <div class="result-sheet-handle"></div>
-      <div class="result-sheet-title">Cargar Resultado</div>
-      <div class="result-sheet-sub" id="resultModalSub">Los Andes vs River Baires</div>
-      <div class="score-input-row">
-        <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" value="0" min="0" id="homeScoreInput"></div>
-        <div class="score-dash">-</div>
-        <div style="text-align:center"><div class="score-team-label" id="result-away-label">Visitante</div><input type="number" class="score-input" value="0" min="0" id="awayScoreInput"></div>
-      </div>
-      <div class="scorers-section">
-        <h4>⚽ Goleadores (opcional)</h4>
-        <div class="scorer-add-row">
-          <select class="form-input form-select" id="scorerTeamSel" style="flex:0 0 120px;padding:10px 8px;font-size:13px"><option>Los Andes</option><option>River Baires</option></select>
-          <select class="form-input form-select" id="scorerPlayerSel" style="padding:10px 8px;font-size:13px"><option>García M.</option><option>López D.</option><option>Torres R.</option></select>
-          <button class="btn btn-primary btn-sm" style="flex-shrink:0;padding:10px 14px" onclick="addScorer()">+</button>
-        </div>
-        <div class="scorers-tags" id="scorersTags"></div>
-      </div>
-      <div class="result-sheet-btns">
-        <button class="btn btn-secondary" onclick="closeModal('resultModal')">Cancelar</button>
-        <button class="btn btn-primary" onclick="showToast('Resultado guardado ✓','success');closeModal('resultModal')">Guardar Resultado</button>
-      </div>
+  <div id="admin-matches" class="admin-screen" style="display:none">
+    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Partidos</h2></div>
+    <div style="padding:16px 16px 8px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar partido','')">+ Partido</button>
+      <button class="btn btn-secondary btn-sm" onclick="goAdmin('fixture')">Generar Fixture</button>
     </div>
+    <div class="admin-list" id="adminMatchesList"></div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div id="admin-fixture" class="admin-screen" style="display:none">
+    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Generar Fixture</h2></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="form-group"><label class="form-label">Formato</label><select class="form-input form-select"><option>Round Robin (todos vs todos)</option><option>Eliminación directa</option><option>Grupos + Playoffs</option></select></div>
+      <div class="form-group"><label class="form-label">Fecha inicio</label><input class="form-input" type="date" value="2025-03-01"></div>
+      <div class="form-group"><label class="form-label">Día de juego</label><select class="form-input form-select"><option>Sábados</option><option>Domingos</option><option>Sábados y Domingos</option></select></div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa:</div>
+        <div style="font-size:13px;font-weight:700">28 partidos · 7 fechas</div>
+        <div style="font-size:12px;color:var(--text2)">Inicio: 01 Mar · Fin: 12 Abr</div>
+      </div>
+      <button class="btn btn-primary" onclick="showToast('¡Fixture generado! 28 partidos creados','success')">Generar Fixture Automático</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="result-modal" id="resultModal">
+  <div class="result-sheet">
+    <div class="rsh"></div>
+    <div class="rst">Cargar Resultado</div>
+    <div class="rss" id="resultModalSub">Local vs Visitante</div>
+    <div class="score-input-row">
+      <div style="text-align:center"><div class="score-team-label" id="result-home-label">Local</div><input type="number" class="score-input" value="0" min="0" id="homeScoreInput"></div>
+      <div class="score-dash">-</div>
+      <div style="text-align:center"><div class="score-team-label" id="result-away-label">Visitante</div><input type="number" class="score-input" value="0" min="0"></div>
+    </div>
+    <div class="scorers-section">
+      <h4>⚽ Goleadores</h4>
+      <div class="scorer-add-row">
+        <select class="form-input form-select" style="flex:0 0 110px;padding:10px 8px;font-size:13px" id="scorerTeamSel"><option>Local</option><option>Visitante</option></select>
+        <select class="form-input form-select" style="padding:10px 8px;font-size:13px" id="scorerPlayerSel"><option>García M.</option><option>López D.</option><option>Torres R.</option></select>
+        <button class="btn btn-primary btn-sm" style="flex-shrink:0;padding:10px 14px" onclick="addScorer()">+</button>
+      </div>
+      <div class="scorers-tags" id="scorersTags"></div>
+    </div>
+    <div class="rsb">
+      <button class="btn btn-secondary" onclick="closeModal('resultModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="showToast('Resultado guardado ✓','success');closeModal('resultModal')">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 </div>
 
 <script>
-const teams = [
+// ═══ DATA ═══
+const leagues = [
+  {id:1, name:'Liga Baires', slug:'liga-baires', sport:'Handball', season:'2025', icon:'🤾', color:'#1a2150', text:'#5b6ef5', teams:8, active:true},
+  {id:2, name:'Liga Norte Fútbol', slug:'liga-norte', sport:'Fútbol', season:'Clausura 2025', icon:'⚽', color:'#1a3d20', text:'#22c55e', teams:12, active:true},
+  {id:3, name:'Liga Sur Básquet', slug:'liga-sur', sport:'Básquet', season:'2025', icon:'🏀', color:'#3d2f1a', text:'#f59e0b', teams:6, active:true},
+  {id:4, name:'Club Voley Centro', slug:'voley-centro', sport:'Vóley', season:'Apertura 2025', icon:'🏐', color:'#2f1a3d', text:'#a855f7', teams:8, active:false},
+  {id:5, name:'Pádel Palermo', slug:'padel-palermo', sport:'Pádel', season:'2025', icon:'🎾', color:'#1a3d3d', text:'#14b8a6', teams:16, active:true},
+];
+
+const teamsData = [
   {id:1,name:'Los Andes',short:'LA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
   {id:2,name:'River Baires',short:'RB',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
   {id:3,name:'Club Tigre',short:'CT',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
@@ -641,13 +594,60 @@ const standings = [
   {teamId:8,pj:5,pg:0,pe:1,pp:4,gf:65,gc:97,pts:1},
 ];
 
+// ═══ THEME ═══
 let isDark=true;
 function toggleTheme(){
   isDark=!isDark;
   document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
-  document.querySelector('.theme-btn').textContent=isDark?'🌙':'☀️';
+  document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=isDark?'🌙':'☀️');
 }
 
+// ═══ HOME ═══
+function renderLeagues(list){
+  const el=document.getElementById('leaguesList');
+  el.innerHTML=list.map(l=>`
+    <div class="league-card" onclick="openLeague(${l.id})">
+      <div class="league-icon" style="background:${l.color}">${l.icon}</div>
+      <div class="league-info">
+        <div class="league-name">${l.name}</div>
+        <div class="league-meta">${l.sport} · ${l.season}</div>
+        <div class="league-tags">
+          <span class="tag ${l.active?'tag-active':'tag-teams'}">${l.active?'● ACTIVA':'Inactiva'}</span>
+          <span class="tag tag-sport">${l.sport}</span>
+          <span class="tag tag-teams">${l.teams} equipos</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function filterLeagues(q){
+  const filtered=leagues.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase()));
+  renderLeagues(filtered);
+}
+function openLeague(id){
+  const l=leagues.find(x=>x.id===id);
+  document.getElementById('league-header-name').textContent=l.name;
+  document.getElementById('league-header-sub').textContent=l.sport+' · '+l.season;
+  showView('view-league');
+  // reset to partidos tab
+  switchTab('partidos',document.querySelector('.nav-item'));
+  buildDateStrip();
+  renderMatches();
+  renderStandings();
+  renderScorers();
+}
+function goHome(){
+  showView('view-home');
+  document.getElementById('view-admin').style.display='none';
+}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const v=document.getElementById(id);
+  v.classList.add('active','slide');
+  setTimeout(()=>v.classList.remove('slide'),300);
+}
+
+// ═══ LEAGUE TABS ═══
 function switchTab(tab,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -655,6 +655,7 @@ function switchTab(tab,el){
   el.classList.add('active');
 }
 
+// ═══ DATE STRIP ═══
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function buildDateStrip(){
   const strip=document.getElementById('dateStrip');
@@ -673,6 +674,7 @@ function selectDate(el){
   el.classList.add('active');
 }
 
+// ═══ MATCHES ═══
 let currentFilter='todos';
 function filterMatches(el,filter){
   document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
@@ -680,7 +682,7 @@ function filterMatches(el,filter){
   currentFilter=filter;
   renderMatches();
 }
-function getTeam(id){return teams.find(t=>t.id===id);}
+function getTeam(id){return teamsData.find(t=>t.id===id);}
 function renderMatches(){
   const filtered=currentFilter==='todos'?matches:matches.filter(m=>m.status===currentFilter);
   if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">No hay partidos para mostrar</div>';return;}
@@ -688,7 +690,8 @@ function renderMatches(){
   filtered.forEach(m=>{if(!byRound[m.round])byRound[m.round]=[];byRound[m.round].push(m);});
   let html='';
   Object.entries(byRound).sort((a,b)=>b[0]-a[0]).forEach(([round,ms])=>{
-    html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">LIGA BAIRES HANDBALL</span><span class="round-badge">FECHA ${round}</span></div>`;
+    const lname=document.getElementById('league-header-name').textContent;
+    html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">🤾</span><span class="tournament-name">${lname.toUpperCase()}</span><span class="round-badge">FECHA ${round}</span></div>`;
     ms.forEach(m=>{
       const home=getTeam(m.home),away=getTeam(m.away);
       const isDone=m.status==='done',isLive=m.status==='live';
@@ -707,6 +710,7 @@ function renderMatches(){
   document.getElementById('matchesList').innerHTML=html;
 }
 
+// ═══ MATCH MODAL ═══
 function openMatch(id){
   const m=matches.find(x=>x.id===id);
   const home=getTeam(m.home),away=getTeam(m.away);
@@ -724,7 +728,8 @@ function openMatch(id){
   if(m.status==='done'){st.textContent='FINALIZADO';st.className='modal-status-tag';}
   else if(m.status==='live'){st.textContent='EN VIVO';st.className='modal-status-tag live';}
   else{st.textContent='PROGRAMADO';st.className='modal-status-tag';}
-  document.getElementById('modal-tournament').textContent=`Liga Baires Handball · Fecha ${m.round}`;
+  const lname=document.getElementById('league-header-name').textContent;
+  document.getElementById('modal-tournament').textContent=`${lname} · Fecha ${m.round}`;
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
 }
@@ -736,6 +741,7 @@ function switchModalTab(tab,el){
   document.getElementById('pane-'+tab).classList.add('active');
 }
 
+// ═══ STANDINGS ═══
 function renderStandings(){
   const sorted=[...standings].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
   const badges=['gold','silver','bronze'];
@@ -747,6 +753,7 @@ function renderStandings(){
   document.getElementById('standingsList').innerHTML=html;
 }
 
+// ═══ SCORERS ═══
 function renderScorers(){
   const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0);
   const medals=['🥇','🥈','🥉'];
@@ -758,81 +765,68 @@ function renderScorers(){
   document.getElementById('scorersList').innerHTML=html;
 }
 
-let searchTimeout;
+// ═══ SEARCH ═══
+let st;
 function searchPlayers(q){
-  clearTimeout(searchTimeout);
-  searchTimeout=setTimeout(()=>{
+  clearTimeout(st);
+  st=setTimeout(()=>{
     const results=document.getElementById('searchResults');
     if(!q.trim()){results.innerHTML='<div class="empty-state">Escribí un nombre para buscar jugadores</div>';return;}
     const found=players.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
     if(!found.length){results.innerHTML='<div class="empty-state">No se encontraron jugadores</div>';return;}
-    let html='';
-    found.forEach(p=>{
+    results.innerHTML=found.map(p=>{
       const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-      html+=`<div class="player-card"><div class="player-avatar" style="color:${t.text};border-color:${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
-    });
-    results.innerHTML=html;
+      return `<div class="player-card"><div class="player-avatar" style="color:${t.text};border-color:${t.color};background:${t.color}">${initials}</div><div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${t.emoji} ${t.name} · ${p.goals} goles</div></div><div class="jersey-badge">#${p.jersey}</div></div>`;
+    }).join('');
   },300);
 }
 
-function showPublic(){document.getElementById('public-view').style.display='';document.getElementById('admin-view').style.display='none';}
-function showAdmin(){document.getElementById('public-view').style.display='none';document.getElementById('admin-view').style.display='';goAdmin('login');}
+// ═══ ADMIN ═══
+function showAdmin(){
+  document.getElementById('view-home').classList.remove('active');
+  document.getElementById('view-league').classList.remove('active');
+  document.getElementById('view-admin').style.display='';
+  goAdmin('login');
+}
 function goAdmin(page){
   document.querySelectorAll('.admin-screen').forEach(s=>s.style.display='none');
   document.getElementById('admin-'+page).style.display='';
   if(page==='teams')renderAdminTeams();
   if(page==='players')renderAdminPlayers();
   if(page==='matches')renderAdminMatches();
-  if(page==='fixture')renderFixtureTeams();
 }
 function renderAdminTeams(){
-  let html='';
-  teams.forEach(t=>{
-    html+=`<div class="list-item"><div class="shield" style="background:${t.color};color:${t.text};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${t.short}</div><div class="list-item-info"><div class="list-item-name">${t.name}</div><div class="list-item-meta">${players.filter(p=>p.team===t.id).length} jugadores</div></div><div class="list-actions"><div class="icon-btn" onclick="showToast('Editando ${t.name}','')">✏️</div><div class="icon-btn" onclick="showToast('${t.name} eliminado','error')">🗑️</div></div></div>`;
-  });
-  document.getElementById('teamsList').innerHTML=html;
+  document.getElementById('teamsList').innerHTML=teamsData.map(t=>`
+    <div class="list-item">
+      <div class="shield" style="background:${t.color};color:${t.text};width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:800;flex-shrink:0">${t.short}</div>
+      <div class="list-item-info"><div class="list-item-name">${t.name}</div><div class="list-item-meta">${players.filter(p=>p.team===t.id).length} jugadores</div></div>
+      <div class="list-actions"><div class="icon-btn" onclick="showToast('Editando ${t.name}','')">✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div>
+    </div>`).join('');
 }
 function renderAdminPlayers(){
   const sel=document.getElementById('playerTeamFilter');
-  if(sel.options.length<=1)teams.forEach(t=>{sel.innerHTML+=`<option value="${t.id}">${t.name}</option>`;});
-  const filterVal=sel.value?parseInt(sel.value):null;
-  const filtered=filterVal?players.filter(p=>p.team===filterVal):players;
-  let html='';
-  filtered.forEach(p=>{
+  if(sel.options.length<=1)teamsData.forEach(t=>{sel.innerHTML+=`<option value="${t.id}">${t.name}</option>`;});
+  const fv=sel.value?parseInt(sel.value):null;
+  const filtered=fv?players.filter(p=>p.team===fv):players;
+  document.getElementById('playersList').innerHTML=filtered.map(p=>{
     const t=getTeam(p.team),initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    html+=`<div class="list-item"><div style="width:36px;height:36px;border-radius:50%;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div><div class="list-item-info"><div class="list-item-name">${p.name}</div><div class="list-item-meta">${t.name} · #${p.jersey} · ${p.goals} goles</div></div><div class="list-actions"><div class="icon-btn" onclick="showToast('Editando ${p.name.split(' ')[0]}','')">✏️</div><div class="icon-btn" onclick="showToast('Jugador eliminado','error')">🗑️</div></div></div>`;
-  });
-  document.getElementById('playersList').innerHTML=html;
+    return `<div class="list-item"><div style="width:36px;height:36px;border-radius:50%;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div><div class="list-item-info"><div class="list-item-name">${p.name}</div><div class="list-item-meta">${t.name} · #${p.jersey} · ${p.goals} goles</div></div><div class="list-actions"><div class="icon-btn" onclick="showToast('Editando','')" >✏️</div><div class="icon-btn" onclick="showToast('Eliminado','error')">🗑️</div></div></div>`;
+  }).join('');
 }
 function renderAdminMatches(){
-  let html='';
-  matches.forEach(m=>{
+  document.getElementById('adminMatchesList').innerHTML=matches.map(m=>{
     const home=getTeam(m.home),away=getTeam(m.away);
     const score=m.status==='done'?`${m.homeScore}-${m.awayScore}`:'Por jugar';
-    html+=`<div class="list-item"><div style="flex:1"><div class="list-item-name">${home.name} vs ${away.name}</div><div class="list-item-meta">Fecha ${m.round} · ${score}</div></div><div class="list-actions">${m.status!=='done'?`<div class="icon-btn" style="background:rgba(34,197,94,0.1);border-color:var(--green);color:var(--green);font-size:11px;font-weight:700;width:auto;padding:0 10px" onclick="openResultModal(${m.id})">Resultado</div>`:''}<div class="icon-btn" onclick="showToast('Editando partido','')">✏️</div></div></div>`;
-  });
-  document.getElementById('adminMatchesList').innerHTML=html;
-}
-function renderFixtureTeams(){
-  let html='';
-  teams.forEach(t=>{
-    html+=`<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--accent);width:16px;height:16px"><span class="shield" style="background:${t.color};color:${t.text};width:24px;height:24px;font-size:9px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">${t.short}</span><span style="font-size:13px;font-weight:600">${t.name}</span></label>`;
-  });
-  document.getElementById('fixtureTeamList').innerHTML=html;
+    return `<div class="list-item"><div style="flex:1"><div class="list-item-name">${home.name} vs ${away.name}</div><div class="list-item-meta">Fecha ${m.round} · ${score}</div></div><div class="list-actions">${m.status!=='done'?`<div class="icon-btn" style="background:rgba(34,197,94,0.1);border-color:var(--green);color:var(--green);font-size:11px;font-weight:700;width:auto;padding:0 10px" onclick="openResultModal(${m.id})">Res.</div>`:''}<div class="icon-btn" onclick="showToast('Editando','')" >✏️</div></div></div>`;
+  }).join('');
 }
 
+// ═══ RESULT MODAL ═══
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function openAddTeamModal(){document.getElementById('addTeamModal').classList.add('open');}
-function openAddPlayerModal(){document.getElementById('addPlayerModal').classList.add('open');}
-function openAddMatchModal(){document.getElementById('addMatchModal').classList.add('open');}
-
 let scorers=[];
 function openResultModal(id){
   const m=matches.find(x=>x.id===id);
-  const home=getTeam(m.home),away=getTeam(m.away);
-  document.getElementById('resultModalSub').textContent=`${home.name} vs ${away.name}`;
-  document.getElementById('result-home-label').textContent=home.name;
-  document.getElementById('result-away-label').textContent=away.name;
+  document.getElementById('resultModalSub').textContent=`${getTeam(m.home).name} vs ${getTeam(m.away).name}`;
   scorers=[];renderScorerTags();
   document.getElementById('resultModal').classList.add('open');
 }
@@ -842,9 +836,10 @@ function addScorer(){
 }
 function removeScorer(i){scorers.splice(i,1);renderScorerTags();}
 function renderScorerTags(){
-  document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="remove" onclick="removeScorer(${i})">×</span></span>`).join('');
+  document.getElementById('scorersTags').innerHTML=scorers.map((s,i)=>`<span class="scorer-tag">⚽ ${s.player} (${s.team}) <span class="rm" onclick="removeScorer(${i})">×</span></span>`).join('');
 }
 
+// ═══ TOAST ═══
 function showToast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg;
@@ -853,20 +848,12 @@ function showToast(msg,type=''){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-let tapCount=0,tapTimer;
-document.querySelector('.logo-circle').addEventListener('click',()=>{
-  tapCount++;clearTimeout(tapTimer);
-  tapTimer=setTimeout(()=>tapCount=0,1000);
-  if(tapCount>=5){tapCount=0;showAdmin();}
-});
+// ═══ INIT ═══
+renderLeagues(leagues);
 
-buildDateStrip();
-renderMatches();
-renderStandings();
-renderScorers();
-
+// Demo admin button
 const demoBar=document.createElement('div');
-demoBar.style.cssText='position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;cursor:pointer;z-index:200;letter-spacing:0.3px;box-shadow:0 2px 12px rgba(91,110,245,0.5)';
+demoBar.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;z-index:200;box-shadow:0 2px 12px rgba(91,110,245,0.5);white-space:nowrap';
 demoBar.textContent='⚙️ PANEL ADMIN (DEMO)';
 demoBar.onclick=showAdmin;
 document.getElementById('app').appendChild(demoBar);
