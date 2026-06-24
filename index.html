@@ -256,6 +256,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .scorer-tag .rm{cursor:pointer;font-size:14px;}
 .scorers-tags{margin-bottom:16px;}
 .rsb{padding:0 16px;display:flex;gap:10px;}
+/* NUEVA LIGA MODAL */
+.nl-icon-btn{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;border:2px solid var(--border);background:var(--card2);transition:all .15s;}
+.nl-icon-btn.selected{border-color:var(--accent);background:var(--accent-dim);}
+.nl-color-btn{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;}
+.nl-color-btn.selected{border-color:#fff;box-shadow:0 0 0 2px var(--accent);}
 /* ANULACIÓN */
 .motivo-btn{padding:11px 14px;border-radius:12px;background:var(--card2);border:2px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
 .motivo-btn.selected{border-color:var(--red);background:rgba(239,68,68,0.08);color:var(--red);}
@@ -504,21 +509,91 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:900;color:var(--accent)">5</div><div style="font-size:10px;color:var(--text2);font-weight:700">LIGAS</div>
+          <div id="sa-stat-ligas" style="font-size:22px;font-weight:900;color:var(--accent)">—</div><div style="font-size:10px;color:var(--text2);font-weight:700">LIGAS</div>
         </div>
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:900;color:var(--green)">4</div><div style="font-size:10px;color:var(--text2);font-weight:700">ACTIVAS</div>
+          <div id="sa-stat-activas" style="font-size:22px;font-weight:900;color:var(--green)">—</div><div style="font-size:10px;color:var(--text2);font-weight:700">ACTIVAS</div>
         </div>
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:900;color:var(--gold)">50</div><div style="font-size:10px;color:var(--text2);font-weight:700">EQUIPOS</div>
+          <div id="sa-stat-torneos" style="font-size:22px;font-weight:900;color:var(--gold)">—</div><div style="font-size:10px;color:var(--text2);font-weight:700">TORNEOS</div>
         </div>
       </div>
     </div>
     <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between">
       <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">LIGAS REGISTRADAS</div>
-      <button class="btn btn-primary btn-sm" onclick="showToast('Modal: Crear nueva liga','success')">+ Nueva Liga</button>
+      <button class="btn btn-primary btn-sm" onclick="openNuevaLiga()">+ Nueva Liga</button>
     </div>
     <div id="superLeaguesList" style="padding-bottom:24px"></div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVA LIGA -->
+<div class="modal-overlay" id="nuevaLigaModal" onclick="closeNuevaLiga(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div id="nl-preview-icon" style="width:44px;height:44px;border-radius:12px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">⚽</div>
+      <div style="flex:1">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Nueva Liga</div>
+        <div id="nl-preview-name" style="font-size:15px;font-weight:900;color:var(--text)">Sin nombre</div>
+      </div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Nombre de la liga</label>
+        <input class="form-input" id="nl-nombre" type="text" placeholder="Ej: Liga Metropolitana de Fútbol" oninput="nlUpdatePreview()" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Deporte</label>
+        <select class="form-input" id="nl-deporte" style="width:100%">
+          <option value="Fútbol">⚽ Fútbol</option>
+          <option value="Handball">🤾 Handball</option>
+          <option value="Básquet">🏀 Básquet</option>
+          <option value="Vóley">🏐 Vóley</option>
+          <option value="Tenis">🎾 Tenis</option>
+          <option value="Atletismo">🏃 Atletismo</option>
+          <option value="Natación">🏊 Natación</option>
+          <option value="Otro">🏆 Otro</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px">Ícono</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="nl-iconos">
+          <div class="nl-icon-btn selected" onclick="nlSelectIcon(this,'⚽')">⚽</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🤾')">🤾</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🏀')">🏀</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🏐')">🏐</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🎾')">🎾</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🏃')">🏃</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🏊')">🏊</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🏆')">🏆</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'⭐')">⭐</div>
+          <div class="nl-icon-btn" onclick="nlSelectIcon(this,'🔥')">🔥</div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px">Color</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="nl-colores">
+          <div class="nl-color-btn selected" onclick="nlSelectColor(this,'#1a2150')" style="background:#1a2150"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#1a3d20')" style="background:#1a3d20"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#3d1a20')" style="background:#3d1a20"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#2d1a3d')" style="background:#2d1a3d"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#1a3a3d')" style="background:#1a3a3d"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#1a1a3d')" style="background:#1a1a3d"></div>
+          <div class="nl-color-btn" onclick="nlSelectColor(this,'#2a2a2a')" style="background:#2a2a2a"></div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email del administrador (opcional)</label>
+        <input class="form-input" id="nl-email" type="email" placeholder="admin@miliga.com" style="width:100%">
+      </div>
+      <div id="nl-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-secondary" onclick="closeNuevaLiga(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="nl-save-btn" style="flex:1" onclick="saveNuevaLiga()">Crear Liga</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1250,14 +1325,38 @@ function showAdminForLeague(l){
 }
 function logoutAdmin(){showView('view-home');showToast('Sesión cerrada','');}
 
-function showSuperAdminDash(){
+async function showSuperAdminDash(){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='none';
   document.getElementById('view-superadmin').classList.add('active');
   document.getElementById('superadmin-login').style.display='none';
   document.getElementById('superadmin-dashboard').style.display='';
-  renderSuperLeagues();
   showToast('Super Admin 👑','success');
+  await loadSuperLeagues();
+}
+async function loadSuperLeagues(){
+  document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const [{data:ls},{data:ts}]=await Promise.all([
+      supa.from('ligas').select('*').order('id'),
+      supa.from('torneos').select('id,liga_id,estado')
+    ]);
+    if(ls){
+      leagues=ls.map(l=>({
+        id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
+        sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
+        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:'ligabaires2025'
+      }));
+      const activas=ls.filter(l=>l.activa).length;
+      const torneosCount=ts?ts.length:0;
+      document.getElementById('sa-stat-ligas').textContent=ls.length;
+      document.getElementById('sa-stat-activas').textContent=activas;
+      document.getElementById('sa-stat-torneos').textContent=torneosCount;
+      renderSuperLeagues();
+    }
+  }catch(e){
+    document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Sin conexión a Supabase</div>';
+  }
 }
 function renderSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML=leagues.map(l=>`
@@ -1265,18 +1364,81 @@ function renderSuperLeagues(){
       <div style="width:48px;height:48px;border-radius:14px;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${l.icon}</div>
       <div style="flex:1">
         <div style="font-size:14px;font-weight:800">${l.name}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:1px">${l.sport} · ${l.teams||0} equipos</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:1px">${l.sport}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:1px">${l.adminEmail}</div>
         <span class="super-badge ${l.active?'active':'inactive'}">${l.active?'● ACTIVA':'INACTIVA'}</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="btn btn-primary btn-sm" onclick="openLeagueAsAdmin(${l.id})">Gestionar</button>
-        <button class="btn btn-secondary btn-sm" onclick="showToast('Config. de ${l.name}','')">Config.</button>
       </div>
     </div>`).join('');
 }
 function openLeagueAsAdmin(id){
   showAdminForLeague(leagues.find(x=>x.id===id));
+}
+
+// ─── NUEVA LIGA ───
+let nlIconSel='⚽', nlColorSel='#1a2150';
+function openNuevaLiga(){
+  nlIconSel='⚽'; nlColorSel='#1a2150';
+  document.getElementById('nl-nombre').value='';
+  document.getElementById('nl-email').value='';
+  document.getElementById('nl-deporte').value='Fútbol';
+  document.getElementById('nl-error').style.display='none';
+  document.getElementById('nl-preview-name').textContent='Sin nombre';
+  document.getElementById('nl-preview-icon').textContent='⚽';
+  document.getElementById('nl-preview-icon').style.background='#1a2150';
+  document.querySelectorAll('.nl-icon-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.querySelectorAll('.nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.getElementById('nl-save-btn').disabled=false;
+  document.getElementById('nl-save-btn').textContent='Crear Liga';
+  document.getElementById('nuevaLigaModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nl-nombre').focus(),300);
+}
+function closeNuevaLiga(e,force){
+  if(force||e.target===document.getElementById('nuevaLigaModal'))
+    document.getElementById('nuevaLigaModal').classList.remove('open');
+}
+function nlUpdatePreview(){
+  const v=document.getElementById('nl-nombre').value.trim();
+  document.getElementById('nl-preview-name').textContent=v||'Sin nombre';
+}
+function nlSelectIcon(el,icon){
+  nlIconSel=icon;
+  document.querySelectorAll('.nl-icon-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nl-preview-icon').textContent=icon;
+}
+function nlSelectColor(el,color){
+  nlColorSel=color;
+  document.querySelectorAll('.nl-color-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nl-preview-icon').style.background=color;
+}
+async function saveNuevaLiga(){
+  const nombre=document.getElementById('nl-nombre').value.trim();
+  const deporte=document.getElementById('nl-deporte').value;
+  const email=document.getElementById('nl-email').value.trim();
+  const errEl=document.getElementById('nl-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('nl-save-btn');
+  btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    const {data,error}=await supa.from('ligas').insert({
+      nombre,deporte,icon:nlIconSel,color:nlColorSel,
+      color_texto:'#ffffff',activa:true,
+      admin_email:email||null
+    }).select().single();
+    if(error)throw error;
+    closeNuevaLiga(null,true);
+    showToast('Liga "'+nombre+'" creada ✓','success');
+    await loadSuperLeagues();
+    renderLeagues(leagues);
+  }catch(e){
+    errEl.textContent='Error al guardar: '+e.message;
+    errEl.style.display='';
+    btn.disabled=false; btn.textContent='Crear Liga';
+  }
 }
 
 function switchTab(tab,el){
