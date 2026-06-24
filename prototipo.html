@@ -716,6 +716,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="stat-card"><span class="stat-icon">⚽</span><div class="stat-num">312</div><div class="stat-label">GOLES</div></div>
     </div>
     <div class="admin-menu">
+      <div class="menu-item" onclick="goAdmin('torneos')"><div class="menu-icon">🏆</div><div class="menu-text"><h3>Torneos</h3><p>Torneos y divisiones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('teams')"><div class="menu-icon">🛡️</div><div class="menu-text"><h3>Equipos</h3><p>Gestionar equipos y escudos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('players')"><div class="menu-icon">👤</div><div class="menu-text"><h3>Jugadores</h3><p>Jugadores y fotos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('matches')"><div class="menu-icon">📅</div><div class="menu-text"><h3>Partidos</h3><p>Fixture y resultados</p></div><span class="menu-chevron">›</span></div>
@@ -756,6 +757,99 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div style="font-size:12px;color:var(--text2)">Inicio: 01 Mar · Fin: 12 Abr</div>
       </div>
       <button class="btn btn-primary" onclick="showToast('¡Fixture generado! 28 partidos creados','success')">Generar Fixture Automático</button>
+    </div>
+  </div>
+  <!-- TORNEOS LIST -->
+  <div id="admin-torneos" class="admin-screen" style="display:none">
+    <div class="admin-header-bar">
+      <span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span>
+      <h2>Torneos</h2>
+      <button class="btn btn-primary btn-sm" onclick="openNuevoTorneo()">+ Nuevo</button>
+    </div>
+    <div id="adminTorneosList" style="padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <!-- TORNEO DETAIL -->
+  <div id="admin-torneo-detail" class="admin-screen" style="display:none">
+    <div class="admin-header-bar">
+      <span style="color:var(--accent);cursor:pointer" onclick="goAdmin('torneos')">‹ Torneos</span>
+      <h2 id="admin-torneo-nombre">Torneo</h2>
+      <button class="btn btn-primary btn-sm" onclick="openNuevaDivision()">+ División</button>
+    </div>
+    <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--text2)" id="admin-torneo-meta">—</div>
+      </div>
+      <span id="admin-torneo-estado-badge" class="tag">—</span>
+    </div>
+    <div style="padding:12px 16px 4px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Divisiones</div>
+    <div id="adminDivisionesList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO TORNEO -->
+<div class="modal-overlay" id="nuevoTorneoModal" onclick="closeNuevoTorneo(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Nuevo Torneo</div>
+      <div style="font-size:15px;font-weight:900" id="nt-preview-nombre">Sin nombre</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del torneo</label>
+        <input class="form-input" id="nt-nombre" type="text" placeholder="Ej: Apertura 2025" oninput="ntUpdatePreview()" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Temporada / Año</label>
+        <input class="form-input" id="nt-temporada" type="text" placeholder="2025" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Estado</label>
+        <select class="form-input" id="nt-estado" style="width:100%">
+          <option value="planificacion">📋 Planificación</option>
+          <option value="activo">🟢 Activo</option>
+          <option value="finalizado">🏁 Finalizado</option>
+        </select>
+      </div>
+      <div id="nt-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeNuevoTorneo(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="nt-save-btn" style="flex:1" onclick="saveNuevoTorneo()">Crear Torneo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVA DIVISIÓN -->
+<div class="modal-overlay" id="nuevaDivisionModal" onclick="closeNuevaDivision(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Nueva División</div>
+      <div style="font-size:15px;font-weight:900" id="nd-preview-nombre">Sin nombre</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre de la división</label>
+        <input class="form-input" id="nd-nombre" type="text" placeholder="Ej: 1ª División Masculino" oninput="ndUpdatePreview()" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Categoría</label>
+        <input class="form-input" id="nd-categoria" type="text" placeholder="Ej: Mayores, Sub-17, Juveniles..." style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Género</label>
+        <select class="form-input" id="nd-genero" style="width:100%">
+          <option value="Masculino">♂ Masculino</option>
+          <option value="Femenino">♀ Femenino</option>
+          <option value="Mixto">⚧ Mixto</option>
+        </select>
+      </div>
+      <div id="nd-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeNuevaDivision(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="nd-save-btn" style="flex:1" onclick="saveNuevaDivision()">Crear División</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1146,6 +1240,7 @@ function filterLeagues(q){
 }
 
 let currentLeagueId=1,currentDivisionId=1;
+let currentAdminLeagueId=null,currentAdminTorneoId=null;
 
 function formatFecha(str){
   if(!str)return '';
@@ -1313,6 +1408,7 @@ function doAdminLogin(){
   document.getElementById('login-error').style.display='block';
 }
 function showAdminForLeague(l){
+  currentAdminLeagueId=l.id;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='';
   document.getElementById('dash-league-icon').textContent=l.icon;
@@ -1547,6 +1643,7 @@ function goAdmin(page){
   if(page==='teams')renderAdminTeams();
   if(page==='players')renderAdminPlayers();
   if(page==='matches')renderAdminMatches();
+  if(page==='torneos')loadAdminTorneos();
 }
 function renderAdminTeams(){
   document.getElementById('teamsList').innerHTML=teamsData.map(t=>`
@@ -1894,6 +1991,158 @@ function showTransferModal(){document.getElementById('transferModal').classList.
 function closeTransfer(e,force){
   if(force||e.target===document.getElementById('transferModal'))
     document.getElementById('transferModal').classList.remove('open');
+}
+
+// ─── TORNEOS (ADMIN) ───
+const estadoBadge={planificacion:'📋 Planificación',activo:'🟢 Activo',finalizado:'🏁 Finalizado'};
+const estadoClass={planificacion:'tag-sport',activo:'tag-active',finalizado:'tag-teams'};
+
+async function loadAdminTorneos(){
+  const el=document.getElementById('adminTorneosList');
+  el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('torneos')
+      .select('*, divisiones(id)')
+      .eq('liga_id',currentAdminLeagueId)
+      .order('id',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){
+      el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">Sin torneos aún.<br>Tocá + Nuevo para crear uno.</div>';
+      return;
+    }
+    el.innerHTML=data.map(t=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="openTorneoDetail(${t.id},'${escHtml(t.nombre)}','${t.estado}','${t.temporada||''}')">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">${escHtml(t.nombre)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.temporada||''}  ·  ${t.divisiones?t.divisiones.length:0} división${t.divisiones&&t.divisiones.length!==1?'es':''}</div>
+        </div>
+        <span class="tag ${estadoClass[t.estado]||'tag-teams'}">${estadoBadge[t.estado]||t.estado}</span>
+        <span style="color:var(--text3);font-size:18px">›</span>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar torneos</div>';
+  }
+}
+
+function openTorneoDetail(id,nombre,estado,temporada){
+  currentAdminTorneoId=id;
+  document.getElementById('admin-torneo-nombre').textContent=nombre;
+  document.getElementById('admin-torneo-meta').textContent=temporada||'Sin temporada';
+  const badge=document.getElementById('admin-torneo-estado-badge');
+  badge.textContent=estadoBadge[estado]||estado;
+  badge.className='tag '+(estadoClass[estado]||'tag-teams');
+  goAdmin('torneo-detail');
+  loadAdminDivisiones();
+}
+
+async function loadAdminDivisiones(){
+  const el=document.getElementById('adminDivisionesList');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('divisiones')
+      .select('*')
+      .eq('torneo_id',currentAdminTorneoId)
+      .order('id');
+    if(error)throw error;
+    if(!data||!data.length){
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin divisiones.<br>Tocá + División para agregar.</div>';
+      return;
+    }
+    el.innerHTML=data.map(d=>`
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${escHtml(d.nombre)}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${d.categoria||''}${d.categoria&&d.genero?' · ':''}${d.genero||''}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="showToast('${escHtml(d.nombre)} seleccionada','')">Gestionar</button>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar divisiones</div>';
+  }
+}
+
+function escHtml(s){return (s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+
+// — Nuevo Torneo —
+function openNuevoTorneo(){
+  document.getElementById('nt-nombre').value='';
+  document.getElementById('nt-temporada').value=new Date().getFullYear();
+  document.getElementById('nt-estado').value='planificacion';
+  document.getElementById('nt-preview-nombre').textContent='Sin nombre';
+  document.getElementById('nt-error').style.display='none';
+  document.getElementById('nt-save-btn').disabled=false;
+  document.getElementById('nt-save-btn').textContent='Crear Torneo';
+  document.getElementById('nuevoTorneoModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nt-nombre').focus(),300);
+}
+function closeNuevoTorneo(e,force){
+  if(force||e.target===document.getElementById('nuevoTorneoModal'))
+    document.getElementById('nuevoTorneoModal').classList.remove('open');
+}
+function ntUpdatePreview(){
+  document.getElementById('nt-preview-nombre').textContent=document.getElementById('nt-nombre').value.trim()||'Sin nombre';
+}
+async function saveNuevoTorneo(){
+  const nombre=document.getElementById('nt-nombre').value.trim();
+  const temporada=document.getElementById('nt-temporada').value.trim();
+  const estado=document.getElementById('nt-estado').value;
+  const errEl=document.getElementById('nt-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('nt-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const {error}=await supa.from('torneos').insert({
+      liga_id:currentAdminLeagueId,nombre,temporada,estado
+    });
+    if(error)throw error;
+    closeNuevoTorneo(null,true);
+    showToast('Torneo "'+nombre+'" creado ✓','success');
+    await loadAdminTorneos();
+  }catch(e){
+    errEl.textContent='Error: '+e.message;errEl.style.display='';
+    btn.disabled=false;btn.textContent='Crear Torneo';
+  }
+}
+
+// — Nueva División —
+function openNuevaDivision(){
+  document.getElementById('nd-nombre').value='';
+  document.getElementById('nd-categoria').value='';
+  document.getElementById('nd-genero').value='Masculino';
+  document.getElementById('nd-preview-nombre').textContent='Sin nombre';
+  document.getElementById('nd-error').style.display='none';
+  document.getElementById('nd-save-btn').disabled=false;
+  document.getElementById('nd-save-btn').textContent='Crear División';
+  document.getElementById('nuevaDivisionModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nd-nombre').focus(),300);
+}
+function closeNuevaDivision(e,force){
+  if(force||e.target===document.getElementById('nuevaDivisionModal'))
+    document.getElementById('nuevaDivisionModal').classList.remove('open');
+}
+function ndUpdatePreview(){
+  document.getElementById('nd-preview-nombre').textContent=document.getElementById('nd-nombre').value.trim()||'Sin nombre';
+}
+async function saveNuevaDivision(){
+  const nombre=document.getElementById('nd-nombre').value.trim();
+  const categoria=document.getElementById('nd-categoria').value.trim();
+  const genero=document.getElementById('nd-genero').value;
+  const errEl=document.getElementById('nd-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('nd-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const {error}=await supa.from('divisiones').insert({
+      torneo_id:currentAdminTorneoId,nombre,categoria:categoria||null,genero
+    });
+    if(error)throw error;
+    closeNuevaDivision(null,true);
+    showToast('División "'+nombre+'" creada ✓','success');
+    await loadAdminDivisiones();
+  }catch(e){
+    errEl.textContent='Error: '+e.message;errEl.style.display='';
+    btn.disabled=false;btn.textContent='Crear División';
+  }
 }
 
 function showToast(msg,type=''){
