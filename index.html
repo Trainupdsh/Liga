@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <title>Ligas Deportivas</title>
 <style>
 :root[data-theme="dark"] {
@@ -934,7 +935,15 @@ header .subtitle{font-size:12px;color:var(--text2);}
 </div>
 
 <script>
-const leagues=[
+// ═══ SUPABASE ═══
+const SUPA_URL='https://qksdonfcqikcvmjztpwf.supabase.co';
+const SUPA_KEY='sb_publishable_JZ3V17H60UYA33u0mdD4kw_vKtt-F-o';
+const supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+let mesaMatchId=3; // partido en_vivo activo
+let mesaRealtimeSub=null;
+
+// Hardcoded fallback (se sobreescribe con datos de Supabase)
+let leagues=[
   {id:1,name:'Liga Baires',slug:'liga-baires',sport:'Handball',season:'2025',icon:'🤾',color:'#1a2150',text:'#5b6ef5',teams:8,active:true,adminEmail:'admin@liga-baires.com',adminPass:'ligabaires2025'},
   {id:2,name:'Liga Norte Fútbol',slug:'liga-norte',sport:'Fútbol',season:'Clausura 2025',icon:'⚽',color:'#1a3d20',text:'#22c55e',teams:12,active:true,adminEmail:'admin@liga-norte.com',adminPass:'liganorte2025'},
   {id:3,name:'Liga Sur Básquet',slug:'liga-sur',sport:'Básquet',season:'2025',icon:'🏀',color:'#3d2f1a',text:'#f59e0b',teams:6,active:true,adminEmail:'admin@liga-sur.com',adminPass:'ligasur2025'},
@@ -1031,18 +1040,82 @@ function filterLeagues(q){
 }
 
 let currentLeagueId=1,currentDivisionId=1;
-function openLeague(id){
-  currentLeagueId=id;
-  const l=leagues.find(x=>x.id===id);
-  document.getElementById('league-header-name').textContent=l.name;
-  document.getElementById('league-header-sub').textContent=l.sport+' · '+(l.season||'—');
-  renderLeagueTorneos(id,l);
-  showView('view-league');
+
+function formatFecha(str){
+  if(!str)return '';
+  const d=new Date(str),m=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return m[d.getMonth()]+' '+d.getFullYear();
 }
-function renderLeagueTorneos(leagueId,l){
+
+async function openLeague(id){
+  currentLeagueId=id;
+  showView('view-league');
+  document.getElementById('league-torneo-banner').innerHTML='';
+  document.getElementById('league-divs-list').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const [{data:liga,error:e1},{data:ts,error:e2}]=await Promise.all([
+      supa.from('ligas').select('*').eq('id',id).single(),
+      supa.from('torneos').select('*').eq('liga_id',id).order('id',{ascending:false})
+    ]);
+    if(e1||e2)throw e1||e2;
+    document.getElementById('league-header-name').textContent=liga.nombre;
+    document.getElementById('league-header-sub').textContent=liga.deporte+' · 2025';
+    const activo=ts.find(t=>t.estado==='activo');
+    let divs=[];
+    if(activo){
+      const {data:ds}=await supa.from('divisiones').select('*').eq('torneo_id',activo.id).order('id');
+      divs=ds||[];
+    }
+    renderLeagueTorneosDB(liga,ts,divs);
+  }catch(err){
+    console.warn('Supabase error, usando datos locales',err);
+    const l=leagues.find(x=>x.id===id);
+    if(l){
+      document.getElementById('league-header-name').textContent=l.name;
+      document.getElementById('league-header-sub').textContent=l.sport+' · '+(l.season||'—');
+      renderLeagueTorneosLocal(id,l);
+    }
+  }
+}
+
+function renderLeagueTorneosDB(liga,ts,divs){
+  const activo=ts.find(t=>t.estado==='activo');
+  const past=ts.filter(t=>t.estado!=='activo');
+  if(activo){
+    document.getElementById('league-torneo-banner').innerHTML=`
+      <div class="torneo-banner" style="background:linear-gradient(135deg,${liga.color},${liga.color}bb)">
+        <div class="torneo-banner-label">Torneo activo</div>
+        <div class="torneo-banner-name">${activo.nombre}</div>
+        <div class="torneo-banner-sub">${divs.length} divisiones · Desde ${formatFecha(activo.fecha_inicio)}</div>
+      </div>`;
+    document.getElementById('league-divs-title').textContent='DIVISIONES — '+activo.nombre;
+    document.getElementById('league-divs-list').innerHTML=divs.length?divs.map(d=>`
+      <div class="div-card" onclick="openDivision(${d.id})">
+        <div class="div-card-icon" style="background:${liga.color}">${d.icon}</div>
+        <div style="flex:1">
+          <div class="div-card-name">${d.nombre}</div>
+          <div class="div-card-meta">Fecha ${d.ronda_actual} de ${d.total_rondas}</div>
+        </div>
+      </div>`).join(''):'<div class="empty-state">Sin divisiones cargadas</div>';
+  } else {
+    document.getElementById('league-torneo-banner').innerHTML='';
+    document.getElementById('league-divs-title').textContent='DIVISIONES';
+    document.getElementById('league-divs-list').innerHTML='<div class="empty-state">Sin torneo activo</div>';
+  }
+  document.getElementById('league-torneos-old').innerHTML=past.length?past.map(t=>`
+    <div class="past-torneo-card" onclick="showToast('${t.nombre} — archivado','')">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${liga.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800">${t.nombre}</div>
+        <div style="font-size:11px;color:var(--text2)">${formatFecha(t.fecha_inicio)}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">FINALIZADO</span>
+    </div>`).join(''):'<div class="empty-state">Sin torneos anteriores</div>';
+}
+
+function renderLeagueTorneosLocal(leagueId,l){
   const active=torneos.filter(t=>t.leagueId===leagueId&&t.status==='active');
   const past=torneos.filter(t=>t.leagueId===leagueId&&t.status!=='active');
-  // Banner
   if(active.length){
     const t=active[0];
     document.getElementById('league-torneo-banner').innerHTML=`
@@ -1056,35 +1129,35 @@ function renderLeagueTorneos(leagueId,l){
     document.getElementById('league-divs-list').innerHTML=divs.map(d=>`
       <div class="div-card" onclick="openDivision(${d.id})">
         <div class="div-card-icon" style="background:${l.color}">${d.icon}</div>
-        <div style="flex:1">
-          <div class="div-card-name">${d.name}</div>
-          <div class="div-card-meta">${d.teams} equipos · Fecha ${d.currentRound} de ${d.rounds}</div>
-        </div>
+        <div style="flex:1"><div class="div-card-name">${d.name}</div><div class="div-card-meta">Fecha ${d.currentRound} de ${d.rounds}</div></div>
       </div>`).join('');
   } else {
     document.getElementById('league-torneo-banner').innerHTML='';
     document.getElementById('league-divs-title').textContent='DIVISIONES';
     document.getElementById('league-divs-list').innerHTML='<div class="empty-state">Sin torneo activo</div>';
   }
-  // Past tournaments
   document.getElementById('league-torneos-old').innerHTML=past.length?past.map(t=>`
-    <div class="past-torneo-card" onclick="showToast('${t.name} — archivado','')">
-      <div style="width:40px;height:40px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${l.icon}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:800">${t.name}</div>
-        <div style="font-size:11px;color:var(--text2)">${t.divsCount} divisiones · ${t.start}</div>
-      </div>
-      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">FINALIZADO</span>
-    </div>`).join(''):'<div class="empty-state">Sin torneos anteriores</div>';
+    <div class="past-torneo-card"><div style="flex:1"><div style="font-size:13px;font-weight:800">${t.name}</div></div><span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--card2);color:var(--text3)">FINALIZADO</span></div>`).join(''):'<div class="empty-state">Sin torneos anteriores</div>';
 }
-function openDivision(divId){
+
+async function openDivision(divId){
   currentDivisionId=divId;
-  const d=divisiones.find(x=>x.id===divId);
-  const t=torneos.find(x=>x.id===d.torneoId);
-  const l=leagues.find(x=>x.id===t.leagueId);
-  document.getElementById('division-header-name').textContent=d.name;
-  document.getElementById('division-header-sub').textContent=t.name+' · '+l.name;
   showView('view-division');
+  try{
+    const {data:d}=await supa.from('divisiones')
+      .select('*, torneo:torneos(nombre, liga:ligas(nombre))')
+      .eq('id',divId).single();
+    if(d){
+      document.getElementById('division-header-name').textContent=d.nombre;
+      document.getElementById('division-header-sub').textContent=d.torneo.nombre+' · '+d.torneo.liga.nombre;
+    }
+  }catch(e){
+    const d=divisiones.find(x=>x.id===divId);
+    if(d){
+      document.getElementById('division-header-name').textContent=d.name||d.nombre;
+      document.getElementById('division-header-sub').textContent='Liga Baires';
+    }
+  }
   switchTab('partidos',document.querySelector('#view-division .nav-item'));
   buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
@@ -1472,7 +1545,8 @@ function showMesaView(user){
   document.getElementById('mesa-timer-btn').textContent='▶ INICIAR';
   document.getElementById('mesa-timer-btn').disabled=false;
   document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
-  showToast('Mesa de Control activada','success');
+  subscribeToMatchEvents(mesaMatchId);
+  showToast('Mesa de Control activada — LIVE','success');
 }
 function toggleTimer(){
   mesaRunning=!mesaRunning;
@@ -1488,24 +1562,42 @@ function toggleTimer(){
   }
 }
 const evtLabels={gol:'⚽ GOL',amarilla:'🟡 AMARILLA',roja:'🔴 ROJA',exclusion:"🚫 EXCLUSIÓN 2'",timeout:'⏱ T. MUERTO',sust:'🔄 SUSTITUCIÓN',fin:'🏁 FIN DE TIEMPO'};
-function mesaEvent(type,side){
+function addEventToLog(type,side,min){
+  const homeName=document.getElementById('mesa-home-name').textContent;
+  const awayName=document.getElementById('mesa-away-name').textContent;
+  const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
+  const el=document.getElementById('mesa-events');
+  if(el.firstChild&&el.firstChild.textContent&&el.firstChild.textContent.includes('Sin eventos'))el.innerHTML='';
+  const entry=document.createElement('div');
+  entry.className='mesa-event';
+  entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span>${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
+  el.prepend(entry);
+}
+async function mesaEvent(type,side){
   if(type==='gol'){
     if(side==='local'){mesaScoreHome++;document.getElementById('mesa-score-home').textContent=mesaScoreHome;}
     else{mesaScoreAway++;document.getElementById('mesa-score-away').textContent=mesaScoreAway;}
   }
   const min=Math.floor(mesaSecs/60);
-  const homeName=document.getElementById('mesa-home-name').textContent;
-  const awayName=document.getElementById('mesa-away-name').textContent;
-  const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
-  const el=document.getElementById('mesa-events');
-  const empty=el.querySelector('[data-empty]');
-  if(empty)empty.remove();
-  else if(el.children.length===1&&el.firstChild.textContent.includes('Sin eventos'))el.innerHTML='';
-  const entry=document.createElement('div');
-  entry.className='mesa-event';
-  entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span>${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
-  el.prepend(entry);
-  showToast((evtLabels[type]||type)+(sideLabel?' — '+sideLabel:''),'');
+  addEventToLog(type,side,min);
+  showToast((evtLabels[type]||type)+(side==='local'?' — '+document.getElementById('mesa-home-name').textContent:side==='visita'?' — '+document.getElementById('mesa-away-name').textContent:''),'');
+  // Guardar en Supabase
+  try{
+    await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:type,equipo:side||null,minuto:min});
+    if(type==='gol'){
+      await supa.from('partidos').update(
+        side==='local'?{goles_local:mesaScoreHome}:{goles_visita:mesaScoreAway}
+      ).eq('id',mesaMatchId);
+    }
+  }catch(e){console.warn('Error guardando evento',e);}
+}
+
+function subscribeToMatchEvents(matchId){
+  if(mesaRealtimeSub){supa.removeChannel(mesaRealtimeSub);mesaRealtimeSub=null;}
+  mesaRealtimeSub=supa.channel('match-'+matchId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'eventos_partido',filter:`partido_id=eq.${matchId}`},
+      ({new:ev})=>{addEventToLog(ev.tipo,ev.equipo,ev.minuto);})
+    .subscribe();
 }
 function endPeriod(){
   clearInterval(mesaTimerInterval);
@@ -1543,7 +1635,28 @@ function showToast(msg,type=''){
   t.className='toast'+(type?' '+type:'');t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
-renderLeagues(leagues);
+// Inicio: cargar ligas desde Supabase
+(async()=>{
+  try{
+    const {data,error}=await supa.from('ligas').select('*').order('id');
+    if(error)throw error;
+    if(data&&data.length){
+      leagues=data.map(l=>({
+        id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
+        sport:l.deporte,season:'2025',icon:l.icon,color:l.color,text:l.color_texto,
+        teams:0,active:l.activa,
+        adminEmail:'admin@liga-baires.com',adminPass:'ligabaires2025'
+      }));
+      renderLeagues(leagues);
+      console.log('✓ Ligas cargadas desde Supabase:',leagues.length);
+    }else{
+      renderLeagues(leagues);
+    }
+  }catch(e){
+    console.warn('Sin conexión a Supabase, usando datos locales',e);
+    renderLeagues(leagues);
+  }
+})();
 </script>
 </body>
 </html>
