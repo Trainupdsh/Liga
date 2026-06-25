@@ -2185,16 +2185,7 @@ const teamsData=[
   {id:7,name:'San Martín',short:'SM',color:'#1a3d3d',text:'#14b8a6',emoji:'🩵'},
   {id:8,name:'Boca Juniors',short:'BJ',color:'#1a1a3d',text:'#eab308',emoji:'💛'},
 ];
-const players=[
-  {id:1,name:'Martín García',team:1,jersey:7,goals:12},{id:2,name:'Diego López',team:1,jersey:10,goals:8},
-  {id:3,name:'Roberto Torres',team:1,jersey:5,goals:5},{id:4,name:'Carlos Sánchez',team:1,jersey:3,goals:4},
-  {id:5,name:'Alejandro Fernández',team:1,jersey:14,goals:3},{id:6,name:'Santiago Martín',team:2,jersey:9,goals:10},
-  {id:7,name:'Pablo Ruiz',team:2,jersey:11,goals:9},{id:8,name:'Lucas Díaz',team:2,jersey:6,goals:7},
-  {id:9,name:'Facundo Gómez',team:2,jersey:4,goals:3},{id:10,name:'Nicolás Castro',team:3,jersey:8,goals:8},
-  {id:11,name:'Maximiliano Pérez',team:3,jersey:10,goals:6},{id:12,name:'Sebastián Romero',team:4,jersey:7,goals:5},
-  {id:13,name:'Gonzalo Herrera',team:4,jersey:9,goals:4},{id:14,name:'Emanuel Flores',team:5,jersey:11,goals:6},
-  {id:15,name:'Brian Morales',team:6,jersey:7,goals:5},{id:16,name:'Tomás Vega',team:7,jersey:10,goals:4},
-];
+const players=[];
 const torneos=[
   {id:1,leagueId:1,name:'Apertura 2025',status:'active',start:'Mar 2025',divsCount:3},
   {id:2,leagueId:1,name:'Clausura 2024',status:'done',start:'Ago 2024',divsCount:3},
@@ -3908,6 +3899,7 @@ function openNuevoClub(){
   document.getElementById('nc-abrev').value='';
   document.getElementById('nc-email').value='';
   document.getElementById('nc-pass').value='';
+  document.getElementById('nc-dir').value='';
   document.getElementById('nc-error').style.display='none';
   document.getElementById('nc-preview-nombre').textContent='Sin nombre';
   document.getElementById('nc-preview-icon').textContent='CL';
@@ -4223,15 +4215,21 @@ function renderPartidoCard(p){
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <div style="flex:1;text-align:right;font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
+      <div style="flex:1;text-align:right">
+        <div style="font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">Local</div>
+      </div>
       <div style="display:flex;align-items:center;gap:4px">
         <div style="width:28px;height:28px;border-radius:50%;background:${p.local?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.local?.abreviacion||'?')}</div>
         <div style="font-size:15px;font-weight:900;padding:0 4px">${p.estado==='programado'?'— : —':`${p.goles_local??0} : ${p.goles_visita??0}`}</div>
         <div style="width:28px;height:28px;border-radius:50%;background:${p.visita?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.visita?.abreviacion||'?')}</div>
       </div>
-      <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Visitante</div>
+      </div>
     </div>
-    ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
+    ${(p.cancha||p.local?.club?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha||p.local?.club?.direccion)}</div>`:''}
     ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
       <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📅 Reprogramar</button>
     </div>`:''}
@@ -4244,7 +4242,7 @@ async function loadAdminPartidos(){
   if(playoffBtn)playoffBtn.style.display='none';
   try{
     const {data,error}=await supa.from('partidos')
-      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal,club:club_id(direccion)), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
       .eq('division_id',currentAdminDivisionId)
       .order('jornada').order('fecha').order('hora');
     if(error)throw error;
