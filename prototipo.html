@@ -2076,8 +2076,10 @@ let currentLeagueLimits={maxEquipos:null,maxJugadores:null};
 
 function formatFecha(str){
   if(!str)return '';
-  const d=new Date(str),m=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  return m[d.getMonth()]+' '+d.getFullYear();
+  const d=new Date(str+'T12:00:00');
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return dias[d.getDay()]+' '+d.getDate()+' '+meses[d.getMonth()];
 }
 
 async function openLeague(id){
