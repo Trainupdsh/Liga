@@ -662,7 +662,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="crown-banner">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <div style="font-size:32px">👑</div>
-        <div><div style="font-size:16px;font-weight:900">Panel Maestro</div><div style="font-size:12px;color:var(--text2)">superadmin@fixtar.com</div></div>
+        <div><div style="font-size:16px;font-weight:900">Panel Maestro</div><div style="font-size:12px;color:var(--text2)">lucasmoreno</div></div>
         <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="goHome()">Salir</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -2181,13 +2181,7 @@ let mesaMatchId=3; // partido en_vivo activo
 let mesaRealtimeSub=null;
 
 // Hardcoded fallback (se sobreescribe con datos de Supabase)
-let leagues=[
-  {id:1,name:'Liga Baires',slug:'liga-baires',sport:'Handball',season:'2025',icon:'🤾',color:'#1a2150',text:'#5b6ef5',teams:8,active:true,adminEmail:'admin@fixtar.com',adminPass:'1234'},
-  {id:2,name:'Liga Norte Fútbol',slug:'liga-norte',sport:'Fútbol',season:'Clausura 2025',icon:'⚽',color:'#1a3d20',text:'#22c55e',teams:12,active:true,adminEmail:'admin2@fixtar.com',adminPass:'1234'},
-  {id:3,name:'Liga Sur Básquet',slug:'liga-sur',sport:'Básquet',season:'2025',icon:'🏀',color:'#3d2f1a',text:'#f59e0b',teams:6,active:true,adminEmail:'admin3@fixtar.com',adminPass:'1234'},
-  {id:4,name:'Club Voley Centro',slug:'voley-centro',sport:'Vóley',season:'Apertura 2025',icon:'🏐',color:'#2f1a3d',text:'#a855f7',teams:8,active:false,adminEmail:'admin4@fixtar.com',adminPass:'1234'},
-  {id:5,name:'Pádel Palermo',slug:'padel-palermo',sport:'Pádel',season:'2025',icon:'🎾',color:'#1a3d3d',text:'#14b8a6',teams:16,active:true,adminEmail:'admin5@fixtar.com',adminPass:'1234'},
-];
+let leagues=[];
 const teamsData=[
   {id:1,name:'Los Andes',short:'LA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
   {id:2,name:'River Baires',short:'RB',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
