@@ -1215,7 +1215,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="foto-upload-zone" id="nc-logo-zone" onclick="document.getElementById('nc-logo-input').click()">
           <input type="file" id="nc-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'nc')">
           <img id="nc-logo-preview" class="foto-preview-img" alt="logo">
-          <div id="nc-logo-placeholder">📷 Toca para subir escudo</div>
+          <div id="nc-logo-placeholder">📷 Toca para subir escudo<br><span style="font-size:10px;opacity:.7">JPG · PNG · Cuadrado · Máx 8 MB</span></div>
         </div>
       </div>
       <div id="nc-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
@@ -1244,7 +1244,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="foto-upload-zone" onclick="document.getElementById('nt-logo-input').click()">
           <input type="file" id="nt-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'nt')">
           <img id="nt-logo-preview" class="foto-preview-img" style="width:72px;height:72px" alt="logo">
-          <div id="nt-logo-placeholder">📷 Toca para subir logo</div>
+          <div id="nt-logo-placeholder">📷 Toca para subir logo<br><span style="font-size:10px;opacity:.7">JPG · PNG · Cuadrado · Máx 8 MB</span></div>
         </div>
       </div>
       <div>
@@ -1356,7 +1356,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="foto-upload-zone" onclick="document.getElementById('cfg-liga-logo-input').click()">
           <input type="file" id="cfg-liga-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'cfg-liga')">
           <img id="cfg-liga-logo-preview" class="foto-preview-img" style="width:72px;height:72px" alt="logo">
-          <div id="cfg-liga-logo-placeholder">📷 Toca para subir logo</div>
+          <div id="cfg-liga-logo-placeholder">📷 Toca para subir logo<br><span style="font-size:10px;opacity:.7">JPG · PNG · Cuadrado · Máx 8 MB</span></div>
         </div>
       </div>
       <div id="cfg-liga-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
@@ -1421,7 +1421,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="foto-upload-zone" id="nj-foto-zone" onclick="document.getElementById('nj-foto-input').click()">
           <input type="file" id="nj-foto-input" accept="image/*" style="display:none" onchange="handleJugadorFotoChange(this,'nj')">
           <img id="nj-foto-preview" class="foto-preview-img" style="width:60px;height:75px;border-radius:8px" alt="foto">
-          <div id="nj-foto-placeholder">📷 Toca para subir foto</div>
+          <div id="nj-foto-placeholder">📷 Toca para subir foto<br><span style="font-size:10px;opacity:.7">JPG · PNG · Máx 8 MB</span></div>
         </div>
       </div>
       <div id="nj-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
@@ -1698,7 +1698,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="foto-upload-zone" onclick="document.getElementById('dj-foto-input').click()">
           <input type="file" id="dj-foto-input" accept="image/*" style="display:none" onchange="handleJugadorFotoChange(this,'dj')">
           <img id="dj-foto-preview" class="foto-preview-img" style="width:60px;height:75px;border-radius:8px" alt="foto">
-          <div id="dj-foto-placeholder">📷 Toca para subir foto</div>
+          <div id="dj-foto-placeholder">📷 Toca para subir foto<br><span style="font-size:10px;opacity:.7">JPG · PNG · Máx 8 MB</span></div>
         </div>
       </div>
       <div id="dj-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
@@ -5189,23 +5189,42 @@ async function resizeAndConvertToWebP(file,maxW,maxH){
       const canvas=document.createElement('canvas');
       canvas.width=w;canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
+      // Try WebP first; fall back to JPEG on browsers that don't support it (iOS Safari)
       canvas.toBlob(blob=>{
-        if(blob)resolve(blob);
-        else reject(new Error('Canvas toBlob failed'));
+        if(blob){resolve(blob);return;}
+        canvas.toBlob(b=>{b?resolve(b):reject(new Error('No se pudo procesar la imagen'));}, 'image/jpeg', 0.85);
       },'image/webp',0.85);
     };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image load failed'));};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Imagen no válida'));};
     img.src=url;
   });
 }
 async function uploadImageToStorage(blob,bucket,path){
-  const {data,error}=await supa.storage.from(bucket).upload(path,blob,{upsert:true,contentType:'image/webp'});
+  const ct=blob.type||'image/jpeg';
+  const ext=ct.includes('webp')?'webp':'jpg';
+  const finalPath=path.replace(/\.(webp|jpg|jpeg)$/,'.'+ext);
+  const {data,error}=await supa.storage.from(bucket).upload(finalPath,blob,{upsert:true,contentType:ct});
   if(error)throw error;
-  const {data:{publicUrl}}=supa.storage.from(bucket).getPublicUrl(path);
+  const {data:{publicUrl}}=supa.storage.from(bucket).getPublicUrl(finalPath);
   return publicUrl;
+}
+function _showClearBtn(id, onClear){
+  let btn=document.getElementById(id);
+  if(!btn){
+    btn=document.createElement('button');
+    btn.type='button'; btn.id=id;
+    btn.style.cssText='display:block;margin:6px auto 0;font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:6px';
+    btn.textContent='✕ Quitar';
+    btn.addEventListener('click',e=>{e.stopPropagation();onClear();btn.style.display='none';});
+    const zone=btn; // placeholder for insertion — inserted by caller
+    return btn;
+  }
+  btn.style.display='block';
+  return btn;
 }
 async function handleEscudoFileChange(input,prefix){
   const file=input.files[0];if(!file)return;
+  if(file.size>8*1024*1024){showToast('La imagen es muy grande (máx 8 MB)','error');return;}
   const preview=document.getElementById(prefix+'-logo-preview');
   const placeholder=document.getElementById(prefix+'-logo-placeholder');
   try{
@@ -5214,10 +5233,33 @@ async function handleEscudoFileChange(input,prefix){
     preview.src=URL.createObjectURL(blob);
     preview.classList.add('visible');
     if(placeholder)placeholder.style.display='none';
-  }catch(e){showToast('Error procesando imagen','error');}
+    const clearId=prefix+'-logo-clear';
+    let btn=document.getElementById(clearId);
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button'; btn.id=clearId;
+      btn.style.cssText='display:block;margin:6px auto 0;font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer';
+      btn.textContent='✕ Quitar';
+      btn.addEventListener('click',e=>{e.stopPropagation();clearEscudo(prefix);});
+      preview.parentNode.appendChild(btn);
+    }
+    btn.style.display='block';
+  }catch(e){showToast('Error al procesar la imagen. Usá JPG o PNG.','error');}
+}
+function clearEscudo(prefix){
+  window['_'+prefix+'LogoBlob']=null;
+  const preview=document.getElementById(prefix+'-logo-preview');
+  const placeholder=document.getElementById(prefix+'-logo-placeholder');
+  const btn=document.getElementById(prefix+'-logo-clear');
+  const input=document.getElementById(prefix+'-logo-input');
+  if(preview){preview.src='';preview.classList.remove('visible');}
+  if(placeholder)placeholder.style.display='';
+  if(btn)btn.style.display='none';
+  if(input)input.value='';
 }
 async function handleJugadorFotoChange(input,prefix){
   const file=input.files[0];if(!file)return;
+  if(file.size>8*1024*1024){showToast('La imagen es muy grande (máx 8 MB)','error');return;}
   const preview=document.getElementById(prefix+'-foto-preview');
   const placeholder=document.getElementById(prefix+'-foto-placeholder');
   try{
@@ -5226,6 +5268,29 @@ async function handleJugadorFotoChange(input,prefix){
     preview.src=URL.createObjectURL(blob);
     preview.classList.add('visible');
     if(placeholder)placeholder.style.display='none';
+    const clearId=prefix+'-foto-clear';
+    let btn=document.getElementById(clearId);
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button'; btn.id=clearId;
+      btn.style.cssText='display:block;margin:6px auto 0;font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer';
+      btn.textContent='✕ Quitar foto';
+      btn.addEventListener('click',e=>{e.stopPropagation();clearFoto(prefix);});
+      preview.parentNode.appendChild(btn);
+    }
+    btn.style.display='block';
+  }catch(e){showToast('Error al procesar la imagen. Usá JPG o PNG.','error');}
+}
+function clearFoto(prefix){
+  window['_'+prefix+'FotoBlob']=null;
+  const preview=document.getElementById(prefix+'-foto-preview');
+  const placeholder=document.getElementById(prefix+'-foto-placeholder');
+  const btn=document.getElementById(prefix+'-foto-clear');
+  const input=document.getElementById(prefix+'-foto-input');
+  if(preview){preview.src='';preview.classList.remove('visible');}
+  if(placeholder)placeholder.style.display='';
+  if(btn)btn.style.display='none';
+  if(input)input.value='';
   }catch(e){showToast('Error procesando imagen','error');}
 }
 
