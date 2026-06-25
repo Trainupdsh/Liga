@@ -1617,6 +1617,23 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- MODAL: ALINEACIÓN -->
+<div class="modal-overlay" id="alineacionModal" onclick="closeAlineacion(event)">
+  <div class="modal-sheet" style="max-height:85vh;display:flex;flex-direction:column;padding-bottom:0">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Alineación</div>
+      <div id="alin-team-name" style="font-size:16px;font-weight:900;margin-top:2px">Equipo</div>
+      <div id="alin-counter" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:700">0 jugadores seleccionados</div>
+    </div>
+    <div id="alin-list" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:0 0 auto" onclick="closeAlineacion(null,true)">Cancelar</button>
+      <button class="btn btn-primary" id="alin-save-btn" style="flex:1" onclick="saveAlineacion()">Confirmar alineación</button>
+    </div>
+  </div>
+</div>
+
 <!-- EN VIVO MODAL (delegado visitante) -->
 <div class="modal-overlay" id="enVivoModal" onclick="closeEnVivo(event)">
   <div class="modal-sheet" style="padding-bottom:28px">
@@ -3116,29 +3133,51 @@ async function loadDelegPartidos(){
       .order('fecha').order('hora');
     const list=data||[];
     if(!list.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
+    // Cargar alineaciones confirmadas de todos estos partidos
+    const pIds=list.map(p=>p.id);
+    const {data:alinData}=await supa.from('alineaciones').select('partido_id,equipo_id').in('partido_id',pIds);
+    const alinMap={};
+    (alinData||[]).forEach(a=>{
+      const k=a.partido_id+'_'+a.equipo_id;
+      alinMap[k]=(alinMap[k]||0)+1;
+    });
     const estadoLabel={programado:'⏳ Programado',en_curso:'🟢 En vivo',finalizado:'✓ Finalizado'};
     el.innerHTML=list.map(p=>{
       const esLocal=ids.includes(p.equipo_local_id);
       const esVisita=ids.includes(p.equipo_visita_id);
-      const puedeOperar=esLocal&&p.estado!=='finalizado';
-      const puedeVerEnVivo=esVisita&&p.estado==='en_curso';
+      const miEquipoId=esLocal?p.equipo_local_id:p.equipo_visita_id;
+      const miNombre=esLocal?(p.local?.nombre||'Local'):(p.visita?.nombre||'Visitante');
+      const alinLocal=alinMap[p.id+'_'+p.equipo_local_id]||0;
+      const alinVisita=alinMap[p.id+'_'+p.equipo_visita_id]||0;
+      const miAlin=esLocal?alinLocal:alinVisita;
+      const ambasConfirmadas=alinLocal>0&&alinVisita>0;
+      const finalizado=p.estado==='finalizado';
+      const enCurso=p.estado==='en_curso';
       return `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:11px;color:var(--text2)">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''}</span>
-          <span style="font-size:11px;font-weight:700;color:${p.estado==='en_curso'?'var(--green)':p.estado==='finalizado'?'var(--text3)':'var(--accent)'}">${estadoLabel[p.estado]||p.estado||''}</span>
+          <span style="font-size:11px;font-weight:700;color:${enCurso?'var(--green)':finalizado?'var(--text3)':'var(--accent)'}">${estadoLabel[p.estado]||p.estado||''}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${puedeOperar||puedeVerEnVivo?'10':'0'}px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <div style="flex:1;text-align:right;font-size:13px;font-weight:${esLocal?'900':'700'};color:${esLocal?'var(--accent)':'inherit'}">${escHtml(p.local?.nombre||'Local')}${esLocal?' 🏠':''}</div>
           <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
           <div style="flex:1;font-size:13px;font-weight:${esVisita?'900':'700'};color:${esVisita?'var(--accent)':'inherit'}">${esVisita?' 🏠':''}${escHtml(p.visita?.nombre||'Visitante')}</div>
         </div>
         ${(p.cancha||delegadoClub?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px">📍 ${escHtml(p.cancha||(esLocal?delegadoClub.direccion:''))}</div>`:''}
-        ${puedeOperar?`
-        <button class="btn" style="width:100%;background:var(--green);color:#fff;font-size:13px" onclick="delegadoAbrirMesa(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}',${p.jornada||'null'})">
-          🎮 Operar Mesa — soy local
+        ${!finalizado?`
+        <button class="btn ${miAlin>0?'btn-secondary':'btn-primary'}" style="width:100%;font-size:13px;margin-bottom:6px" onclick="openAlineacionModal(${p.id},${miEquipoId},'${escHtml(miNombre)}')">
+          ${miAlin>0?`✅ Mi alineación (${miAlin} jug.) — Editar`:'📋 Confirmar mi alineación'}
         </button>`:''}
-        ${puedeVerEnVivo?`
+        ${!finalizado&&esLocal&&miAlin>0&&alinVisita>0?`
+        <button class="btn" style="width:100%;background:var(--green);color:#fff;font-size:13px" onclick="delegadoAbrirMesa(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}',${p.jornada||'null'})">
+          🎮 Operar Mesa
+        </button>`:''}
+        ${!finalizado&&esLocal&&miAlin>0&&alinVisita===0?`
+        <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:8px 12px;font-size:12px;color:#b45309;text-align:center">
+          ⏳ Esperando que el visitante confirme su alineación
+        </div>`:''}
+        ${!finalizado&&esVisita&&(enCurso||ambasConfirmadas)?`
         <button class="btn btn-secondary" style="width:100%;font-size:13px" onclick="delegadoVerEnVivo(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}')">
           👁️ Ver en vivo
         </button>`:''}
@@ -3841,16 +3880,16 @@ async function selectMesaMatch(id){
     document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
     document.getElementById('mesa-subtitle').textContent=(mesaCurrentUser?.league||'Liga')+(p.jornada?' · Fecha '+p.jornada:'');
     if(p.estado==='programado'){try{await supa.from('partidos').update({estado:'en_curso'}).eq('id',id);}catch(e2){}}
-    // Cargar plantel de ambos equipos para el picker
+    // Cargar alineaciones confirmadas para el picker
     mesaLocalJugadores=[];mesaVisitaJugadores=[];
     try{
-      const[{data:jLocal},{data:jVisita}]=await Promise.all([
-        supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.equipo_local_id).order('numero'),
-        supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.equipo_visita_id).order('numero')
+      const[{data:aLocal},{data:aVisita}]=await Promise.all([
+        supa.from('alineaciones').select('jugador:jugador_id(id,nombre,numero)').eq('partido_id',id).eq('equipo_id',p.equipo_local_id),
+        supa.from('alineaciones').select('jugador:jugador_id(id,nombre,numero)').eq('partido_id',id).eq('equipo_id',p.equipo_visita_id)
       ]);
-      mesaLocalJugadores=jLocal||[];
-      mesaVisitaJugadores=jVisita||[];
-    }catch(e2){console.warn('No se pudo cargar plantel',e2);}
+      mesaLocalJugadores=(aLocal||[]).map(a=>a.jugador).filter(Boolean);
+      mesaVisitaJugadores=(aVisita||[]).map(a=>a.jugador).filter(Boolean);
+    }catch(e2){console.warn('No se pudo cargar alineaciones',e2);}
     document.getElementById('mesa-match-selector').style.display='none';
     document.querySelector('#view-mesa .mesa-scoreboard').style.display='';
     document.querySelector('#view-mesa .mesa-btns').style.display='';
@@ -4950,6 +4989,91 @@ async function applyPassChange(r,newPass){
   } else if(r.tipo==='club'){
     const {error}=await supa.from('clubes').update({delegado_pass:newPass}).eq('id',r.clubId);
     if(error)throw error;
+  }
+}
+
+// ─── ALINEACIÓN ───
+let alinPartidoId=null, alinEquipoId=null, alinSeleccionados=new Set(), alinJugadores=[];
+
+async function openAlineacionModal(partidoId, equipoId, teamName){
+  alinPartidoId=partidoId; alinEquipoId=equipoId; alinSeleccionados=new Set();
+  document.getElementById('alin-team-name').textContent=teamName;
+  document.getElementById('alin-list').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  document.getElementById('alin-save-btn').disabled=false;
+  document.getElementById('alin-save-btn').textContent='Confirmar alineación';
+  document.getElementById('alineacionModal').classList.add('open');
+  try{
+    const [{data:jugadores},{data:existing}]=await Promise.all([
+      supa.from('jugadores').select('id,nombre,numero,posicion').eq('equipo_id',equipoId).order('numero'),
+      supa.from('alineaciones').select('jugador_id').eq('partido_id',partidoId).eq('equipo_id',equipoId)
+    ]);
+    alinJugadores=jugadores||[];
+    (existing||[]).forEach(a=>alinSeleccionados.add(a.jugador_id));
+    renderAlineacionList();
+  }catch(e){
+    document.getElementById('alin-list').innerHTML='<div style="text-align:center;padding:24px;color:var(--red)">Error al cargar jugadores</div>';
+  }
+}
+
+function renderAlineacionList(){
+  const el=document.getElementById('alin-list');
+  if(!alinJugadores.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin jugadores en el plantel.<br>Agregá jugadores primero.</div>';
+    updateAlinCounter(); return;
+  }
+  el.innerHTML=alinJugadores.map(j=>{
+    const sel=alinSeleccionados.has(j.id);
+    return `<div onclick="toggleAlin(${j.id})" id="alin-row-${j.id}" style="background:var(--card);border:2px solid ${sel?'var(--accent)':'var(--border)'};border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s">
+      <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${sel?'var(--accent)':'var(--text3)'};background:${sel?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:900;color:#fff;transition:all .15s">${sel?'✓':''}</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:var(--accent);flex-shrink:0">${j.numero||'?'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(j.nombre||'Jugador')}</div>
+        <div style="font-size:11px;color:var(--text3)">${j.posicion||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  updateAlinCounter();
+}
+
+function toggleAlin(jugadorId){
+  if(alinSeleccionados.has(jugadorId)) alinSeleccionados.delete(jugadorId);
+  else alinSeleccionados.add(jugadorId);
+  const row=document.getElementById('alin-row-'+jugadorId);
+  if(!row)return;
+  const sel=alinSeleccionados.has(jugadorId);
+  row.style.borderColor=sel?'var(--accent)':'var(--border)';
+  const box=row.querySelector('div');
+  box.style.borderColor=sel?'var(--accent)':'var(--text3)';
+  box.style.background=sel?'var(--accent)':'transparent';
+  box.textContent=sel?'✓':'';
+  updateAlinCounter();
+}
+
+function updateAlinCounter(){
+  const n=alinSeleccionados.size;
+  document.getElementById('alin-counter').textContent=n+' jugador'+(n!==1?'es':'')+' seleccionado'+(n!==1?'s':'');
+}
+
+function closeAlineacion(e,force){
+  if(force||e?.target===document.getElementById('alineacionModal'))
+    document.getElementById('alineacionModal').classList.remove('open');
+}
+
+async function saveAlineacion(){
+  if(alinSeleccionados.size===0){showToast('Seleccioná al menos un jugador','error');return;}
+  const btn=document.getElementById('alin-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    await supa.from('alineaciones').delete().eq('partido_id',alinPartidoId).eq('equipo_id',alinEquipoId);
+    const rows=[...alinSeleccionados].map(jugadorId=>({partido_id:alinPartidoId,equipo_id:alinEquipoId,jugador_id:jugadorId}));
+    const {error}=await supa.from('alineaciones').insert(rows);
+    if(error)throw error;
+    closeAlineacion(null,true);
+    showToast('Alineación confirmada ✓ ('+alinSeleccionados.size+' jugadores)','success');
+    await loadDelegPartidos();
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+    btn.disabled=false;btn.textContent='Confirmar alineación';
   }
 }
 </script>
