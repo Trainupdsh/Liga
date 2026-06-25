@@ -673,6 +673,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div><label class="form-label">Nombre del plan</label><input class="form-input" id="ep-plan-nombre" type="text" placeholder="Ej: Starter"></div>
       <div><label class="form-label">Descripción corta</label><input class="form-input" id="ep-plan-desc" type="text" placeholder="Para ligas pequeñas..."></div>
       <div><label class="form-label">Precio mensual (ARS, 0 = gratis)</label><input class="form-input" id="ep-plan-precio" type="number" min="0" placeholder="0"></div>
+      <div><label class="form-label">Color de acento (hex)</label><div style="display:flex;gap:8px;align-items:center"><input class="form-input" id="ep-plan-color" type="color" style="width:48px;height:36px;padding:2px;cursor:pointer" value="#5b6ef5"><input class="form-input" id="ep-plan-color-hex" type="text" placeholder="#5b6ef5" style="flex:1" oninput="document.getElementById('ep-plan-color').value=this.value"></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <div><label class="form-label">Max. Divisiones</label><input class="form-input" id="ep-plan-divs" type="number" placeholder="-1=ilimit."><small style="font-size:10px;color:var(--text3)">-1 = ilimitado</small></div>
         <div><label class="form-label">Max. Equipos/Div</label><input class="form-input" id="ep-plan-equipos" type="number" placeholder="-1=ilimit."></div>
@@ -2335,6 +2336,8 @@ function openEditPlan(planId){
   document.getElementById('ep-plan-nombre').value=p.nombre||'';
   document.getElementById('ep-plan-desc').value=p.descripcion||'';
   document.getElementById('ep-plan-precio').value=p.precio_mensual||0;
+  document.getElementById('ep-plan-color').value=p.color||'#5b6ef5';
+  document.getElementById('ep-plan-color-hex').value=p.color||'#5b6ef5';
   document.getElementById('ep-plan-divs').value=p.max_divisiones||1;
   document.getElementById('ep-plan-equipos').value=p.max_equipos||8;
   document.getElementById('ep-plan-jugadores').value=p.max_jugadores||20;
@@ -2353,6 +2356,8 @@ function openNuevoPlan(){
   document.getElementById('ep-plan-nombre').value='';
   document.getElementById('ep-plan-desc').value='';
   document.getElementById('ep-plan-precio').value=0;
+  document.getElementById('ep-plan-color').value='#5b6ef5';
+  document.getElementById('ep-plan-color-hex').value='#5b6ef5';
   document.getElementById('ep-plan-divs').value=1;
   document.getElementById('ep-plan-equipos').value=10;
   document.getElementById('ep-plan-jugadores').value=20;
@@ -2377,6 +2382,7 @@ async function saveEditPlan(){
     nombre,
     descripcion:document.getElementById('ep-plan-desc').value.trim()||null,
     precio_mensual:parseFloat(document.getElementById('ep-plan-precio').value)||0,
+    color:document.getElementById('ep-plan-color-hex').value.trim()||document.getElementById('ep-plan-color').value||'#5b6ef5',
     max_divisiones:parseInt(document.getElementById('ep-plan-divs').value)||1,
     max_equipos:parseInt(document.getElementById('ep-plan-equipos').value)||8,
     max_jugadores:parseInt(document.getElementById('ep-plan-jugadores').value)||20,
@@ -2929,7 +2935,7 @@ async function openMatchDB(id){
     document.getElementById('modal-away-shield').textContent=visita?.abreviacion||'?';
     document.getElementById('modal-away-shield').style.cssText=`background:${visita?.color_principal||'#1a2150'};color:${visita?.color_texto||'#fff'}`;
     document.getElementById('modal-away-name').textContent=visita?.nombre||'Visitante';
-    document.getElementById('modal-score').textContent=isDone?`${p.goles_local} - ${p.goles_visita}`:isLive?`${p.goles_local??0} - ${p.goles_visita??0}`:'- - -';
+    document.getElementById('modal-score').textContent=isDone?`${p.goles_local??0} - ${p.goles_visita??0}`:isLive?`${p.goles_local??0} - ${p.goles_visita??0}`:'- - -';
     const st=document.getElementById('modal-status-tag');
     st.textContent=isDone?'FINALIZADO':isLive?'EN VIVO':'PROGRAMADO';
     st.className='modal-status-tag'+(isLive?' live':'');
@@ -3975,7 +3981,14 @@ async function saveNuevoEquipo(){
   const btn=document.getElementById('ne-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    if(currentLeagueLimits.maxEquipos){
+    const planMaxEq=currentLigaPlan?.max_equipos;
+    if(planMaxEq!=null&&planMaxEq!==-1){
+      const {count}=await supa.from('equipos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId);
+      if(count>=planMaxEq){
+        errEl.textContent=`Límite del plan: máx. ${planMaxEq} equipos por división. Actualizá tu plan.`;
+        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Equipo';return;
+      }
+    } else if(currentLeagueLimits.maxEquipos){
       const {data:divs}=await supa.from('divisiones').select('id,torneo:torneos!inner(liga_id)').eq('torneo.liga_id',currentAdminLeagueId);
       const divIds=(divs||[]).map(d=>d.id);
       if(divIds.length){
@@ -4065,7 +4078,14 @@ async function saveNuevoJugador(){
   const btn=document.getElementById('nj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    if(currentLeagueLimits.maxJugadores){
+    const planMaxJug=currentLigaPlan?.max_jugadores;
+    if(planMaxJug!=null&&planMaxJug!==-1){
+      const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
+      if(count>=planMaxJug){
+        errEl.textContent=`Límite del plan: máx. ${planMaxJug} jugadores por equipo. Actualizá tu plan.`;
+        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
+      }
+    } else if(currentLeagueLimits.maxJugadores){
       const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
       if(count>=currentLeagueLimits.maxJugadores){
         errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxJugadores} jugadores por equipo`;
@@ -4484,6 +4504,16 @@ async function saveNuevaDivision(){
   const btn=document.getElementById('nd-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
+    if(currentLigaPlan){
+      const maxDiv=currentLigaPlan.max_divisiones;
+      if(maxDiv!=null&&maxDiv!==-1){
+        const {count}=await supa.from('divisiones').select('id',{count:'exact',head:true}).eq('torneo_id',currentAdminTorneoId);
+        if(count>=maxDiv){
+          errEl.textContent=`Límite del plan: máx. ${maxDiv} división${maxDiv===1?'':'es'}. Actualizá tu plan.`;
+          errEl.style.display='';btn.disabled=false;btn.textContent='Crear División';return;
+        }
+      }
+    }
     const {error}=await supa.from('divisiones').insert({
       torneo_id:currentAdminTorneoId,nombre,categoria:categoria||null,genero
     });
@@ -4557,6 +4587,16 @@ async function selectMesaMatch(id){
     document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
     document.getElementById('mesa-subtitle').textContent=(mesaCurrentUser?.league||'Liga')+(p.jornada?' · Fecha '+p.jornada:'');
     if(p.estado==='programado'){try{await supa.from('partidos').update({estado:'en_curso'}).eq('id',id);}catch(e2){}}
+    // Cargar plan de liga para gates de features
+    if(!currentLigaPlan&&p.division_id){
+      try{
+        const {data:div}=await supa.from('divisiones')
+          .select('torneo:torneo_id(liga:liga_id(id,plan_id,plan_vencimiento))')
+          .eq('id',p.division_id).single();
+        const liga=div?.torneo?.liga;
+        if(liga?.plan_id)await loadCurrentLigaPlan(liga.id,liga.plan_id);
+      }catch(e2){console.warn('No se pudo cargar plan de liga',e2);}
+    }
     // Cargar alineaciones confirmadas para el picker
     mesaLocalJugadores=[];mesaVisitaJugadores=[];
     try{
@@ -4712,7 +4752,7 @@ async function openPlanillaDB(id){
     renderList(resL.data,'plan-home-players');
     renderList(resV.data,'plan-away-players');
     document.getElementById('planillaModal').classList.add('open');
-  }catch(e){openPlanilla(id);}
+  }catch(e){showToast('Error al cargar la planilla','error');}
 }
 
 // ═══ FIXTURE AUTOMÁTICO (ROUND-ROBIN) ═══
@@ -4905,14 +4945,15 @@ function showToast(msg,type=''){
 // Inicio: cargar ligas desde Supabase
 (async()=>{
   try{
-    const {data,error}=await supa.from('ligas').select('*').order('id');
+    const {data,error}=await supa.from('ligas').select('*, plan:plan_id(nombre,color)').order('id');
     if(error)throw error;
     if(data&&data.length){
       leagues=data.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,
-        adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025'
+        adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
+        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null
       }));
       renderLeagues(leagues);
       console.log('✓ Ligas cargadas desde Supabase:',leagues.length);
