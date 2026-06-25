@@ -2069,16 +2069,16 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div class="modal-sheet" style="padding-bottom:28px">
     <div class="modal-handle"></div>
     <div style="padding:16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Reprogramar Partido</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Editar Partido</div>
       <div style="font-size:16px;font-weight:900;margin-top:2px" id="reprogramar-title">Partido</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
       <div>
-        <label class="form-label">Nueva fecha</label>
+        <label class="form-label">Fecha</label>
         <input class="form-input" type="date" id="reprogram-fecha">
       </div>
       <div>
-        <label class="form-label">Nuevo horario</label>
+        <label class="form-label">Horario</label>
         <input class="form-input" type="time" id="reprogram-hora">
       </div>
       <div>
@@ -4333,7 +4333,7 @@ function renderPartidoCard(p){
     </div>
     ${(p.cancha||p.local?.club?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha||p.local?.club?.direccion)}</div>`:''}
     ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
-      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📅 Reprogramar</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}')">✏️ Editar</button>
     </div>`:''}
   </div>`;
 }
@@ -5498,12 +5498,12 @@ async function saveInformeArbitro(){
 
 // ═══ REPROGRAMAR ═══
 let _reprogramarMatchId=null;
-function openReprogramar(matchId,titulo){
+function openReprogramar(matchId,titulo,fecha,hora,cancha){
   _reprogramarMatchId=matchId;
   document.getElementById('reprogramar-title').textContent=titulo||'Partido';
-  document.getElementById('reprogram-fecha').value='';
-  document.getElementById('reprogram-hora').value='';
-  document.getElementById('reprogram-cancha').value='';
+  document.getElementById('reprogram-fecha').value=fecha||'';
+  document.getElementById('reprogram-hora').value=hora||'';
+  document.getElementById('reprogram-cancha').value=cancha||'';
   document.getElementById('reprogram-motivo').value='';
   document.getElementById('reprogramarModal').classList.add('open');
 }
