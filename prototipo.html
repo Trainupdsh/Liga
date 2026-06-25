@@ -706,17 +706,21 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
-<!-- MODAL: EDITAR CONTRASEÑA (superadmin) -->
+<!-- MODAL: EDITAR ACCESO (superadmin) -->
 <div class="modal-overlay" id="editPassModal" onclick="closeEditPass(event)">
   <div class="modal-sheet" style="padding-bottom:28px">
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Cambiar contraseña</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Editar acceso</div>
       <div id="ep-user-label" style="font-size:15px;font-weight:900;margin-top:2px">—</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div id="ep-email-group" class="form-group">
+        <label class="form-label">Email / Usuario</label>
+        <input class="form-input" id="ep-email" type="text" placeholder="email@ejemplo.com">
+      </div>
       <div class="form-group">
-        <label class="form-label">Nueva contraseña</label>
+        <label class="form-label">Contraseña</label>
         <input class="form-input" id="ep-pass" type="text" placeholder="Ej: 1234">
       </div>
       <div id="ep-error" style="display:none;color:var(--red);font-size:12px"></div>
@@ -5938,8 +5942,11 @@ function roleName(r){return{liga_admin:'Liga Admin',delegado:'Delegado',arbitro:
 
 function openEditPass(r){
   saEditTarget=r;
-  document.getElementById('ep-user-label').textContent=r.name+' ('+r.email+')';
+  document.getElementById('ep-user-label').textContent=r.name;
+  document.getElementById('ep-email').value=r.email&&r.email!=='—'?r.email:'';
   document.getElementById('ep-pass').value=r.pass||'';
+  // Show email field only for liga and club types (not extra in-memory users)
+  document.getElementById('ep-email-group').style.display=r.tipo==='extra'?'none':'';
   document.getElementById('ep-error').style.display='none';
   document.getElementById('ep-save-btn').disabled=false;
   document.getElementById('ep-save-btn').textContent='Guardar';
@@ -5950,15 +5957,16 @@ function closeEditPass(e,force){
     document.getElementById('editPassModal').classList.remove('open');
 }
 async function saveEditPass(){
+  const email=document.getElementById('ep-email').value.trim();
   const pass=document.getElementById('ep-pass').value.trim();
   const errEl=document.getElementById('ep-error');
   if(!pass){errEl.textContent='Ingresá una contraseña';errEl.style.display='';return;}
   const btn=document.getElementById('ep-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    await applyPassChange(saEditTarget,pass);
+    await applyAccessChange(saEditTarget,email,pass);
     closeEditPass(null,true);
-    showToast('Contraseña actualizada ✓','success');
+    showToast('Acceso actualizado ✓','success');
     await loadSAUsuarios();
     filterSAUsuarios();
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar';}
@@ -5966,21 +5974,28 @@ async function saveEditPass(){
 async function blanquearPass(r){
   if(!confirm('¿Blanquear contraseña de "'+r.name+'" a "1234"?'))return;
   try{
-    await applyPassChange(r,'1234');
+    await applyAccessChange(r,r.email,1234);
     showToast('Contraseña blanqueada a 1234 ✓','success');
     await loadSAUsuarios();
     filterSAUsuarios();
   }catch(e){showToast('Error: '+e.message,'error');}
 }
-async function applyPassChange(r,newPass){
+async function applyAccessChange(r,newEmail,newPass){
+  const passStr=String(newPass);
   if(r.tipo==='liga'){
+    const updates={admin_pass:passStr};
+    if(newEmail)updates.admin_email=newEmail;
+    const {error}=await supa.from('ligas').update(updates).eq('id',r.ligaId);
+    if(error)throw error;
     const liga=leagues.find(l=>l.id===r.ligaId);
-    if(liga)liga.adminPass=newPass;
+    if(liga){liga.adminPass=passStr;if(newEmail)liga.adminEmail=newEmail;}
   } else if(r.tipo==='extra'){
     const u=extraUsers.find(u=>u.email===r.email);
-    if(u)u.pass=newPass;
+    if(u)u.pass=passStr;
   } else if(r.tipo==='club'){
-    const {error}=await supa.from('clubes').update({delegado_pass:newPass}).eq('id',r.clubId);
+    const updates={delegado_pass:passStr};
+    if(newEmail)updates.delegado_email=newEmail;
+    const {error}=await supa.from('clubes').update(updates).eq('id',r.clubId);
     if(error)throw error;
   }
 }
