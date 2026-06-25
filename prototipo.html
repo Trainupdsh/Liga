@@ -202,6 +202,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .form-input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;outline:none;transition:border-color 0.2s;}
 .form-input:focus{border-color:var(--accent);}
 .form-select{appearance:none;cursor:pointer;}
+.day-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.day-chip input{display:none;}
+.day-chip span{display:inline-block;padding:7px 11px;border-radius:10px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer;transition:all .15s;user-select:none;}
+.day-chip input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff;}
 .btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;}
 .btn-primary{background:var(--accent);color:#fff;}
 .btn-primary:active{opacity:0.9;}
@@ -887,7 +891,22 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div id="fixture-div-nombre" style="font-size:13px;font-weight:700;color:var(--accent)">Ninguna — entrá a Gestionar una división</div>
       </div>
       <div class="form-group"><label class="form-label">Formato</label><select class="form-input form-select" id="fixture-formato"><option value="roundrobin">Round Robin (todos vs todos)</option><option value="ida_vuelta">Ida y vuelta (2× round robin)</option></select></div>
-      <div class="form-group"><label class="form-label">Fecha de inicio</label><input class="form-input" type="date" id="fixture-fecha-inicio"></div>
+      <div class="form-group">
+        <label class="form-label">Días de juego</label>
+        <div class="day-chips">
+          <label class="day-chip"><input type="checkbox" id="fd-lun" value="1"><span>Lun</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-mar" value="2"><span>Mar</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-mie" value="3"><span>Mié</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-jue" value="4"><span>Jue</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-vie" value="5"><span>Vie</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-sab" value="6" checked><span>Sáb</span></label>
+          <label class="day-chip"><input type="checkbox" id="fd-dom" value="0"><span>Dom</span></label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1"><label class="form-label">Fecha de inicio</label><input class="form-input" type="date" id="fixture-fecha-inicio"></div>
+        <div class="form-group" style="flex:1"><label class="form-label">Hora por defecto</label><input class="form-input" type="time" id="fixture-hora" value="16:00"></div>
+      </div>
       <div class="form-group"><label class="form-label">Cancha / Sede por defecto (opcional)</label><input class="form-input" type="text" id="fixture-cancha" placeholder="Ej: Estadio Municipal"></div>
       <div id="fixture-preview" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
         <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa</div>
@@ -4052,6 +4071,21 @@ async function openPlanillaDB(id){
 }
 
 // ═══ FIXTURE AUTOMÁTICO (ROUND-ROBIN) ═══
+function nextDiaJuego(desde, diasSemana){
+  // Returns new Date on or after 'desde' that falls on one of diasSemana (0=Dom…6=Sáb)
+  const d=new Date(desde);
+  for(let i=0;i<14;i++){
+    if(diasSemana.includes(d.getDay()))return new Date(d);
+    d.setDate(d.getDate()+1);
+  }
+  return new Date(desde);
+}
+function advanceToNextMatchDay(desde, diasSemana){
+  // Advance at least 1 day then find next match day
+  const d=new Date(desde);
+  d.setDate(d.getDate()+1);
+  return nextDiaJuego(d, diasSemana);
+}
 async function generarFixture(){
   const btn=document.getElementById('fixture-gen-btn');
   if(!currentAdminDivisionId){showToast('Primero seleccioná una división','error');return;}
@@ -4059,7 +4093,12 @@ async function generarFixture(){
   if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 equipos','error');return;}
   const formato=document.getElementById('fixture-formato')?.value||'roundrobin';
   const fechaInicio=document.getElementById('fixture-fecha-inicio')?.value||new Date().toISOString().split('T')[0];
+  const hora=document.getElementById('fixture-hora')?.value||'16:00';
   const cancha=document.getElementById('fixture-cancha')?.value.trim()||null;
+  // Días de juego seleccionados
+  const diaIds=[{id:'fd-lun',v:1},{id:'fd-mar',v:2},{id:'fd-mie',v:3},{id:'fd-jue',v:4},{id:'fd-vie',v:5},{id:'fd-sab',v:6},{id:'fd-dom',v:0}];
+  const diasSemana=diaIds.filter(d=>document.getElementById(d.id)?.checked).map(d=>d.v);
+  if(!diasSemana.length){showToast('Seleccioná al menos un día de juego','error');return;}
   const preview=document.getElementById('fixture-preview');
   const nombre=document.getElementById('fixture-div-nombre');
   if(nombre)nombre.textContent=adminDivEquipos.length+' equipos';
@@ -4071,30 +4110,57 @@ async function generarFixture(){
   const pivot=ids[0];
   let rot=ids.slice(1);
   const partidos=[];
+  // Calcular fechas reales basadas en días seleccionados
+  let fechaActual=nextDiaJuego(new Date(fechaInicio+'T12:00:00'), diasSemana);
+  const fechasPorRonda=[];
+  for(let r=0;r<rondas;r++){
+    fechasPorRonda.push(fechaActual.toISOString().split('T')[0]);
+    fechaActual=advanceToNextMatchDay(fechaActual, diasSemana);
+  }
   for(let r=0;r<rondas;r++){
     const jornada=r+1;
-    const d=new Date(fechaInicio);d.setDate(d.getDate()+r*7);
-    const fechaStr=d.toISOString().split('T')[0];
+    const fechaStr=fechasPorRonda[r];
     const row=[pivot,...rot];
     const mitad=row.length/2;
     for(let i=0;i<mitad;i++){
       const l=row[i],v=row[row.length-1-i];
-      if(l&&v)partidos.push({division_id:currentAdminDivisionId,equipo_local_id:l,equipo_visita_id:v,jornada,fecha:fechaStr,hora:'16:00',cancha,estado:'programado',goles_local:0,goles_visita:0});
+      if(l&&v)partidos.push({division_id:currentAdminDivisionId,equipo_local_id:l,equipo_visita_id:v,jornada,fecha:fechaStr,hora,cancha,estado:'programado',goles_local:0,goles_visita:0});
     }
     rot=[rot[rot.length-1],...rot.slice(0,-1)];
   }
   if(formato==='ida_vuelta'){
-    const vuelta=partidos.map(p=>{
-      const d=new Date(fechaInicio);d.setDate(d.getDate()+(p.jornada+rondas-1)*7);
-      return {...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:d.toISOString().split('T')[0]};
+    let fechaVuelta=advanceToNextMatchDay(new Date(fechasPorRonda[rondas-1]+'T12:00:00'), diasSemana);
+    const vuelta=partidos.map((p,i)=>{
+      const f=new Date(fechaVuelta);
+      if(i>0&&partidos[i].jornada!==partidos[i-1].jornada){
+        fechaVuelta=advanceToNextMatchDay(fechaVuelta, diasSemana);
+      }
+      return {...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:fechaVuelta.toISOString().split('T')[0]};
     });
-    partidos.push(...vuelta);
+    // Recalcular fechas de vuelta correctamente
+    let fv=advanceToNextMatchDay(new Date(fechasPorRonda[rondas-1]+'T12:00:00'), diasSemana);
+    const fechasVuelta=[];
+    for(let r=0;r<rondas;r++){
+      fechasVuelta.push(fv.toISOString().split('T')[0]);
+      fv=advanceToNextMatchDay(fv, diasSemana);
+    }
+    const vueltaFixed=partidos.map(p=>({...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:fechasVuelta[p.jornada-1]}));
+    partidos.push(...vueltaFixed);
   }
+  const totalF=formato==='ida_vuelta'?rondas*2:rondas;
+  const diasNombres=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const diasLabel=diasSemana.sort((a,b)=>a-b).map(d=>diasNombres[d]).join(', ');
   if(preview){
-    const totalF=formato==='ida_vuelta'?rondas*2:rondas;
-    preview.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">Vista previa del fixture</div>
-      <div style="font-size:14px;font-weight:700">${adminDivEquipos.length} equipos · ${partidos.length} partidos · ${totalF} fechas</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">Inicia ${formatFecha(fechaInicio)} · ${formato==='ida_vuelta'?'Ida y vuelta':'Round Robin (todos contra todos)'}</div>`;
+    preview.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Vista previa del fixture</div>
+      <div style="font-size:15px;font-weight:800">${adminDivEquipos.length} equipos · ${partidos.length} partidos · ${totalF} fechas</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;display:flex;flex-direction:column;gap:3px">
+        <span>📅 Inicia ${formatFecha(fechasPorRonda[0])} — ${diasLabel} a las ${hora}</span>
+        <span>🔄 ${formato==='ida_vuelta'?'Ida y vuelta':'Round Robin (todos contra todos)'}</span>
+      </div>`;
+  }
+  if(!confirm(`¿Generar ${partidos.length} partidos para ${totalF} fechas?\nInicia el ${formatFecha(fechasPorRonda[0])} los ${diasLabel}.`)){
+    if(btn){btn.disabled=false;btn.textContent='Generar Fixture Automático';}
+    return;
   }
   try{
     const {error}=await supa.from('partidos').insert(partidos);
