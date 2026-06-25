@@ -2990,7 +2990,14 @@ function closeMesaPicker(e,force){
 async function confirmMesaPicker(){
   if(!mpTeamSel){document.getElementById('mp-error').textContent='Seleccioná el equipo';document.getElementById('mp-error').style.display='';return;}
   const sel=document.getElementById('mp-jugador-sel');
-  const jugador=(sel.style.display!=='none'&&sel.value?sel.value:document.getElementById('mp-jugador-txt').value).trim();
+  const hayJugadores=sel.style.display!=='none'&&sel.options.length>1;
+  const jugadorSel=sel.value.trim();
+  const jugadorTxt=document.getElementById('mp-jugador-txt').value.trim();
+  const jugador=hayJugadores?jugadorSel:jugadorTxt;
+  const errEl=document.getElementById('mp-error');
+  if(hayJugadores&&!jugadorSel){
+    errEl.textContent='Seleccioná el jugador';errEl.style.display='';return;
+  }
   closeMesaPicker(null,true);
   await mesaEvent(mpPendingType,mpTeamSel,jugador||'');
 }
@@ -3834,6 +3841,16 @@ async function selectMesaMatch(id){
     document.getElementById('mesa-events').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Sin eventos aún</div>';
     document.getElementById('mesa-subtitle').textContent=(mesaCurrentUser?.league||'Liga')+(p.jornada?' · Fecha '+p.jornada:'');
     if(p.estado==='programado'){try{await supa.from('partidos').update({estado:'en_curso'}).eq('id',id);}catch(e2){}}
+    // Cargar plantel de ambos equipos para el picker
+    mesaLocalJugadores=[];mesaVisitaJugadores=[];
+    try{
+      const[{data:jLocal},{data:jVisita}]=await Promise.all([
+        supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.equipo_local_id).order('numero'),
+        supa.from('jugadores').select('id,nombre,numero').eq('equipo_id',p.equipo_visita_id).order('numero')
+      ]);
+      mesaLocalJugadores=jLocal||[];
+      mesaVisitaJugadores=jVisita||[];
+    }catch(e2){console.warn('No se pudo cargar plantel',e2);}
     document.getElementById('mesa-match-selector').style.display='none';
     document.querySelector('#view-mesa .mesa-scoreboard').style.display='';
     document.querySelector('#view-mesa .mesa-btns').style.display='';
