@@ -477,6 +477,73 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .plan-badge.pro{background:rgba(26,33,80,.2);color:var(--accent)}
 .plan-badge.premium{background:rgba(212,175,55,.2);color:#d4af37}
 .upgrade-lock{opacity:.5;cursor:not-allowed;position:relative}
+
+/* ═══ RESPONSIVE DESKTOP ≥1024px ═══ */
+@media(min-width:1024px){
+  body{background:var(--bg2);}
+  #app{max-width:960px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+
+  /* HOME */
+  .leagues-list{display:grid;grid-template-columns:1fr 1fr;}
+  .home-banner{padding:32px 28px;}
+  .home-banner h2{font-size:26px;}
+
+  /* DIVISION — reorder: nav between header and content */
+  #view-division{display:flex;flex-direction:column;}
+  #view-division header{order:1;position:sticky;top:0;z-index:110;}
+  #view-division nav.bottom-nav{
+    order:2;
+    position:sticky;top:58px;
+    z-index:100;
+    transform:none;
+    bottom:auto;left:auto;
+    max-width:100%;width:100%;
+    border-top:none;border-bottom:1px solid var(--border);
+    padding-bottom:0;
+  }
+  #view-division nav.bottom-nav .nav-item{padding:14px 0 12px;}
+  #view-division nav.bottom-nav .nav-item .nav-label{font-size:11px;}
+  #view-division .content{order:3;padding-bottom:32px;}
+
+  /* ADMIN DASHBOARD */
+  .dashboard-grid{grid-template-columns:repeat(4,1fr);}
+  .admin-menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;}
+  .admin-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+  /* SUPERADMIN leagues list */
+  #superLeaguesList{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 8px;}
+  .super-league-row{margin:0;}
+
+  /* MESA — centered + bigger scoreboard */
+  .mesa-scoreboard{max-width:760px;margin:0 auto;padding:32px 24px;}
+  .mesa-score-num{font-size:80px;min-width:72px;}
+  .mesa-score-sep{font-size:40px;}
+  .mesa-team-name{font-size:16px;}
+  .mesa-timer{font-size:36px;}
+  .mesa-btns{grid-template-columns:repeat(4,1fr);max-width:760px;margin:0 auto;}
+  .mesa-log{max-width:760px;margin:0 auto;}
+  #mesa-match-selector{max-width:760px;margin:0 auto;}
+
+  /* MODALS → centered dialogs (override bottom-sheet defaults) */
+  .modal-overlay{align-items:center;}
+  .modal-sheet{border-radius:20px;max-width:540px;transform:scale(.95) !important;transition:transform .25s cubic-bezier(.32,.72,0,1),opacity .25s;}
+  .modal-overlay.open .modal-sheet{transform:scale(1) !important;}
+  .modal-handle{display:none;}
+
+  .result-modal{align-items:center;}
+  .result-sheet{border-radius:20px;max-width:540px;transform:scale(.95) !important;transition:transform .25s cubic-bezier(.32,.72,0,1);}
+  .result-modal.open .result-sheet{transform:scale(1) !important;}
+  .rsh{display:none;}
+
+  .cred-overlay{align-items:center;}
+  .cred-sheet{border-radius:20px;max-width:460px;transform:scale(.95) !important;transition:transform .25s cubic-bezier(.32,.72,0,1);}
+  .cred-overlay.open .cred-sheet{transform:scale(1) !important;}
+  .cred-handle{display:none;}
+
+  .player-profile-modal{align-items:center;}
+  .player-profile-sheet{border-radius:20px;max-width:540px;transform:scale(.95) !important;transition:transform .25s cubic-bezier(.32,.72,0,1);}
+  .player-profile-modal.open .player-profile-sheet{transform:scale(1) !important;}
+}
 </style>
 </head>
 <body>
