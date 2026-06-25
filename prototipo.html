@@ -3838,7 +3838,6 @@ async function selectMesaMatch(id){
     document.querySelector('#view-mesa .mesa-scoreboard').style.display='';
     document.querySelector('#view-mesa .mesa-btns').style.display='';
     document.querySelector('#view-mesa .mesa-log').style.display='';
-    subscribeToMatchEvents(id);
     showToast('Mesa de Control activada — LIVE','success');
   }catch(e){
     el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Error al cargar partido</div>';
