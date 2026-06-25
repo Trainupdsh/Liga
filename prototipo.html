@@ -1019,7 +1019,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="menu-item" onclick="openHistorial()"><div class="menu-icon">🏅</div><div class="menu-text"><h3>Historial</h3><p>Temporadas y campeones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openPlayoffsModal()"><div class="menu-icon">🎯</div><div class="menu-text"><h3>Playoffs / Eliminatoria</h3><p>Fase final del torneo</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="exportPDF()"><div class="menu-icon">📄</div><div class="menu-text"><h3>Exportar PDF</h3><p>Imprimir posiciones y datos</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Nombre, temporada, puntos</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="openConfigLiga()"><div class="menu-icon">⚙️</div><div class="menu-text"><h3>Configuración</h3><p>Nombre, deporte, logo de la liga</p></div><span class="menu-chevron">›</span></div>
     </div>
   </div>
   <div id="admin-teams" class="admin-screen" style="display:none">
@@ -1236,6 +1236,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del torneo</label>
         <input class="form-input" id="nt-nombre" type="text" placeholder="Ej: Apertura 2025" oninput="ntUpdatePreview()" style="width:100%">
       </div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Logo del torneo (opcional)</label>
+        <div class="foto-upload-zone" onclick="document.getElementById('nt-logo-input').click()">
+          <input type="file" id="nt-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'nt')">
+          <img id="nt-logo-preview" class="foto-preview-img" style="width:72px;height:72px" alt="logo">
+          <div id="nt-logo-placeholder">📷 Toca para subir logo</div>
+        </div>
+      </div>
       <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Temporada / Año</label>
         <input class="form-input" id="nt-temporada" type="text" placeholder="2025" style="width:100%">
@@ -1323,6 +1330,35 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevaDivision(null,true)">Cancelar</button>
         <button class="btn btn-primary" id="nd-save-btn" style="flex:1" onclick="saveNuevaDivision()">Crear División</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIGURACIÓN DE LIGA -->
+<div class="modal-overlay" id="configLigaModal" onclick="closeConfigLiga(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Configuración de la Liga</div>
+      <div style="font-size:15px;font-weight:900" id="cfg-liga-preview">Sin nombre</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:75vh">
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre de la liga</label>
+        <input class="form-input" id="cfg-liga-nombre" type="text" style="width:100%" oninput="document.getElementById('cfg-liga-preview').textContent=this.value||'Sin nombre'"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Deporte</label>
+        <input class="form-input" id="cfg-liga-deporte" type="text" style="width:100%"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Escudo / Logo de la liga</label>
+        <div class="foto-upload-zone" onclick="document.getElementById('cfg-liga-logo-input').click()">
+          <input type="file" id="cfg-liga-logo-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'cfg-liga')">
+          <img id="cfg-liga-logo-preview" class="foto-preview-img" style="width:72px;height:72px" alt="logo">
+          <div id="cfg-liga-logo-placeholder">📷 Toca para subir logo</div>
+        </div>
+      </div>
+      <div id="cfg-liga-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeConfigLiga(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="cfg-liga-save-btn" style="flex:1" onclick="saveConfigLiga()">Guardar cambios</button>
       </div>
     </div>
   </div>
@@ -2700,8 +2736,14 @@ function showAdminForLeague(l){
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='';
-  document.getElementById('dash-league-icon').textContent=l.icon;
-  document.getElementById('dash-league-icon').style.background=l.color;
+  const iconEl=document.getElementById('dash-league-icon');
+  if(l.logoUrl){
+    iconEl.innerHTML=`<img src="${l.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+    iconEl.style.background='transparent';
+  }else{
+    iconEl.textContent=l.icon;
+    iconEl.style.background=l.color;
+  }
   document.getElementById('dash-league-name').textContent=l.name;
   document.getElementById('dash-league-sub').textContent=l.sport+' · Temporada '+(l.season||'—');
   document.getElementById('dash-admin-email').textContent=l.adminEmail;
@@ -2760,7 +2802,7 @@ async function loadSuperLeagues(){
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
         maxEquipos:l.max_equipos||null,maxJugadores:l.max_jugadores_por_equipo||null,
-        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null
+        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null
       }));
       const activas=ls.filter(l=>l.activa).length;
       const torneosCount=ts?ts.length:0;
@@ -2825,6 +2867,61 @@ async function confirmarEliminarDivision(id,nombre){
     showToast('División eliminada','error');
     await loadAdminDivisiones();
   }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ─── CONFIGURACIÓN DE LIGA ───
+function openConfigLiga(){
+  const l=leagues.find(x=>x.id===currentAdminLeagueId);
+  if(!l){showToast('Liga no encontrada','error');return;}
+  document.getElementById('cfg-liga-nombre').value=l.name||'';
+  document.getElementById('cfg-liga-deporte').value=l.sport||'';
+  document.getElementById('cfg-liga-preview').textContent=l.name||'Sin nombre';
+  document.getElementById('cfg-liga-error').style.display='none';
+  document.getElementById('cfg-liga-save-btn').disabled=false;
+  document.getElementById('cfg-liga-save-btn').textContent='Guardar cambios';
+  const preview=document.getElementById('cfg-liga-logo-preview');
+  const placeholder=document.getElementById('cfg-liga-logo-placeholder');
+  window['_cfg-ligaLogoBlob']=null;
+  if(l.logoUrl){preview.src=l.logoUrl;preview.classList.add('visible');placeholder.style.display='none';}
+  else{preview.classList.remove('visible');placeholder.style.display='';}
+  document.getElementById('configLigaModal').classList.add('open');
+}
+function closeConfigLiga(e,force){
+  if(force||e.target===document.getElementById('configLigaModal'))
+    document.getElementById('configLigaModal').classList.remove('open');
+}
+async function saveConfigLiga(){
+  const nombre=document.getElementById('cfg-liga-nombre').value.trim();
+  const deporte=document.getElementById('cfg-liga-deporte').value.trim();
+  const errEl=document.getElementById('cfg-liga-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('cfg-liga-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const updates={nombre,deporte:deporte||null};
+    const logoBlob=window['_cfg-ligaLogoBlob'];
+    if(logoBlob){
+      const logoUrl=await uploadImageToStorage(logoBlob,'ligas',`liga_${currentAdminLeagueId}.webp`);
+      updates.logo_url=logoUrl;
+    }
+    const {error}=await supa.from('ligas').update(updates).eq('id',currentAdminLeagueId);
+    if(error)throw error;
+    window['_cfg-ligaLogoBlob']=null;
+    const l=leagues.find(x=>x.id===currentAdminLeagueId);
+    if(l){
+      l.name=nombre;l.sport=deporte||l.sport;
+      if(updates.logo_url)l.logoUrl=updates.logo_url;
+      document.getElementById('dash-league-name').textContent=nombre;
+      document.getElementById('dash-league-sub').textContent=(deporte||l.sport)+' · Temporada '+(l.season||'—');
+      const iconEl=document.getElementById('dash-league-icon');
+      if(updates.logo_url){
+        iconEl.innerHTML=`<img src="${updates.logo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+        iconEl.style.background='transparent';
+      }
+    }
+    closeConfigLiga(null,true);
+    showToast('Liga actualizada ✓','success');
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar cambios';}
 }
 
 // ─── NUEVA LIGA ───
@@ -3802,8 +3899,12 @@ async function loadAdminTorneos(){
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">Sin torneos aún.<br>Tocá + Nuevo para crear uno.</div>';
       return;
     }
-    el.innerHTML=data.map(t=>`
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
+    el.innerHTML=data.map(t=>{
+      const logoEl=t.logo_url
+        ?`<img src="${t.logo_url}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0">`
+        :`<div style="width:40px;height:40px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏆</div>`;
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
+        ${logoEl}
         <div style="flex:1;cursor:pointer" onclick="openTorneoDetail(${t.id},'${escHtml(t.nombre)}','${t.estado}','${t.temporada||''}')">
           <div style="font-size:14px;font-weight:800">${escHtml(t.nombre)}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.temporada||''}  ·  ${t.divisiones?t.divisiones.length:0} división${t.divisiones&&t.divisiones.length!==1?'es':''}</div>
@@ -3813,7 +3914,8 @@ async function loadAdminTorneos(){
           <span style="color:var(--text3);font-size:18px;cursor:pointer" onclick="openTorneoDetail(${t.id},'${escHtml(t.nombre)}','${t.estado}','${t.temporada||''}')">›</span>
           <span style="font-size:11px;color:var(--red);cursor:pointer;font-weight:700" onclick="confirmarEliminarTorneo(${t.id},'${escHtml(t.nombre)}')">✕ Eliminar</span>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }catch(e){
     el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar torneos</div>';
   }
@@ -4522,6 +4624,9 @@ function openNuevoTorneo(){
   document.getElementById('nt-temporada').value=new Date().getFullYear();
   document.getElementById('nt-estado').value='planificacion';
   document.getElementById('nt-formato').value='roundrobin';
+  window._ntLogoBlob=null;
+  document.getElementById('nt-logo-preview').classList.remove('visible');
+  document.getElementById('nt-logo-placeholder').style.display='';
   document.getElementById('nt-hora').value='16:00';
   document.getElementById('nt-fecha-inicio').value='';
   [{id:'nt-lun'},{id:'nt-mar'},{id:'nt-mie'},{id:'nt-jue'},{id:'nt-vie'},{id:'nt-dom'}].forEach(c=>document.getElementById(c.id).checked=false);
@@ -4554,10 +4659,17 @@ async function saveNuevoTorneo(){
   const btn=document.getElementById('nt-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
+    let logoUrl=null;
+    if(window._ntLogoBlob){
+      try{logoUrl=await uploadImageToStorage(window._ntLogoBlob,'torneos',`torneo_${currentAdminLeagueId}_${Date.now()}.webp`);}
+      catch(imgErr){console.warn('Logo torneo upload failed:',imgErr);}
+    }
     const {error}=await supa.from('torneos').insert({
-      liga_id:currentAdminLeagueId,nombre,temporada,estado,formato,dias_semana,hora_default,fecha_inicio
+      liga_id:currentAdminLeagueId,nombre,temporada,estado,formato,dias_semana,hora_default,fecha_inicio,
+      logo_url:logoUrl||null
     });
     if(error)throw error;
+    window._ntLogoBlob=null;
     closeNuevoTorneo(null,true);
     showToast('Torneo "'+nombre+'" creado ✓','success');
     await loadAdminTorneos();
@@ -5046,7 +5158,7 @@ function showToast(msg,type=''){
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,
         adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
-        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null
+        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null
       }));
       renderLeagues(leagues);
       console.log('✓ Ligas cargadas desde Supabase:',leagues.length);
