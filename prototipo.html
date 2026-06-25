@@ -948,10 +948,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <span style="color:var(--accent);cursor:pointer" onclick="goAdmin('torneo-detail')">‹ Divisiones</span>
       <h2 id="admin-div-nombre" style="font-size:15px">División</h2>
     </div>
-    <div style="display:flex;border-bottom:2px solid var(--border)">
-      <div id="adtab-equipos" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px" onclick="switchAdminDivTab('equipos',this)">EQUIPOS</div>
-      <div id="adtab-jugadores" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px" onclick="switchAdminDivTab('jugadores',this)">JUGADORES</div>
-      <div id="adtab-partidos" style="flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px" onclick="switchAdminDivTab('partidos',this)">PARTIDOS</div>
+    <div style="display:flex;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none">
+      <div id="adtab-equipos" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('equipos',this)">EQUIPOS</div>
+      <div id="adtab-jugadores" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('jugadores',this)">JUGADORES</div>
+      <div id="adtab-partidos" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('partidos',this)">PARTIDOS</div>
+      <div id="adtab-tabla" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('tabla',this)">TABLA</div>
     </div>
     <!-- TAB: EQUIPOS -->
     <div id="admin-div-equipos">
@@ -971,9 +972,39 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div id="admin-div-partidos" style="display:none">
       <div style="padding:12px 16px 8px;display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-secondary btn-sm" onclick="openFixtureScreen()">🔄 Fixture</button>
+        <button class="btn btn-secondary btn-sm" id="btn-gen-playoffs" style="display:none" onclick="openPlayoffsModal()">🏆 Playoffs</button>
         <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Partido</button>
       </div>
       <div id="adminPartidosList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <!-- TAB: TABLA -->
+    <div id="admin-div-tabla" style="display:none">
+      <div id="adminTablaContent" style="padding:12px 16px 24px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PLAYOFFS -->
+<div class="modal-overlay" id="playoffsModal" onclick="closePlayoffsModal(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Generar Playoffs</div>
+      <div style="font-size:15px;font-weight:900">¿Cuántos equipos pasan?</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px;max-height:75vh;overflow-y:auto">
+      <div id="playoffs-tabla-preview"></div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Equipos clasificados</label>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" id="poff-n2" onclick="setPoffN(2)" style="flex:1;font-weight:800">2</button>
+          <button class="btn btn-secondary" id="poff-n4" onclick="setPoffN(4)" style="flex:1;font-weight:800">4</button>
+          <button class="btn btn-secondary" id="poff-n8" onclick="setPoffN(8)" style="flex:1;font-weight:800">8</button>
+        </div>
+      </div>
+      <div id="playoffs-bracket-preview" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;display:none"></div>
+      <div id="playoffs-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <button class="btn btn-primary" id="playoffs-gen-btn" onclick="generarPlayoffs()" style="display:none">🏆 Generar primera ronda</button>
     </div>
   </div>
 </div>
@@ -3486,7 +3517,7 @@ function openDivisionFromAdmin(divId, nombre){
 }
 
 function switchAdminDivTab(tab, el){
-  ['equipos','jugadores','partidos'].forEach(t=>{
+  ['equipos','jugadores','partidos','tabla'].forEach(t=>{
     document.getElementById('admin-div-'+t).style.display=t===tab?'':'none';
     const tabEl=document.getElementById('adtab-'+t);
     tabEl.style.color=t===tab?'var(--accent)':'var(--text3)';
@@ -3494,6 +3525,7 @@ function switchAdminDivTab(tab, el){
   });
   if(tab==='jugadores')loadAdminJugadores();
   if(tab==='partidos')loadAdminPartidos();
+  if(tab==='tabla')loadAdminTabla();
 }
 
 // — EQUIPOS —
@@ -3693,43 +3725,247 @@ async function confirmarEliminarJugador(id,nombre){
 }
 
 // — PARTIDOS —
+function renderPartidoCard(p){
+  const estadoLabel={programado:'⏳',en_curso:'🟢 EN VIVO',finalizado:'✓'};
+  const faseLabelMap={cuartos:'Cuartos de final',semis:'Semifinal',final:'Final',tercer_puesto:'3er. puesto'};
+  const faseTag=p.fase&&p.fase!=='regular'?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(212,175,55,0.15);color:#d4af37;border:1px solid rgba(212,175,55,0.3)">${faseLabelMap[p.fase]||p.fase}</span> `:'';
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text2)">${faseTag}${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada&&(p.fase==='regular'||!p.fase)?'· Fecha '+p.jornada:''}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||''}</span>
+        ${p.estado!=='finalizado'?`<button class="btn btn-sm" style="background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:2px 7px;font-size:10px" onclick="openAdminResultModal(${p.id})">Res.</button>`:''}
+        <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:2px 7px" onclick="confirmarEliminarPartido(${p.id})">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1;text-align:right;font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${p.local?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.local?.abreviacion||'?')}</div>
+        <div style="font-size:15px;font-weight:900;padding:0 4px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:${p.visita?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.visita?.abreviacion||'?')}</div>
+      </div>
+      <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
+    </div>
+    ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
+    ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
+      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📅 Reprogramar</button>
+    </div>`:''}
+  </div>`;
+}
 async function loadAdminPartidos(){
   const el=document.getElementById('adminPartidosList');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  const playoffBtn=document.getElementById('btn-gen-playoffs');
+  if(playoffBtn)playoffBtn.style.display='none';
   try{
     const {data,error}=await supa.from('partidos')
       .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
       .eq('division_id',currentAdminDivisionId)
-      .order('fecha').order('hora');
+      .order('jornada').order('fecha').order('hora');
     if(error)throw error;
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
-    const estadoLabel={programado:'⏳',en_curso:'🟢 EN VIVO',finalizado:'✓'};
-    el.innerHTML=data.map(p=>`
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:11px;color:var(--text2)">${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada?'· Fecha '+p.jornada:''}</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:11px;color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||p.estado||''}</span>
-            ${p.estado!=='finalizado'?`<button class="btn btn-sm" style="background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:2px 7px;font-size:10px" onclick="openAdminResultModal(${p.id})">Res.</button>`:''}
-            <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:2px 7px" onclick="confirmarEliminarPartido(${p.id})">✕</button>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;text-align:right;font-size:13px;font-weight:700">${escHtml(p.local?.nombre||'Local')}</div>
-          <div style="display:flex;align-items:center;gap:4px">
-            <div style="width:28px;height:28px;border-radius:50%;background:${p.local?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.local?.abreviacion||'?')}</div>
-            <div style="font-size:15px;font-weight:900;padding:0 4px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
-            <div style="width:28px;height:28px;border-radius:50%;background:${p.visita?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${escHtml(p.visita?.abreviacion||'?')}</div>
-          </div>
-          <div style="flex:1;font-size:13px;font-weight:700">${escHtml(p.visita?.nombre||'Visitante')}</div>
-        </div>
-        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha)}</div>`:''}
-        ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📅 Reprogramar</button>
-          <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="shareResultText('${escHtml(p.local?.nombre||'Local')} ${p.goles_local??0} - ${p.goles_visita??0} ${escHtml(p.visita?.nombre||'Visitante')}')">🔗 Compartir</button>
-        </div>`:'<div style="margin-top:8px"><button class="btn btn-secondary btn-sm" style="width:100%;font-size:11px" onclick="shareResultText(\''+escHtml(p.local?.nombre||'Local')+' '+p.goles_local+' - '+p.goles_visita+' '+escHtml(p.visita?.nombre||'Visitante')+'\')">🔗 Compartir resultado</button></div>'}
-      </div>`).join('');
+    const regulares=data.filter(p=>!p.fase||p.fase==='regular');
+    const playoffs=data.filter(p=>p.fase&&p.fase!=='regular');
+    const faseOrder={cuartos:1,semis:2,final:3,tercer_puesto:2.5};
+    playoffs.sort((a,b)=>(faseOrder[a.fase]||9)-(faseOrder[b.fase]||9));
+    // Mostrar botón playoffs si toda la fase regular terminó
+    const regularTerminada=regulares.length>0&&regulares.every(p=>p.estado==='finalizado');
+    // También mostrar "siguiente ronda" si hay playoffs en curso
+    const fasesPlayoff=[...new Set(playoffs.map(p=>p.fase))].sort((a,b)=>(faseOrder[a]||9)-(faseOrder[b]||9));
+    const ultimaFase=fasesPlayoff[fasesPlayoff.length-1];
+    const ultimaFasePartidos=playoffs.filter(p=>p.fase===ultimaFase);
+    const ultimaFaseTerminada=ultimaFasePartidos.length>0&&ultimaFasePartidos.every(p=>p.estado==='finalizado');
+    const siguienteFase={cuartos:'semis',semis:'final'}[ultimaFase];
+    if(playoffBtn){
+      if(regularTerminada&&!playoffs.length){
+        playoffBtn.style.display='';playoffBtn.textContent='🏆 Playoffs';playoffBtn.onclick=openPlayoffsModal;
+      } else if(ultimaFaseTerminada&&siguienteFase){
+        playoffBtn.style.display='';playoffBtn.textContent='➡ Generar '+{semis:'Semifinales',final:'Final'}[siguienteFase];
+        playoffBtn.onclick=()=>generarSiguienteRonda(ultimaFase,ultimaFasePartidos);
+      } else {
+        playoffBtn.style.display='none';
+      }
+    }
+    let html='';
+    if(regulares.length){
+      html+=`<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 8px">Fase regular</div>`;
+      html+=regulares.map(renderPartidoCard).join('');
+    }
+    if(playoffs.length){
+      const fasesSorted=[...new Set(playoffs.map(p=>p.fase))].sort((a,b)=>(faseOrder[a]||9)-(faseOrder[b]||9));
+      fasesSorted.forEach(fase=>{
+        const faseLabelMap={cuartos:'Cuartos de final',semis:'Semifinales',final:'Final',tercer_puesto:'Tercer puesto'};
+        html+=`<div style="font-size:11px;font-weight:700;color:var(--gold,#d97706);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 8px">🏆 ${faseLabelMap[fase]||fase}</div>`;
+        html+=playoffs.filter(p=>p.fase===fase).map(renderPartidoCard).join('');
+      });
+    }
+    el.innerHTML=html;
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+
+// ═══ TABLA DE POSICIONES ═══
+function calcularTabla(partidos, equipos){
+  const t={};
+  equipos.forEach(e=>{t[e.id]={id:e.id,nombre:e.nombre,color:e.color_principal,abrev:e.abreviacion,pj:0,g:0,e:0,p:0,gf:0,gc:0,pts:0};});
+  partidos.filter(p=>p.estado==='finalizado'&&(!p.fase||p.fase==='regular')).forEach(p=>{
+    const gl=p.goles_local??0,gv=p.goles_visita??0;
+    const loc=t[p.equipo_local_id],vis=t[p.equipo_visita_id];
+    if(!loc||!vis)return;
+    loc.pj++;vis.pj++;loc.gf+=gl;loc.gc+=gv;vis.gf+=gv;vis.gc+=gl;
+    if(gl>gv){loc.g++;loc.pts+=3;vis.p++;}
+    else if(gl<gv){vis.g++;vis.pts+=3;loc.p++;}
+    else{loc.e++;loc.pts++;vis.e++;vis.pts++;}
+  });
+  return Object.values(t).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)||b.gf-a.gf);
+}
+function renderTabla(tabla){
+  if(!tabla.length)return '<div style="text-align:center;color:var(--text3);padding:24px;font-size:14px">Sin resultados todavía.</div>';
+  return `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="color:var(--text2);font-size:10px;font-weight:700;text-transform:uppercase">
+        <th style="padding:6px 4px;text-align:left">#</th>
+        <th style="padding:6px 4px;text-align:left">Equipo</th>
+        <th style="padding:6px 4px;text-align:center">PJ</th>
+        <th style="padding:6px 4px;text-align:center">G</th>
+        <th style="padding:6px 4px;text-align:center">E</th>
+        <th style="padding:6px 4px;text-align:center">P</th>
+        <th style="padding:6px 4px;text-align:center">DIF</th>
+        <th style="padding:6px 4px;text-align:center;font-weight:900;color:var(--accent)">PTS</th>
+      </tr></thead>
+      <tbody>${tabla.map((e,i)=>`<tr style="border-top:1px solid var(--border)">
+        <td style="padding:8px 4px;font-weight:700;color:var(--text2)">${i+1}</td>
+        <td style="padding:8px 4px"><div style="display:flex;align-items:center;gap:7px">
+          <div style="width:22px;height:22px;border-radius:50%;background:${e.color||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(e.abrev||'?')}</div>
+          <span style="font-weight:700;font-size:13px">${escHtml(e.nombre)}</span>
+        </div></td>
+        <td style="padding:8px 4px;text-align:center;color:var(--text2)">${e.pj}</td>
+        <td style="padding:8px 4px;text-align:center">${e.g}</td>
+        <td style="padding:8px 4px;text-align:center;color:var(--text2)">${e.e}</td>
+        <td style="padding:8px 4px;text-align:center;color:var(--text2)">${e.p}</td>
+        <td style="padding:8px 4px;text-align:center;color:${(e.gf-e.gc)>0?'var(--green)':(e.gf-e.gc)<0?'var(--red)':'var(--text2)'}">${e.gf-e.gc>0?'+':''}${e.gf-e.gc}</td>
+        <td style="padding:8px 4px;text-align:center;font-weight:900;font-size:14px;color:var(--accent)">${e.pts}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+async function loadAdminTabla(){
+  const el=document.getElementById('adminTablaContent');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    if(!adminDivEquipos.length)await loadAdminEquipos();
+    const {data,error}=await supa.from('partidos').select('*').eq('division_id',currentAdminDivisionId);
+    if(error)throw error;
+    const tabla=calcularTabla(data||[],adminDivEquipos);
+    el.innerHTML=renderTabla(tabla);
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">Error al cargar</div>';}
+}
+
+// ═══ PLAYOFFS ═══
+let poffN=4,poffTabla=[];
+async function openPlayoffsModal(){
+  document.getElementById('playoffs-error').style.display='none';
+  document.getElementById('playoffs-gen-btn').style.display='none';
+  document.getElementById('playoffs-bracket-preview').style.display='none';
+  document.getElementById('playoffs-tabla-preview').innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">⏳ Cargando...</div>';
+  document.getElementById('playoffsModal').classList.add('open');
+  try{
+    if(!adminDivEquipos.length)await loadAdminEquipos();
+    const {data}=await supa.from('partidos').select('*').eq('division_id',currentAdminDivisionId);
+    poffTabla=calcularTabla(data||[],adminDivEquipos);
+    document.getElementById('playoffs-tabla-preview').innerHTML=renderTabla(poffTabla);
+    // Default: mayor potencia de 2 que sea ≤ equipos disponibles
+    const n=poffTabla.length;
+    poffN=n>=8?8:n>=4?4:2;
+    setPoffN(poffN);
+  }catch(e){document.getElementById('playoffs-tabla-preview').innerHTML='<div style="color:var(--red);padding:16px">Error cargando tabla</div>';}
+}
+function closePlayoffsModal(e,force){
+  if(force||e?.target===document.getElementById('playoffsModal'))
+    document.getElementById('playoffsModal').classList.remove('open');
+}
+function setPoffN(n){
+  poffN=n;
+  [2,4,8].forEach(v=>{
+    const b=document.getElementById('poff-n'+v);
+    if(b)b.style.cssText=v===n?'flex:1;font-weight:800;background:var(--accent);color:#fff;border-color:var(--accent)':'flex:1;font-weight:800';
+  });
+  const errEl=document.getElementById('playoffs-error');
+  const prevEl=document.getElementById('playoffs-bracket-preview');
+  const genBtn=document.getElementById('playoffs-gen-btn');
+  if(poffTabla.length<n){
+    errEl.textContent=`No hay suficientes equipos (${poffTabla.length} disponibles)`;
+    errEl.style.display='';prevEl.style.display='none';genBtn.style.display='none';return;
+  }
+  errEl.style.display='none';
+  const clasificados=poffTabla.slice(0,n);
+  const cruces=[];
+  for(let i=0;i<n/2;i++)cruces.push({a:clasificados[i],b:clasificados[n-1-i]});
+  const faseLabel=n===2?'Final':n===4?'Semifinales':'Cuartos de final';
+  prevEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px">${faseLabel}</div>`+
+    cruces.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;font-weight:700;flex:1;text-align:right">${escHtml(c.a.nombre)}</span>
+      <span style="font-size:11px;color:var(--text2)">vs</span>
+      <span style="font-size:13px;font-weight:700;flex:1">${escHtml(c.b.nombre)}</span>
+    </div>`).join('');
+  prevEl.style.display='';
+  genBtn.style.display='';
+}
+async function generarPlayoffs(){
+  const btn=document.getElementById('playoffs-gen-btn');
+  btn.disabled=true;btn.textContent='Generando…';
+  try{
+    if(!currentAdminTorneoId)throw new Error('No hay torneo seleccionado');
+    const {data:t}=await supa.from('torneos').select('hora_default,fecha_inicio,dias_semana').eq('id',currentAdminTorneoId).single();
+    const hora=t?.hora_default||'16:00';
+    const diasSemana=(t?.dias_semana||[6]).map(Number);
+    // Fecha: después del último partido de fase regular
+    const {data:ultimoP}=await supa.from('partidos').select('fecha').eq('division_id',currentAdminDivisionId).not('fecha','is',null).order('fecha',{ascending:false}).limit(1);
+    const baseDate=ultimoP?.[0]?.fecha||t?.fecha_inicio||new Date().toISOString().split('T')[0];
+    const fecha=advanceToNextMatchDay(new Date(baseDate+'T12:00:00'),diasSemana).toISOString().split('T')[0];
+    const n=poffN;
+    const clasificados=poffTabla.slice(0,n);
+    const fase=n===2?'final':n===4?'semis':'cuartos';
+    const partidos=[];
+    for(let i=0;i<n/2;i++){
+      const loc=clasificados[i],vis=clasificados[n-1-i];
+      partidos.push({division_id:currentAdminDivisionId,equipo_local_id:loc.id,equipo_visita_id:vis.id,fase,fecha,hora,jornada:null,cancha:null,estado:'programado',goles_local:0,goles_visita:0});
+    }
+    const {error}=await supa.from('partidos').insert(partidos);
+    if(error)throw error;
+    closePlayoffsModal(null,true);
+    showToast('Playoffs generados ✓','success');
+    await loadAdminPartidos();
+  }catch(e){
+    document.getElementById('playoffs-error').textContent='Error: '+e.message;
+    document.getElementById('playoffs-error').style.display='';
+  }finally{btn.disabled=false;btn.textContent='🏆 Generar primera ronda';}
+}
+async function generarSiguienteRonda(faseActual, partidosFase){
+  const siguienteFase={cuartos:'semis',semis:'final'}[faseActual];
+  if(!siguienteFase)return;
+  const faseLabel={semis:'Semifinales',final:'Final'}[siguienteFase];
+  if(!confirm(`¿Generar ${faseLabel} con los ganadores de ${faseActual==='cuartos'?'Cuartos':'Semifinales'}?`))return;
+  try{
+    const {data:t}=await supa.from('torneos').select('hora_default,dias_semana').eq('id',currentAdminTorneoId).single();
+    const hora=t?.hora_default||'16:00';
+    const diasSemana=(t?.dias_semana||[6]).map(Number);
+    const {data:ultimoP}=await supa.from('partidos').select('fecha').eq('division_id',currentAdminDivisionId).not('fecha','is',null).order('fecha',{ascending:false}).limit(1);
+    const baseDate=ultimoP?.[0]?.fecha||new Date().toISOString().split('T')[0];
+    const fecha=advanceToNextMatchDay(new Date(baseDate+'T12:00:00'),diasSemana).toISOString().split('T')[0];
+    // Ganadores: equipo con más goles; si hay empate el local pasa
+    const ganadores=partidosFase.map(p=>{
+      const gl=p.goles_local??0,gv=p.goles_visita??0;
+      return gl>=gv?{id:p.equipo_local_id}:{id:p.equipo_visita_id};
+    });
+    const partidos=[];
+    for(let i=0;i<ganadores.length/2;i++){
+      partidos.push({division_id:currentAdminDivisionId,equipo_local_id:ganadores[i].id,equipo_visita_id:ganadores[ganadores.length-1-i].id,fase:siguienteFase,fecha,hora,jornada:null,cancha:null,estado:'programado',goles_local:0,goles_visita:0});
+    }
+    const {error}=await supa.from('partidos').insert(partidos);
+    if(error)throw error;
+    showToast(faseLabel+' generadas ✓','success');
+    await loadAdminPartidos();
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 
 function openNuevoPartido(){
