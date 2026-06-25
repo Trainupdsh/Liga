@@ -1020,6 +1020,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="menu-item" onclick="openComunicados('admin')"><div class="menu-icon">📢</div><div class="menu-text"><h3>Comunicados</h3><p>Mensajes y avisos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openMultas()"><div class="menu-icon">💰</div><div class="menu-text"><h3>Multas y Sanciones</h3><p>Control de infracciones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openCanchas()"><div class="menu-icon">🏟️</div><div class="menu-text"><h3>Canchas</h3><p>Disponibilidad de instalaciones</p></div><span class="menu-chevron">›</span></div>
+      <div class="menu-item" onclick="goAdmin('arbitros')"><div class="menu-icon">🟡</div><div class="menu-text"><h3>Árbitros</h3><p>Perfiles y asignaciones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openHistorial()"><div class="menu-icon">🏅</div><div class="menu-text"><h3>Historial</h3><p>Temporadas y campeones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openPlayoffsModal()"><div class="menu-icon">🎯</div><div class="menu-text"><h3>Playoffs / Eliminatoria</h3><p>Fase final del torneo</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="exportPDF()"><div class="menu-icon">📄</div><div class="menu-text"><h3>Exportar PDF</h3><p>Imprimir posiciones y datos</p></div><span class="menu-chevron">›</span></div>
@@ -1046,6 +1047,17 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <button class="btn btn-secondary btn-sm" onclick="openFixtureScreen()">Generar Fixture</button>
     </div>
     <div class="admin-list" id="adminMatchesList"></div>
+  </div>
+  <!-- ÁRBITROS LIST -->
+  <div id="admin-arbitros" class="admin-screen" style="display:none">
+    <div class="admin-header-bar">
+      <span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span>
+      <h2>Árbitros</h2>
+    </div>
+    <div style="padding:12px 16px 8px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary btn-sm" onclick="openNuevoArbitro()">+ Nuevo árbitro</button>
+    </div>
+    <div id="adminArbitrosList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
   </div>
   <div id="admin-fixture" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('division')">‹ Volver</span><h2>Generar Fixture</h2></div>
@@ -2090,12 +2102,57 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <input class="form-input" type="text" id="reprogram-cancha" placeholder="Nombre de la cancha">
       </div>
       <div>
-        <label class="form-label">Motivo</label>
-        <textarea class="form-input" id="reprogram-motivo" rows="2" placeholder="Motivo de la reprogramación..." style="resize:none"></textarea>
+        <label class="form-label">Árbitro</label>
+        <select class="form-input form-select" id="reprogram-arbitro" style="padding:10px 12px;font-size:13px">
+          <option value="">Sin árbitro asignado</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Notas</label>
+        <textarea class="form-input" id="reprogram-motivo" rows="2" placeholder="Notas adicionales..." style="resize:none"></textarea>
       </div>
       <div style="display:flex;gap:10px;margin-top:4px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeReprogramar(null,true)">Cancelar</button>
-        <button class="btn" style="flex:1" onclick="saveReprogramacion()">Confirmar</button>
+        <button class="btn" style="flex:1" onclick="saveReprogramacion()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ÁRBITRO MODAL -->
+<div class="modal-overlay" id="nuevoArbitroModal" onclick="closeNuevoArbitro(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px" id="arb-modal-subtitle">Nuevo árbitro</div>
+      <div style="font-size:16px;font-weight:900;margin-top:2px">Perfil de árbitro</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div class="foto-upload-zone" style="width:72px;height:72px;flex-shrink:0" onclick="document.getElementById('arb-foto-input').click()">
+          <input type="file" id="arb-foto-input" accept="image/*" style="display:none" onchange="handleEscudoFileChange(this,'arb')">
+          <img id="arb-logo-preview" class="foto-preview-img" style="width:72px;height:72px" alt="foto">
+          <div id="arb-logo-placeholder" style="font-size:11px;text-align:center;padding:8px">📷 Foto<br><span style="font-size:9px;opacity:.7">JPG·PNG·8MB</span></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label class="form-label">Nombre completo *</label>
+            <input class="form-input" type="text" id="arb-nombre" placeholder="Ej: Carlos García">
+          </div>
+          <div>
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" id="arb-email" placeholder="arbitro@ejemplo.com">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Teléfono</label>
+        <input class="form-input" type="tel" id="arb-telefono" placeholder="+54 9 11 1234-5678">
+      </div>
+      <div id="arb-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeNuevoArbitro(null,true)">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" id="arb-save-btn" onclick="saveArbitro()">Guardar</button>
       </div>
     </div>
   </div>
@@ -3268,6 +3325,7 @@ function goAdmin(page){
   if(page==='matches')renderAdminMatches();
   if(page==='torneos')loadAdminTorneos();
   if(page==='clubes')loadAdminClubes();
+  if(page==='arbitros')loadAdminArbitros();
   if(page==='fixture'){
     const divEl=document.getElementById('fixture-div-nombre');
     if(divEl){
@@ -4336,8 +4394,9 @@ function renderPartidoCard(p){
       </div>
     </div>
     ${(p.cancha||p.local?.club?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha||p.local?.club?.direccion)}</div>`:''}
+    ${p.arbitro?.nombre?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:2px">🟡 Árb: ${escHtml(p.arbitro.nombre)}</div>`:''}
     ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
-      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}')">✏️ Editar</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'})">✏️ Editar</button>
     </div>`:''}
   </div>`;
 }
@@ -4348,7 +4407,7 @@ async function loadAdminPartidos(){
   if(playoffBtn)playoffBtn.style.display='none';
   try{
     const {data,error}=await supa.from('partidos')
-      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal,club:club_id(direccion)), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal,club:club_id(direccion)), visita:equipo_visita_id(id,nombre,abreviacion,color_principal), arbitro:arbitro_id(id,nombre)')
       .eq('division_id',currentAdminDivisionId)
       .order('jornada').order('fecha').order('hora');
     if(error)throw error;
@@ -5564,15 +5623,131 @@ async function saveInformeArbitro(){
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
+// ═══ ÁRBITROS ═══
+let ligaArbitros=[];
+let _editingArbitroId=null;
+async function loadAdminArbitros(){
+  const el=document.getElementById('adminArbitrosList');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('arbitros').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    if(error)throw error;
+    ligaArbitros=data||[];
+    if(!ligaArbitros.length){
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin árbitros registrados.<br>Tocá + Nuevo árbitro.</div>';
+      return;
+    }
+    el.innerHTML=ligaArbitros.map(a=>{
+      const foto=a.foto_url?`<img src="${a.foto_url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0" alt="foto">`
+        :`<div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0">${escHtml((a.nombre||'?')[0].toUpperCase())}</div>`;
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+        ${foto}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700">${escHtml(a.nombre)}</div>
+          ${a.email?`<div style="font-size:11px;color:var(--text2)">${escHtml(a.email)}</div>`:''}
+          ${a.telefono?`<div style="font-size:11px;color:var(--text3)">${escHtml(a.telefono)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" style="background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3);padding:4px 10px" onclick='openEditArbitro(${JSON.stringify(a)})'>✏️</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:4px 10px" onclick="confirmarEliminarArbitro(${a.id},'${escHtml(a.nombre)}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+function openNuevoArbitro(){
+  _editingArbitroId=null;
+  document.getElementById('arb-modal-subtitle').textContent='Nuevo árbitro';
+  document.getElementById('arb-nombre').value='';
+  document.getElementById('arb-email').value='';
+  document.getElementById('arb-telefono').value='';
+  document.getElementById('arb-error').style.display='none';
+  document.getElementById('arb-save-btn').disabled=false;
+  document.getElementById('arb-save-btn').textContent='Guardar';
+  window._arbLogoBlob=null;
+  const prev=document.getElementById('arb-logo-preview');
+  prev.src='';prev.classList.remove('visible');
+  document.getElementById('arb-logo-placeholder').style.display='';
+  const clr=document.getElementById('arb-logo-clear');
+  if(clr)clr.style.display='none';
+  document.getElementById('nuevoArbitroModal').classList.add('open');
+  setTimeout(()=>document.getElementById('arb-nombre').focus(),300);
+}
+function openEditArbitro(a){
+  if(typeof a==='string')a=JSON.parse(a);
+  _editingArbitroId=a.id;
+  document.getElementById('arb-modal-subtitle').textContent='Editar árbitro';
+  document.getElementById('arb-nombre').value=a.nombre||'';
+  document.getElementById('arb-email').value=a.email||'';
+  document.getElementById('arb-telefono').value=a.telefono||'';
+  document.getElementById('arb-error').style.display='none';
+  document.getElementById('arb-save-btn').disabled=false;
+  document.getElementById('arb-save-btn').textContent='Guardar cambios';
+  window._arbLogoBlob=null;
+  const prev=document.getElementById('arb-logo-preview');
+  if(a.foto_url){prev.src=a.foto_url;prev.classList.add('visible');document.getElementById('arb-logo-placeholder').style.display='none';}
+  else{prev.src='';prev.classList.remove('visible');document.getElementById('arb-logo-placeholder').style.display='';}
+  const clr=document.getElementById('arb-logo-clear');
+  if(clr)clr.style.display='none';
+  document.getElementById('nuevoArbitroModal').classList.add('open');
+}
+function closeNuevoArbitro(e,force){
+  if(force||e?.target===document.getElementById('nuevoArbitroModal'))
+    document.getElementById('nuevoArbitroModal').classList.remove('open');
+}
+async function saveArbitro(){
+  const nombre=document.getElementById('arb-nombre').value.trim();
+  const email=document.getElementById('arb-email').value.trim();
+  const telefono=document.getElementById('arb-telefono').value.trim();
+  const errEl=document.getElementById('arb-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  const btn=document.getElementById('arb-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    let foto_url=undefined;
+    if(window._arbLogoBlob){
+      const path=`arb_${currentAdminLeagueId}_${Date.now()}.webp`;
+      foto_url=await uploadImageToStorage(window._arbLogoBlob,'arbitros',path);
+    }
+    if(_editingArbitroId){
+      const updates={nombre,email:email||null,telefono:telefono||null};
+      if(foto_url!==undefined)updates.foto_url=foto_url;
+      const {error}=await supa.from('arbitros').update(updates).eq('id',_editingArbitroId);
+      if(error)throw error;
+      showToast('Árbitro actualizado ✓','success');
+    } else {
+      const row={liga_id:currentAdminLeagueId,nombre,email:email||null,telefono:telefono||null};
+      if(foto_url!==undefined)row.foto_url=foto_url;
+      const {error}=await supa.from('arbitros').insert(row);
+      if(error)throw error;
+      showToast('Árbitro creado ✓','success');
+    }
+    closeNuevoArbitro(null,true);
+    await loadAdminArbitros();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar';}
+}
+async function confirmarEliminarArbitro(id,nombre){
+  if(!confirm('¿Eliminar al árbitro "'+nombre+'"?\nSe quitará de todos los partidos asignados.'))return;
+  try{
+    await supa.from('partidos').update({arbitro_id:null,arbitro_email:null}).eq('arbitro_id',id);
+    await supa.from('arbitros').delete().eq('id',id);
+    showToast('Árbitro eliminado','error');
+    await loadAdminArbitros();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
 // ═══ REPROGRAMAR ═══
 let _reprogramarMatchId=null;
-function openReprogramar(matchId,titulo,fecha,hora,cancha){
+function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId){
   _reprogramarMatchId=matchId;
   document.getElementById('reprogramar-title').textContent=titulo||'Partido';
   document.getElementById('reprogram-fecha').value=fecha||'';
   document.getElementById('reprogram-hora').value=hora||'';
   document.getElementById('reprogram-cancha').value=cancha||'';
   document.getElementById('reprogram-motivo').value='';
+  const sel=document.getElementById('reprogram-arbitro');
+  sel.innerHTML='<option value="">Sin árbitro asignado</option>'+(ligaArbitros||[]).map(a=>`<option value="${a.id}">${escHtml(a.nombre)}</option>`).join('');
+  sel.value=arbitroId||'';
   document.getElementById('reprogramarModal').classList.add('open');
 }
 function closeReprogramar(e,force){
@@ -5583,15 +5758,19 @@ async function saveReprogramacion(){
   const fecha=document.getElementById('reprogram-fecha').value;
   const hora=document.getElementById('reprogram-hora').value;
   const cancha=document.getElementById('reprogram-cancha').value.trim();
+  const arbitroIdVal=document.getElementById('reprogram-arbitro').value;
   if(!fecha){showToast('Seleccioná una fecha','error');return;}
   try{
     const updates={estado:'programado'};
     if(fecha)updates.fecha=fecha;
     if(hora)updates.hora=hora;
-    if(cancha)updates.cancha=cancha;
+    updates.cancha=cancha||null;
+    updates.arbitro_id=arbitroIdVal?parseInt(arbitroIdVal):null;
+    const arb=ligaArbitros.find(a=>a.id===parseInt(arbitroIdVal));
+    updates.arbitro_email=arb?.email||null;
     await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);
     closeReprogramar(null,true);
-    showToast('Partido reprogramado ✓','success');
+    showToast('Partido actualizado ✓','success');
     await loadAdminPartidos();
   }catch(e){showToast('Error: '+e.message,'error');}
 }
