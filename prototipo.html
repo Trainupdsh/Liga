@@ -600,13 +600,18 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <button class="btn btn-primary btn-sm" onclick="openNuevaLiga()">+ Nueva Liga</button>
     </div>
     <div id="superLeaguesList" style="padding-bottom:8px"></div>
-    <!-- PANEL USUARIOS -->
-    <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between;margin-top:4px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">USUARIOS Y CONTRASEÑAS</div>
-      <button class="btn btn-secondary btn-sm" onclick="loadSAUsuarios()">↻ Actualizar</button>
+    <!-- PANEL USUARIOS (colapsado por defecto) -->
+    <div style="padding:12px 16px;margin-top:4px;border-top:1px solid var(--border)">
+      <div onclick="toggleSAUsuarios()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">🔑 Usuarios y contraseñas</div>
+        <span id="sa-usuarios-chevron" style="font-size:18px;color:var(--text3);transition:transform .2s">›</span>
+      </div>
     </div>
-    <div id="saUsuariosList" style="padding:0 16px 32px;display:flex;flex-direction:column;gap:8px">
-      <div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Cargando usuarios…</div>
+    <div id="saUsuariosPanel" style="display:none">
+      <div style="padding:0 16px 10px">
+        <input class="form-input" id="saUsuariosBuscar" type="search" placeholder="Buscar por nombre, email o rol…" oninput="filterSAUsuarios()" style="width:100%;font-size:13px">
+      </div>
+      <div id="saUsuariosList" style="padding:0 16px 32px;display:flex;flex-direction:column;gap:8px"></div>
     </div>
   </div>
 </div>
@@ -2166,7 +2171,6 @@ async function showSuperAdminDash(){
   document.getElementById('superadmin-dashboard').style.display='';
   showToast('Super Admin 👑','success');
   await loadSuperLeagues();
-  loadSAUsuarios();
 }
 async function loadSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
@@ -4709,28 +4713,49 @@ async function cambiarEstadoTorneo(nuevoEstado){
 }
 
 // ─── SUPERADMIN: USUARIOS ───
-let saEditTarget=null;
+let saEditTarget=null, saAllRows=[];
+
+function toggleSAUsuarios(){
+  const panel=document.getElementById('saUsuariosPanel');
+  const chevron=document.getElementById('sa-usuarios-chevron');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'':'none';
+  chevron.style.transform=open?'rotate(90deg)':'';
+  if(open&&!saAllRows.length)loadSAUsuarios();
+}
+
+function filterSAUsuarios(){
+  const q=document.getElementById('saUsuariosBuscar').value.trim().toLowerCase();
+  const filtered=q?saAllRows.filter(r=>(r.name+r.email+r.role).toLowerCase().includes(q)):saAllRows;
+  renderSARows(filtered,q);
+}
 
 async function loadSAUsuarios(){
   const el=document.getElementById('saUsuariosList');
   el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">⏳ Cargando…</div>';
-  const rows=[];
-  // Liga admins
+  saAllRows=[];
   leagues.forEach(l=>{
-    rows.push({key:'liga_'+l.id,role:'Liga Admin',name:l.name,email:l.adminEmail,pass:l.adminPass,tipo:'liga',ligaId:l.id});
+    saAllRows.push({key:'liga_'+l.id,role:'Liga Admin',name:l.name,email:l.adminEmail,pass:l.adminPass,tipo:'liga',ligaId:l.id});
   });
-  // Extra users
   extraUsers.forEach(u=>{
-    rows.push({key:'extra_'+u.email,role:roleName(u.role),name:u.name,email:u.email,pass:u.pass,tipo:'extra',ref:u});
+    saAllRows.push({key:'extra_'+u.email,role:roleName(u.role),name:u.name,email:u.email,pass:u.pass,tipo:'extra'});
   });
-  // Delegados desde Supabase
   try{
-    const {data}=await supa.from('clubes').select('id,nombre,delegado_email,delegado_pass,liga_id').not('delegado_email','is',null).order('nombre');
+    const {data}=await supa.from('clubes').select('id,nombre,delegado_email,delegado_pass').not('delegado_email','is',null).order('nombre');
     (data||[]).forEach(c=>{
-      rows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:c.delegado_pass||'—',tipo:'club',clubId:c.id});
+      saAllRows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:c.delegado_pass||'—',tipo:'club',clubId:c.id});
     });
-  }catch(e){console.warn('loadSAUsuarios clubs error',e);}
-  if(!rows.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Sin usuarios</div>';return;}
+  }catch(e){console.warn('loadSAUsuarios error',e);}
+  document.getElementById('saUsuariosBuscar').value='';
+  renderSARows(saAllRows,'');
+}
+
+function renderSARows(rows,q){
+  const el=document.getElementById('saUsuariosList');
+  if(!rows.length){
+    el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">${q?'Sin resultados para "'+escHtml(q)+'"':'Sin usuarios'}</div>`;
+    return;
+  }
   el.innerHTML=rows.map(r=>`
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="display:flex;align-items:flex-start;gap:10px">
@@ -4776,6 +4801,7 @@ async function saveEditPass(){
     closeEditPass(null,true);
     showToast('Contraseña actualizada ✓','success');
     await loadSAUsuarios();
+    filterSAUsuarios();
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar';}
 }
 async function blanquearPass(r){
@@ -4784,6 +4810,7 @@ async function blanquearPass(r){
     await applyPassChange(r,'1234');
     showToast('Contraseña blanqueada a 1234 ✓','success');
     await loadSAUsuarios();
+    filterSAUsuarios();
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function applyPassChange(r,newPass){
