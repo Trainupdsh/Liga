@@ -599,7 +599,37 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">LIGAS REGISTRADAS</div>
       <button class="btn btn-primary btn-sm" onclick="openNuevaLiga()">+ Nueva Liga</button>
     </div>
-    <div id="superLeaguesList" style="padding-bottom:24px"></div>
+    <div id="superLeaguesList" style="padding-bottom:8px"></div>
+    <!-- PANEL USUARIOS -->
+    <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">USUARIOS Y CONTRASEÑAS</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadSAUsuarios()">↻ Actualizar</button>
+    </div>
+    <div id="saUsuariosList" style="padding:0 16px 32px;display:flex;flex-direction:column;gap:8px">
+      <div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Cargando usuarios…</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR CONTRASEÑA (superadmin) -->
+<div class="modal-overlay" id="editPassModal" onclick="closeEditPass(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Cambiar contraseña</div>
+      <div id="ep-user-label" style="font-size:15px;font-weight:900;margin-top:2px">—</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <input class="form-input" id="ep-pass" type="text" placeholder="Ej: 1234">
+      </div>
+      <div id="ep-error" style="display:none;color:var(--red);font-size:12px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeEditPass(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="ep-save-btn" style="flex:1" onclick="saveEditPass()">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -891,7 +921,16 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="flex:1">
         <div style="font-size:11px;color:var(--text2)" id="admin-torneo-meta">—</div>
       </div>
-      <span id="admin-torneo-estado-badge" class="tag">—</span>
+      <div style="position:relative">
+        <span id="admin-torneo-estado-badge" class="tag" style="cursor:pointer" onclick="toggleEstadoDropdown()" title="Cambiar estado">—  ▾</span>
+        <div id="estado-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:10px;z-index:100;min-width:160px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+          <div style="padding:4px 0">
+            <div onclick="cambiarEstadoTorneo('planificacion')" style="padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📋 <span>Planificación</span></div>
+            <div onclick="cambiarEstadoTorneo('activo')" style="padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🟢 <span>Activo</span></div>
+            <div onclick="cambiarEstadoTorneo('finalizado')" style="padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🏁 <span>Finalizado</span></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div style="padding:12px 16px 4px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Divisiones</div>
     <div id="adminDivisionesList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
@@ -2127,6 +2166,7 @@ async function showSuperAdminDash(){
   document.getElementById('superadmin-dashboard').style.display='';
   showToast('Super Admin 👑','success');
   await loadSuperLeagues();
+  loadSAUsuarios();
 }
 async function loadSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
@@ -3093,8 +3133,10 @@ function openTorneoDetail(id,nombre,estado,temporada){
   document.getElementById('admin-torneo-nombre').textContent=nombre;
   document.getElementById('admin-torneo-meta').textContent=temporada||'Sin temporada';
   const badge=document.getElementById('admin-torneo-estado-badge');
-  badge.textContent=estadoBadge[estado]||estado;
+  badge.textContent=(estadoBadge[estado]||estado)+'  ▾';
   badge.className='tag '+(estadoClass[estado]||'tag-teams');
+  badge.style.cursor='pointer';
+  document.getElementById('estado-dropdown').style.display='none';
   goAdmin('torneo-detail');
   loadAdminDivisiones();
 }
@@ -4639,6 +4681,122 @@ async function loadAdminDashboard(){
     if(cards[0]&&eq.count!=null)cards[0].textContent=eq.count;
     if(cards[2]&&part.count!=null)cards[2].textContent=part.count;
   }catch(e){console.warn('loadAdminDashboard error',e);}
+}
+
+// ─── ESTADO TORNEO ───
+function toggleEstadoDropdown(){
+  const dd=document.getElementById('estado-dropdown');
+  dd.style.display=dd.style.display==='none'?'block':'none';
+  if(dd.style.display==='block'){
+    setTimeout(()=>document.addEventListener('click',closeEstadoDropdownOutside,{once:true}),10);
+  }
+}
+function closeEstadoDropdownOutside(e){
+  const dd=document.getElementById('estado-dropdown');
+  if(dd&&!dd.contains(e.target))dd.style.display='none';
+}
+async function cambiarEstadoTorneo(nuevoEstado){
+  document.getElementById('estado-dropdown').style.display='none';
+  try{
+    const {error}=await supa.from('torneos').update({estado:nuevoEstado}).eq('id',currentAdminTorneoId);
+    if(error)throw error;
+    const badge=document.getElementById('admin-torneo-estado-badge');
+    badge.textContent=(estadoBadge[nuevoEstado]||nuevoEstado)+'  ▾';
+    badge.className='tag '+(estadoClass[nuevoEstado]||'tag-teams');
+    badge.style.cursor='pointer';
+    showToast('Estado actualizado: '+(estadoBadge[nuevoEstado]||nuevoEstado),'success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ─── SUPERADMIN: USUARIOS ───
+let saEditTarget=null;
+
+async function loadSAUsuarios(){
+  const el=document.getElementById('saUsuariosList');
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">⏳ Cargando…</div>';
+  const rows=[];
+  // Liga admins
+  leagues.forEach(l=>{
+    rows.push({key:'liga_'+l.id,role:'Liga Admin',name:l.name,email:l.adminEmail,pass:l.adminPass,tipo:'liga',ligaId:l.id});
+  });
+  // Extra users
+  extraUsers.forEach(u=>{
+    rows.push({key:'extra_'+u.email,role:roleName(u.role),name:u.name,email:u.email,pass:u.pass,tipo:'extra',ref:u});
+  });
+  // Delegados desde Supabase
+  try{
+    const {data}=await supa.from('clubes').select('id,nombre,delegado_email,delegado_pass,liga_id').not('delegado_email','is',null).order('nombre');
+    (data||[]).forEach(c=>{
+      rows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:c.delegado_pass||'—',tipo:'club',clubId:c.id});
+    });
+  }catch(e){console.warn('loadSAUsuarios clubs error',e);}
+  if(!rows.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Sin usuarios</div>';return;}
+  el.innerHTML=rows.map(r=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">${escHtml(r.role)}</div>
+          <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.name)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${escHtml(r.email)}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <span style="font-family:monospace;font-size:12px;background:var(--card2);padding:2px 7px;border-radius:6px;border:1px solid var(--border)">${escHtml(String(r.pass||'—'))}</span>
+            <span style="font-size:10px;color:var(--text3)">contraseña</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px" onclick='openEditPass(${JSON.stringify(r)})'>✏️ Cambiar</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3)" onclick='blanquearPass(${JSON.stringify(r)})'>↺ Blanquear</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function roleName(r){return{liga_admin:'Liga Admin',delegado:'Delegado',arbitro:'Árbitro',mesa:'Mesa de Control'}[r]||r;}
+
+function openEditPass(r){
+  saEditTarget=r;
+  document.getElementById('ep-user-label').textContent=r.name+' ('+r.email+')';
+  document.getElementById('ep-pass').value=r.pass||'';
+  document.getElementById('ep-error').style.display='none';
+  document.getElementById('ep-save-btn').disabled=false;
+  document.getElementById('ep-save-btn').textContent='Guardar';
+  document.getElementById('editPassModal').classList.add('open');
+}
+function closeEditPass(e,force){
+  if(force||e.target===document.getElementById('editPassModal'))
+    document.getElementById('editPassModal').classList.remove('open');
+}
+async function saveEditPass(){
+  const pass=document.getElementById('ep-pass').value.trim();
+  const errEl=document.getElementById('ep-error');
+  if(!pass){errEl.textContent='Ingresá una contraseña';errEl.style.display='';return;}
+  const btn=document.getElementById('ep-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    await applyPassChange(saEditTarget,pass);
+    closeEditPass(null,true);
+    showToast('Contraseña actualizada ✓','success');
+    await loadSAUsuarios();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar';}
+}
+async function blanquearPass(r){
+  if(!confirm('¿Blanquear contraseña de "'+r.name+'" a "1234"?'))return;
+  try{
+    await applyPassChange(r,'1234');
+    showToast('Contraseña blanqueada a 1234 ✓','success');
+    await loadSAUsuarios();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function applyPassChange(r,newPass){
+  if(r.tipo==='liga'){
+    const liga=leagues.find(l=>l.id===r.ligaId);
+    if(liga)liga.adminPass=newPass;
+  } else if(r.tipo==='extra'){
+    const u=extraUsers.find(u=>u.email===r.email);
+    if(u)u.pass=newPass;
+  } else if(r.tipo==='club'){
+    const {error}=await supa.from('clubes').update({delegado_pass:newPass}).eq('id',r.clubId);
+    if(error)throw error;
+  }
 }
 </script>
 </body>
