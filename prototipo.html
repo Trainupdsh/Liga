@@ -2233,6 +2233,250 @@ function formatFecha(str){
   return dias[d.getDay()]+' '+d.getDate()+' '+meses[d.getMonth()];
 }
 
+// ─── PLANES / FEATURE GATES ───
+const FEATURE_LABELS={playoffs:'Playoffs / Eliminatoria',tv_mode:'Modo TV',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',historial:'Historial de temporadas',inscripcion_online:'Inscripción online',arbitros:'Gestión de árbitros'};
+
+function canUseFeature(feature){
+  if(!currentLigaPlan)return true;
+  return currentLigaPlan.features?.[feature]===true;
+}
+function canAddItem(limitKey,currentCount){
+  if(!currentLigaPlan)return true;
+  const max=currentLigaPlan[limitKey];
+  if(max==null||max===-1)return true;
+  return currentCount<max;
+}
+function showUpgradePrompt(feature,title,msg){
+  const icons={playoffs:'🏆',tv_mode:'📺',comunicados:'📢',multas:'💰',historial:'🏅',inscripcion_online:'📝',arbitros:'🦺',divisiones:'📊',equipos:'🏟️',jugadores:'👥'};
+  document.getElementById('upgrade-icon').textContent=icons[feature]||'🔒';
+  document.getElementById('upgrade-title').textContent=title;
+  document.getElementById('upgrade-msg').textContent=msg;
+  const plan=currentLigaPlan;
+  document.getElementById('upgrade-plan-info').innerHTML=plan?`Tu plan actual: <strong>${escHtml(plan.nombre)}</strong>${plan.vencimiento?' · Vence: '+formatFecha(plan.vencimiento):''}`:' Sin plan asignado';
+  document.getElementById('upgradeModal').classList.add('open');
+}
+function closeUpgradeAndOpenPlanes(){
+  document.getElementById('upgradeModal').classList.remove('open');
+  setTimeout(()=>openVerPlanes(),200);
+}
+
+async function loadCurrentLigaPlan(ligaId,planId){
+  const bannerNombre=document.getElementById('dash-plan-nombre');
+  const bannerVence=document.getElementById('dash-plan-vence');
+  if(!planId){
+    currentLigaPlan=null;
+    bannerNombre.textContent='Sin plan asignado';
+    bannerVence.textContent='Contactá al administrador para activar tu plan';
+    return;
+  }
+  try{
+    const {data:p}=await supa.from('planes').select('*').eq('id',planId).single();
+    const {data:l}=await supa.from('ligas').select('plan_vencimiento').eq('id',ligaId).single();
+    if(p){
+      currentLigaPlan={...p,vencimiento:l?.plan_vencimiento||null};
+      bannerNombre.textContent=p.nombre+' Plan';
+      bannerVence.textContent=l?.plan_vencimiento?'Activo hasta '+formatFecha(l.plan_vencimiento):'Activo · Sin vencimiento';
+      updateAdminMenuForPlan();
+    }
+  }catch(e){currentLigaPlan=null;}
+}
+function updateAdminMenuForPlan(){}
+
+function toggleSAPlanes(){
+  const panel=document.getElementById('saPlanesPanelSA');
+  const chevron=document.getElementById('sa-planes-chevron');
+  const open=panel.style.display==='none'||!panel.style.display;
+  if(open){panel.style.cssText='display:flex;flex-direction:column;gap:10px;padding:0 16px 32px';}
+  else{panel.style.display='none';}
+  chevron.style.transform=open?'rotate(90deg)':'';
+  if(open&&!saPlanes.length)loadSAPlanes();
+}
+async function loadSAPlanes(){
+  const el=document.getElementById('saPlanesPanelSA');
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('planes').select('*').order('orden');
+    if(error)throw error;
+    saPlanes=data||[];
+    renderSAPlanes();
+  }catch(e){el.innerHTML='<div style="color:var(--red);padding:16px">Error al cargar planes</div>';}
+}
+function renderSAPlanes(){
+  const el=document.getElementById('saPlanesPanelSA');
+  el.innerHTML=saPlanes.map(p=>{
+    const features=p.features||{};
+    const enabledCount=Object.values(features).filter(Boolean).length;
+    const precio=p.precio_mensual>0?`$${Number(p.precio_mensual).toLocaleString('es-AR')}/mes`:'GRATIS';
+    return `<div style="background:var(--card);border:2px solid ${p.color||'var(--border)'};border-radius:16px;padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:15px;font-weight:900">${escHtml(p.nombre)}</div>
+          <div style="font-size:11px;color:var(--text2)">${escHtml(p.descripcion||'')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:900;color:${p.color||'var(--accent)'}">${precio}</div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="openEditPlan(${p.id})">✏️ Editar</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">
+        <span>📊 ${p.max_divisiones===-1?'∞':p.max_divisiones} div.</span>
+        <span>🏟️ ${p.max_equipos===-1?'∞':p.max_equipos} equipos</span>
+        <span>👥 ${p.max_jugadores===-1?'∞':p.max_jugadores} jug./equipo</span>
+        <span>✓ ${enabledCount}/${Object.keys(FEATURE_LABELS).length} features</span>
+      </div>
+    </div>`;
+  }).join('')+'<button class="btn btn-primary" onclick="openNuevoPlan()" style="width:100%">+ Agregar plan</button>';
+}
+function openEditPlan(planId){
+  editPlanId=planId;
+  const p=saPlanes.find(x=>x.id===planId);
+  if(!p)return;
+  document.getElementById('ep-plan-nombre-label').textContent=p.nombre;
+  document.getElementById('ep-plan-nombre').value=p.nombre||'';
+  document.getElementById('ep-plan-desc').value=p.descripcion||'';
+  document.getElementById('ep-plan-precio').value=p.precio_mensual||0;
+  document.getElementById('ep-plan-divs').value=p.max_divisiones||1;
+  document.getElementById('ep-plan-equipos').value=p.max_equipos||8;
+  document.getElementById('ep-plan-jugadores').value=p.max_jugadores||20;
+  const feats=p.features||{};
+  document.getElementById('ep-plan-features').innerHTML=Object.entries(FEATURE_LABELS).map(([k,label])=>`
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="ep-feat-${k}" ${feats[k]?'checked':''} style="width:18px;height:18px;accent-color:var(--accent)">
+      <span style="font-size:13px">${label}</span>
+    </label>`).join('');
+  document.getElementById('ep-plan-error').style.display='none';
+  document.getElementById('editPlanModal').classList.add('open');
+}
+function openNuevoPlan(){
+  editPlanId=null;
+  document.getElementById('ep-plan-nombre-label').textContent='Nuevo plan';
+  document.getElementById('ep-plan-nombre').value='';
+  document.getElementById('ep-plan-desc').value='';
+  document.getElementById('ep-plan-precio').value=0;
+  document.getElementById('ep-plan-divs').value=1;
+  document.getElementById('ep-plan-equipos').value=10;
+  document.getElementById('ep-plan-jugadores').value=20;
+  document.getElementById('ep-plan-features').innerHTML=Object.entries(FEATURE_LABELS).map(([k,label])=>`
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="ep-feat-${k}" style="width:18px;height:18px;accent-color:var(--accent)">
+      <span style="font-size:13px">${label}</span>
+    </label>`).join('');
+  document.getElementById('ep-plan-error').style.display='none';
+  document.getElementById('editPlanModal').classList.add('open');
+}
+function closeEditPlan(e,force){
+  if(force||e?.target===document.getElementById('editPlanModal'))
+    document.getElementById('editPlanModal').classList.remove('open');
+}
+async function saveEditPlan(){
+  const nombre=document.getElementById('ep-plan-nombre').value.trim();
+  if(!nombre){document.getElementById('ep-plan-error').textContent='El nombre es obligatorio';document.getElementById('ep-plan-error').style.display='';return;}
+  const features={};
+  Object.keys(FEATURE_LABELS).forEach(k=>{features[k]=document.getElementById('ep-feat-'+k).checked;});
+  const payload={
+    nombre,
+    descripcion:document.getElementById('ep-plan-desc').value.trim()||null,
+    precio_mensual:parseFloat(document.getElementById('ep-plan-precio').value)||0,
+    max_divisiones:parseInt(document.getElementById('ep-plan-divs').value)||1,
+    max_equipos:parseInt(document.getElementById('ep-plan-equipos').value)||8,
+    max_jugadores:parseInt(document.getElementById('ep-plan-jugadores').value)||20,
+    features
+  };
+  const btn=document.getElementById('ep-plan-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    if(editPlanId){
+      const {error}=await supa.from('planes').update(payload).eq('id',editPlanId);
+      if(error)throw error;
+    }else{
+      const {error}=await supa.from('planes').insert({...payload,orden:saPlanes.length+1,activo:true});
+      if(error)throw error;
+    }
+    closeEditPlan(null,true);
+    showToast('Plan guardado ✓','success');
+    saPlanes=[];
+    await loadSAPlanes();
+  }catch(e){document.getElementById('ep-plan-error').textContent='Error: '+e.message;document.getElementById('ep-plan-error').style.display='';}
+  finally{btn.disabled=false;btn.textContent='Guardar';}
+}
+function openAsignarPlan(ligaId,ligaNombre,currentPlanId){
+  asignarPlanLigaId=ligaId;
+  document.getElementById('ap-liga-label').textContent=ligaNombre;
+  document.getElementById('ap-vencimiento').value='';
+  document.getElementById('ap-error').style.display='none';
+  const sel=document.getElementById('ap-plan-sel');
+  sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(p=>`<option value="${p.id}" ${p.id==currentPlanId?'selected':''}>${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+  if(!saPlanes.length){
+    loadSAPlanes().then(()=>{
+      sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(p=>`<option value="${p.id}" ${p.id==currentPlanId?'selected':''}>${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+    });
+  }
+  document.getElementById('asignarPlanModal').classList.add('open');
+}
+function closeAsignarPlan(e,force){
+  if(force||e?.target===document.getElementById('asignarPlanModal'))
+    document.getElementById('asignarPlanModal').classList.remove('open');
+}
+async function saveAsignarPlan(){
+  const planId=document.getElementById('ap-plan-sel').value||null;
+  const vencimiento=document.getElementById('ap-vencimiento').value||null;
+  const btn=document.getElementById('ap-save-btn');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    const {error}=await supa.from('ligas').update({plan_id:planId?parseInt(planId):null,plan_vencimiento:vencimiento}).eq('id',asignarPlanLigaId);
+    if(error)throw error;
+    closeAsignarPlan(null,true);
+    showToast('Plan asignado ✓','success');
+    await loadSuperLeagues();
+    if(!saPlanes.length)await loadSAPlanes();
+  }catch(e){document.getElementById('ap-error').textContent='Error: '+e.message;document.getElementById('ap-error').style.display='';}
+  finally{btn.disabled=false;btn.textContent='Guardar';}
+}
+function openVerPlanes(){
+  document.getElementById('verPlanesModal').classList.add('open');
+  loadVerPlanes();
+}
+function closeVerPlanes(e,force){
+  if(force||e?.target===document.getElementById('verPlanesModal'))
+    document.getElementById('verPlanesModal').classList.remove('open');
+}
+async function loadVerPlanes(){
+  const el=document.getElementById('ver-planes-list');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('planes').select('*').eq('activo',true).order('orden');
+    if(error)throw error;
+    const planes=data||[];
+    el.innerHTML=planes.map(p=>{
+      const isCurrent=currentLigaPlan&&currentLigaPlan.id===p.id;
+      const features=p.features||{};
+      const precio=p.precio_mensual>0?`$${Number(p.precio_mensual).toLocaleString('es-AR')}/mes`:'GRATIS';
+      return `<div style="background:var(--card);border:2px solid ${isCurrent?p.color||'var(--accent)':'var(--border)'};border-radius:16px;padding:16px;position:relative">
+        ${isCurrent?`<div style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;background:${p.color||'var(--accent)'};color:#fff">TU PLAN</div>`:''}
+        <div style="font-size:18px;font-weight:900;margin-bottom:2px">${escHtml(p.nombre)}</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${escHtml(p.descripcion||'')}</div>
+        <div style="font-size:22px;font-weight:900;color:${p.color||'var(--accent)'};margin-bottom:12px">${precio}</div>
+        <div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+          <span>📊 ${p.max_divisiones===-1?'Divisiones ilimitadas':p.max_divisiones+' div. máx.'}</span>
+          <span>🏟️ ${p.max_equipos===-1?'Equipos ilimitados':p.max_equipos+' equipos/div.'}</span>
+          <span>👥 ${p.max_jugadores===-1?'Jugadores ilimitados':p.max_jugadores+' jug./equipo'}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${Object.entries(FEATURE_LABELS).map(([k,label])=>`
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
+              <span>${features[k]?'✅':'❌'}</span><span style="color:${features[k]?'inherit':'var(--text3)'}">${label}</span>
+            </div>`).join('')}
+        </div>
+        ${!isCurrent?`<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="solicitarUpgrade('${escHtml(p.nombre)}')">Solicitar este plan</button>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div style="color:var(--red);padding:16px">Error al cargar planes</div>';}
+}
+function solicitarUpgrade(planNombre){
+  showToast('Solicitud enviada al administrador de FIXTAR 📧','success');
+  closeVerPlanes(null,true);
+}
+
 async function openLeague(id){
   currentLeagueId=id;
   showView('view-league');
@@ -2400,6 +2644,7 @@ async function doAdminLogin(){
 }
 function showAdminForLeague(l){
   currentAdminLeagueId=l.id;
+  currentLigaPlan=null;
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='';
@@ -2410,6 +2655,7 @@ function showAdminForLeague(l){
   document.getElementById('dash-admin-email').textContent=l.adminEmail;
   goAdmin('dashboard');
   showToast('Bienvenido, '+l.name,'success');
+  loadCurrentLigaPlan(l.id,l.planId||null);
 }
 function logoutAdmin(){showView('view-home');showToast('Sesión cerrada','');}
 
@@ -2458,12 +2704,14 @@ function renderSuperLeagues(){
         <div style="font-size:11px;color:var(--text3);margin-top:1px">${l.adminEmail}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
           <span class="super-badge ${l.active?'active':'inactive'}">${l.active?'● ACTIVA':'INACTIVA'}</span>
+          ${l.planNombre?`<span class="plan-badge" style="background:rgba(0,0,0,.15);color:${l.planColor||'var(--accent)'}">💳 ${escHtml(l.planNombre)}</span>`:'<span class="plan-badge starter">Sin plan</span>'}
           ${l.maxEquipos?`<span class="tag tag-teams">≤${l.maxEquipos} equipos</span>`:''}
           ${l.maxJugadores?`<span class="tag tag-teams">≤${l.maxJugadores} jug/equipo</span>`:''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="btn btn-primary btn-sm" onclick="openLeagueAsAdmin(${l.id})">Gestionar</button>
+        <button class="btn btn-secondary btn-sm" onclick="openAsignarPlan(${l.id},'${escHtml(l.name)}',${l.planId||'null'})">📋 Plan</button>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarLiga(${l.id},'${escHtml(l.name)}')">Eliminar</button>
       </div>
     </div>`).join('');
@@ -3986,6 +4234,7 @@ async function loadAdminTabla(){
 // ═══ PLAYOFFS ═══
 let poffN=4,poffTabla=[];
 async function openPlayoffsModal(){
+  if(currentLigaPlan&&!canUseFeature('playoffs')){showUpgradePrompt('playoffs','Playoffs no disponible','La fase eliminatoria requiere el plan Pro o Premium.');return;}
   if(!currentAdminDivisionId){showToast('Primero entrá a una división desde Gestionar División','error');return;}
   document.getElementById('playoffs-error').style.display='none';
   document.getElementById('playoffs-gen-btn').style.display='none';
@@ -4744,6 +4993,7 @@ function renderCompletenessRing(pct){
 // ═══ TV MODE ═══
 let tvSyncInterval=null;
 function openTVMode(){
+  if(currentLigaPlan&&!canUseFeature('tv_mode')){showUpgradePrompt('tv_mode','Modo TV no disponible','El Modo TV en pantalla completa requiere el plan Pro o Premium.');return;}
   const overlay=document.getElementById('tv-overlay');
   overlay.classList.add('open');
   document.getElementById('tv-local-name').textContent=document.getElementById('mesa-home-name')?.textContent||'Local';
@@ -4893,6 +5143,7 @@ async function saveComunicado(){
 
 // ═══ MULTAS ═══
 function openMultas(){
+  if(currentLigaPlan&&!canUseFeature('multas')){showUpgradePrompt('multas','Multas no disponible','La gestión de multas requiere el plan Pro o Premium.');return;}
   document.getElementById('multasModal').classList.add('open');
   loadMultas();
 }
@@ -5033,6 +5284,7 @@ async function saveReprogramacion(){
 
 // ═══ HISTORIAL ═══
 function openHistorial(){
+  if(currentLigaPlan&&!canUseFeature('historial')){showUpgradePrompt('historial','Historial no disponible','El historial de temporadas requiere el plan Pro o Premium.');return;}
   document.getElementById('historialModal').classList.add('open');
   loadHistorial();
 }
