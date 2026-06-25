@@ -4133,7 +4133,7 @@ async function openFixtureScreen(){
     const {data:t}=await supa.from('torneos').select('nombre,formato,dias_semana,hora_default,fecha_inicio').eq('id',currentAdminTorneoId).single();
     if(!t){resumen.textContent='No se pudo cargar el torneo';return;}
     const diasNombres=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const dias=(t.dias_semana||[6]).slice().sort((a,b)=>a-b).map(d=>diasNombres[d]).join(', ');
+    const dias=(t.dias_semana||[6]).map(Number).slice().sort((a,b)=>a-b).map(d=>diasNombres[d]).join(', ');
     const formatoLabel=t.formato==='ida_vuelta'?'Ida y vuelta':'Round Robin';
     resumen.innerHTML=`<b>${escHtml(t.nombre)}</b><br>
       📅 ${dias} · ⏰ ${t.hora_default||'16:00'}<br>
@@ -4142,7 +4142,6 @@ async function openFixtureScreen(){
     const n=adminDivEquipos.length;
     const eq=n%2===0?n:n+1;
     const rondas=eq-1;
-    const total=formato==='ida_vuelta'?rondas*rondas/2*2:rondas*(eq/2);
     const totalP=t.formato==='ida_vuelta'?rondas*(eq/2)*2:rondas*(eq/2);
     const totalF=t.formato==='ida_vuelta'?rondas*2:rondas;
     if(preview&&n>=2){
