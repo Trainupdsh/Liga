@@ -1473,13 +1473,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-arbitro" class="view">
   <header>
     <span class="back-link" onclick="logoutAdmin()">‹</span>
-    <div style="flex:1"><h1 id="arb-name">Carlos Medina</h1><span class="subtitle">Árbitro · Liga Baires</span></div>
+    <div style="flex:1"><h1 id="arb-name">Carlos Medina</h1><span class="subtitle" id="arb-subtitle">Árbitro</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:24px">
     <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
       <span style="font-size:22px">📅</span>
-      <div><div style="font-size:13px;font-weight:700">Hoy — Sábado 21 Jun</div><div style="font-size:11px;color:var(--text2)">2 partidos asignados</div></div>
+      <div><div style="font-size:13px;font-weight:700" id="arb-today-label">Hoy</div><div style="font-size:11px;color:var(--text2)" id="arb-match-count">Cargando...</div></div>
     </div>
     <div class="section-title">MIS PARTIDOS</div>
     <div id="arbitro-matches"></div>
@@ -3305,6 +3305,11 @@ function generateQR(seed){
 function showArbitroView(user){
   showView('view-arbitro');
   document.getElementById('arb-name').textContent=user.name;
+  document.getElementById('arb-subtitle').textContent='Árbitro'+(user.league?' · '+user.league:'');
+  const hoy=new Date();
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('arb-today-label').textContent='Hoy — '+dias[hoy.getDay()]+' '+hoy.getDate()+' '+meses[hoy.getMonth()];
   loadArbitroPartidos(user);
   showToast('Bienvenido, '+user.name,'success');
 }
@@ -4815,6 +4820,8 @@ async function loadArbitroPartidos(user){
     };
     el.innerHTML=activos.length?activos.map(renderP).join(''):'<div style="text-align:center;color:var(--text3);padding:32px;font-size:14px">Sin partidos próximos asignados.</div>';
     nextEl.innerHTML=pasados.length?`<div style="padding:4px 16px 4px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">RECIENTES</div>`+pasados.map(renderP).join(''):'';
+    const cEl=document.getElementById('arb-match-count');
+    if(cEl)cEl.textContent=activos.length?activos.length+' partido'+(activos.length===1?'':'s')+' asignado'+(activos.length===1?'':'s'):'Sin partidos próximos';
   }catch(e){
     el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Sin conexión a Supabase.</div>';
     renderArbitroMatchesLocal();
