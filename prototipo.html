@@ -489,8 +489,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .home-banner h2{font-size:26px;}
 
   /* DIVISION — reorder: nav between header and content */
-  #view-division{display:flex;flex-direction:column;}
-  #view-division header{order:1;position:sticky;top:0;z-index:110;}
+  #view-division.active{display:flex;flex-direction:column;}
+  #view-division.active header{order:1;position:sticky;top:0;z-index:110;}
   #view-division nav.bottom-nav{
     order:2;
     position:sticky;top:58px;
@@ -501,9 +501,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
     border-top:none;border-bottom:1px solid var(--border);
     padding-bottom:0;
   }
-  #view-division nav.bottom-nav .nav-item{padding:14px 0 12px;}
-  #view-division nav.bottom-nav .nav-item .nav-label{font-size:11px;}
-  #view-division .content{order:3;padding-bottom:32px;}
+  #view-division.active nav.bottom-nav .nav-item{padding:14px 0 12px;}
+  #view-division.active nav.bottom-nav .nav-item .nav-label{font-size:11px;}
+  #view-division.active .content{order:3;padding-bottom:32px;}
 
   /* ADMIN DASHBOARD */
   .dashboard-grid{grid-template-columns:repeat(4,1fr);}
