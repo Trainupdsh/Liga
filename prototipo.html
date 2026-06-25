@@ -1009,6 +1009,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <input class="form-input" id="nc-pass" type="text" placeholder="Ej: losandes2025" style="width:100%"></div>
         <div style="font-size:11px;color:var(--text3)">El delegado usará estas credenciales para entrar a la app y gestionar el plantel.</div>
       </div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📍 Dirección / Sede del club (opcional)</label>
+        <input class="form-input" id="nc-dir" type="text" placeholder="Ej: Av. San Martín 1250, Lomas de Zamora" style="width:100%">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Aparecerá en el fixture para que los jugadores sepan dónde es el partido.</div>
+      </div>
       <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Escudo del club (opcional)</label>
         <div class="foto-upload-zone" id="nc-logo-zone" onclick="document.getElementById('nc-logo-input').click()">
@@ -1303,11 +1307,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="mesa-btns">
       <button class="mesa-btn gol-local" onclick="mesaEvent('gol','local')"><span class="mb-icon">⚽</span><span class="mb-label">GOL LOCAL</span></button>
       <button class="mesa-btn gol-visit" onclick="mesaEvent('gol','visita')"><span class="mb-icon">⚽</span><span class="mb-label">GOL VISITANTE</span></button>
-      <button class="mesa-btn amarilla" onclick="mesaEvent('amarilla','')"><span class="mb-icon">🟡</span><span class="mb-label">AMARILLA</span></button>
-      <button class="mesa-btn roja" onclick="mesaEvent('roja','')"><span class="mb-icon">🔴</span><span class="mb-label">ROJA</span></button>
-      <button class="mesa-btn exclusion" onclick="mesaEvent('exclusion','')"><span class="mb-icon">🚫</span><span class="mb-label">EXCLUSIÓN 2'</span></button>
-      <button class="mesa-btn timeout" onclick="mesaEvent('timeout','')"><span class="mb-icon">⏱</span><span class="mb-label">TIEMPO MUERTO</span></button>
-      <button class="mesa-btn sust" onclick="mesaEvent('sust','')"><span class="mb-icon">🔄</span><span class="mb-label">SUSTITUCIÓN</span></button>
+      <button class="mesa-btn amarilla" onclick="openMesaPicker('amarilla')"><span class="mb-icon">🟡</span><span class="mb-label">AMARILLA</span></button>
+      <button class="mesa-btn roja" onclick="openMesaPicker('roja')"><span class="mb-icon">🔴</span><span class="mb-label">ROJA</span></button>
+      <button class="mesa-btn exclusion" onclick="openMesaPicker('exclusion')"><span class="mb-icon">🚫</span><span class="mb-label">EXCLUSIÓN 2'</span></button>
+      <button class="mesa-btn timeout" onclick="mesaEvent('timeout','','')"><span class="mb-icon">⏱</span><span class="mb-label">TIEMPO MUERTO</span></button>
+      <button class="mesa-btn sust" onclick="openMesaPicker('sust')"><span class="mb-icon">🔄</span><span class="mb-label">SUSTITUCIÓN</span></button>
       <button class="mesa-btn fin-tiempo" onclick="endPeriod()"><span class="mb-icon">🏁</span><span class="mb-label">FIN DE TIEMPO</span></button>
       <button class="mesa-btn" onclick="openTVMode()" style="background:var(--card2);grid-column:1/-1"><span class="mb-icon">📺</span><span class="mb-label">MODO TV / PANTALLA GRANDE</span></button>
     </div>
@@ -1461,6 +1465,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <div class="nl-color-btn" onclick="ecSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
         </div>
       </div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📍 Dirección / Sede del club (opcional)</label>
+        <input class="form-input" id="ec-dir" type="text" placeholder="Ej: Av. San Martín 1250, Lomas de Zamora" style="width:100%">
+      </div>
       <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Escudo del club (opcional)</label>
         <div class="foto-upload-zone" onclick="document.getElementById('ec-logo-input').click()">
@@ -1473,6 +1480,42 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeEditClub(null,true)">Cancelar</button>
         <button class="btn btn-primary" id="ec-save-btn" style="flex:1" onclick="saveEditClub()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PICKER TARJETA/SUSTITUCIÓN -->
+<div class="modal-overlay" id="mesaPickerModal" onclick="closeMesaPicker(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Registrar evento</div>
+      <div style="font-size:17px;font-weight:900" id="mp-titulo">—</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Equipo</div>
+        <div style="display:flex;gap:8px">
+          <button id="mp-btn-local" onclick="mpSelectTeam('local')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px" id="mp-btn-local">🏠 LOCAL</button>
+          <button id="mp-btn-visita" onclick="mpSelectTeam('visita')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px">🚌 VISITANTE</button>
+        </div>
+        <div id="mp-team-names" style="display:flex;gap:8px;margin-top:4px">
+          <div id="mp-local-name" style="flex:1;text-align:center;font-size:11px;color:var(--text3)">—</div>
+          <div id="mp-visita-name" style="flex:1;text-align:center;font-size:11px;color:var(--text3)">—</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jugador (opcional)</div>
+        <select class="form-input form-select" id="mp-jugador-sel" style="width:100%;display:none;margin-bottom:6px">
+          <option value="">— Seleccionar jugador —</option>
+        </select>
+        <input class="form-input" id="mp-jugador-txt" type="text" placeholder="Nro. o nombre del jugador (opcional)" style="width:100%">
+      </div>
+      <div id="mp-error" style="display:none;color:var(--red);font-size:12px;text-align:center"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="flex:0 0 auto" onclick="closeMesaPicker(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="mp-confirm-btn" style="flex:1;opacity:.4;pointer-events:none" onclick="confirmMesaPicker()">Confirmar</button>
       </div>
     </div>
   </div>
@@ -2797,10 +2840,11 @@ function toggleTimer(){
   }
 }
 const evtLabels={gol:'⚽ GOL',amarilla:'🟡 AMARILLA',roja:'🔴 ROJA',exclusion:"🚫 EXCLUSIÓN 2'",timeout:'⏱ T. MUERTO',sust:'🔄 SUSTITUCIÓN',fin:'🏁 FIN DE TIEMPO'};
-function addEventToLog(type,side,min,isAnulado,motivo,dbId){
+function addEventToLog(type,side,min,isAnulado,motivo,dbId,jugador){
   const homeName=document.getElementById('mesa-home-name').textContent;
   const awayName=document.getElementById('mesa-away-name').textContent;
   const sideLabel=side==='local'?homeName:side==='visita'?awayName:'';
+  const jugadorSpan=jugador?` <span style="font-size:11px;color:var(--accent);font-weight:700">#${escHtml(jugador)}</span>`:'';
   const el=document.getElementById('mesa-events');
   if(el.firstChild&&el.firstChild.textContent&&el.firstChild.textContent.includes('Sin eventos'))el.innerHTML='';
   const entry=document.createElement('div');
@@ -2810,7 +2854,7 @@ function addEventToLog(type,side,min,isAnulado,motivo,dbId){
   if(isAnulado){
     entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="mesa-event-gol" style="text-decoration:line-through">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}<span class="mesa-event-anulado-tag">ANULADO</span>${motivo?`<span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${motivo}</span>`:''}`;
   } else {
-    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="${isGol?'mesa-event-gol':''}">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}`;
+    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="${isGol?'mesa-event-gol':''}">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}${jugadorSpan}`;
     if(isGol)entry.onclick=()=>openAnular(entry,type,side,min);
   }
   el.prepend(entry);
@@ -2878,19 +2922,20 @@ function closeAnular(e,force){
   if(force||e.target===document.getElementById('anularModal'))
     document.getElementById('anularModal').classList.remove('open');
 }
-async function mesaEvent(type,side){
+async function mesaEvent(type,side,jugador){
   if(type==='gol'){
     if(side==='local'){mesaScoreHome++;document.getElementById('mesa-score-home').textContent=mesaScoreHome;}
     else{mesaScoreAway++;document.getElementById('mesa-score-away').textContent=mesaScoreAway;}
   }
   const min=Math.floor(mesaSecs/60);
-  addEventToLog(type,side,min);
-  showToast((evtLabels[type]||type)+(side==='local'?' — '+document.getElementById('mesa-home-name').textContent:side==='visita'?' — '+document.getElementById('mesa-away-name').textContent:''),'');
-  // Guardar en Supabase y guardar id en el elemento del log
+  addEventToLog(type,side,min,false,'',null,jugador);
+  const homeName=document.getElementById('mesa-home-name').textContent;
+  const awayName=document.getElementById('mesa-away-name').textContent;
+  const equipoLabel=side==='local'?homeName:side==='visita'?awayName:'';
+  showToast((evtLabels[type]||type)+(equipoLabel?' — '+equipoLabel:'')+(jugador?' #'+jugador:''),'');
   try{
-    const {data:ev}=await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:type,equipo:side||null,minuto:min}).select().single();
+    const {data:ev}=await supa.from('eventos_partido').insert({partido_id:mesaMatchId,tipo:type,equipo:side||null,minuto:min,jugador_nombre:jugador||null}).select().single();
     if(ev&&type==='gol'){
-      // Asignar id al primer elemento del log (el que acabamos de agregar)
       const primer=document.getElementById('mesa-events').firstChild;
       if(primer)primer.dataset.id=ev.id;
       await supa.from('partidos').update(
@@ -2898,6 +2943,56 @@ async function mesaEvent(type,side){
       ).eq('id',mesaMatchId);
     }
   }catch(e){console.warn('Error guardando evento',e);}
+}
+
+// ─── PICKER TARJETA / SUSTITUCIÓN ───
+let mpPendingType='', mpTeamSel='', mesaLocalJugadores=[], mesaVisitaJugadores=[];
+function openMesaPicker(type){
+  mpPendingType=type;mpTeamSel='';
+  const labels={amarilla:'🟡 TARJETA AMARILLA',roja:'🔴 TARJETA ROJA',exclusion:"🚫 EXCLUSIÓN 2'",sust:'🔄 SUSTITUCIÓN'};
+  document.getElementById('mp-titulo').textContent=labels[type]||type;
+  document.getElementById('mp-local-name').textContent=document.getElementById('mesa-home-name').textContent;
+  document.getElementById('mp-visita-name').textContent=document.getElementById('mesa-away-name').textContent;
+  ['mp-btn-local','mp-btn-visita'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.style.background='';b.style.color='';b.style.borderColor='';
+  });
+  document.getElementById('mp-jugador-txt').value='';
+  document.getElementById('mp-jugador-sel').style.display='none';
+  document.getElementById('mp-jugador-sel').innerHTML='<option value="">— Seleccionar jugador —</option>';
+  document.getElementById('mp-error').style.display='none';
+  const confirmBtn=document.getElementById('mp-confirm-btn');
+  confirmBtn.style.opacity='.4';confirmBtn.style.pointerEvents='none';
+  document.getElementById('mesaPickerModal').classList.add('open');
+}
+function mpSelectTeam(side){
+  mpTeamSel=side;
+  const accentStyle='background:var(--accent);color:#fff;border-color:var(--accent)';
+  const defStyle='background:var(--card2);color:var(--text);border-color:var(--border)';
+  document.getElementById('mp-btn-local').style.cssText=side==='local'?accentStyle:defStyle;
+  document.getElementById('mp-btn-visita').style.cssText=side==='visita'?accentStyle:defStyle;
+  // Llenar select de jugadores si hay datos
+  const jugadores=side==='local'?mesaLocalJugadores:mesaVisitaJugadores;
+  const sel=document.getElementById('mp-jugador-sel');
+  if(jugadores.length){
+    sel.innerHTML='<option value="">— Seleccionar jugador —</option>'+jugadores.map(j=>`<option value="${j.numero?j.numero+' - ':''} ${escHtml(j.nombre||'')}">${j.numero?'#'+j.numero+' ':''} ${escHtml(j.nombre||'')}</option>`).join('');
+    sel.style.display='';
+  } else {
+    sel.style.display='none';
+  }
+  document.getElementById('mp-confirm-btn').style.opacity='1';
+  document.getElementById('mp-confirm-btn').style.pointerEvents='auto';
+}
+function closeMesaPicker(e,force){
+  if(force||e.target===document.getElementById('mesaPickerModal'))
+    document.getElementById('mesaPickerModal').classList.remove('open');
+}
+async function confirmMesaPicker(){
+  if(!mpTeamSel){document.getElementById('mp-error').textContent='Seleccioná el equipo';document.getElementById('mp-error').style.display='';return;}
+  const sel=document.getElementById('mp-jugador-sel');
+  const jugador=(sel.style.display!=='none'&&sel.value?sel.value:document.getElementById('mp-jugador-txt').value).trim();
+  closeMesaPicker(null,true);
+  await mesaEvent(mpPendingType,mpTeamSel,jugador||'');
 }
 
 function subscribeToMatchEvents(matchId){
@@ -3031,7 +3126,7 @@ async function loadDelegPartidos(){
           <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
           <div style="flex:1;font-size:13px;font-weight:${esVisita?'900':'700'};color:${esVisita?'var(--accent)':'inherit'}">${esVisita?' 🏠':''}${escHtml(p.visita?.nombre||'Visitante')}</div>
         </div>
-        ${p.cancha?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px">📍 ${escHtml(p.cancha)}</div>`:''}
+        ${(p.cancha||delegadoClub?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px">📍 ${escHtml(p.cancha||(esLocal?delegadoClub.direccion:''))}</div>`:''}
         ${puedeOperar?`
         <button class="btn" style="width:100%;background:var(--green);color:#fff;font-size:13px" onclick="delegadoAbrirMesa(${p.id},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}',${p.jornada||'null'})">
           🎮 Operar Mesa — soy local
@@ -3243,6 +3338,7 @@ async function saveNuevoClub(){
   const abrev=document.getElementById('nc-abrev').value.trim().toUpperCase();
   const email=document.getElementById('nc-email').value.trim();
   const pass=document.getElementById('nc-pass').value.trim();
+  const dir=document.getElementById('nc-dir').value.trim();
   const errEl=document.getElementById('nc-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
   const btn=document.getElementById('nc-save-btn');
@@ -3260,7 +3356,7 @@ async function saveNuevoClub(){
       liga_id:currentAdminLeagueId, nombre, abreviacion:abrev||null,
       color_principal:ncColorSel, color_texto:'#ffffff',
       delegado_email:email||null, delegado_pass:pass||null,
-      logo_url:logoUrl
+      logo_url:logoUrl, direccion:dir||null
     });
     if(error)throw error;
     window._ncLogoBlob=null;
@@ -3949,6 +4045,7 @@ function openEditClub(){
   ecColor=delegadoClub.color_principal||'#1a2150';
   document.getElementById('ec-nombre').value=delegadoClub.nombre||delegadoClub.name||'';
   document.getElementById('ec-abrev').value=delegadoClub.abreviacion||'';
+  document.getElementById('ec-dir').value=delegadoClub.direccion||'';
   document.getElementById('ec-error').style.display='none';
   document.querySelectorAll('#ec-colores .nl-color-btn').forEach(b=>{
     const bc=b.style.backgroundColor||b.style.background||'';
@@ -3985,7 +4082,8 @@ async function saveEditClub(){
   const btn=document.getElementById('ec-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    const updates={nombre,abreviacion:abreviacion||null,color_principal:ecColor};
+    const dir=document.getElementById('ec-dir').value.trim();
+    const updates={nombre,abreviacion:abreviacion||null,color_principal:ecColor,direccion:dir||null};
     const ecLogoBlob=window._ecLogoBlob;
     if(ecLogoBlob){
       try{
@@ -3998,6 +4096,7 @@ async function saveEditClub(){
     delegadoClub.nombre=nombre;
     delegadoClub.abreviacion=abreviacion||null;
     delegadoClub.color_principal=ecColor;
+    delegadoClub.direccion=dir||null;
     closeEditClub(null,true);
     showDelegadoView(delegadoClub);
     showToast('Club actualizado ✓','success');
@@ -4433,22 +4532,34 @@ async function loadCanchas(){
   const el=document.getElementById('canchas-list');
   el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Cargando...</div>';
   try{
-    const {data,error}=await supa.from('canchas').select('*').eq('liga_id',currentAdminLeagueId||0).order('nombre');
-    if(error)throw error;
-    if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin canchas registradas.</div>';return;}
-    el.innerHTML=data.map(c=>`
-      <div class="cancha-card" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-size:14px;font-weight:700">🏟️ ${escHtml(c.nombre||'Cancha')}</div>
-            ${c.direccion?`<div style="font-size:12px;color:var(--text2)">📍 ${escHtml(c.direccion)}</div>`:''}
-          </div>
-          ${c.capacidad?`<div style="font-size:12px;color:var(--text3)">${c.capacidad} jugadores</div>`:''}
-        </div>
-        <div style="margin-top:8px;display:flex;gap:6px">
-          <span class="cancha-slot" style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)">Disponible</span>
-        </div>
-      </div>`).join('');
+    const [{data:canchas},{data:clubes}]=await Promise.all([
+      supa.from('canchas').select('*').eq('liga_id',currentAdminLeagueId||0).order('nombre'),
+      supa.from('clubes').select('nombre,direccion').eq('liga_id',currentAdminLeagueId||0).not('direccion','is',null).order('nombre')
+    ]);
+    const sedesClub=(clubes||[]).filter(c=>c.direccion);
+    const canchasList=canchas||[];
+    if(!canchasList.length&&!sedesClub.length){
+      el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin canchas ni sedes registradas.</div>';return;
+    }
+    let html='';
+    if(canchasList.length){
+      html+=`<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 8px">Canchas</div>`;
+      html+=canchasList.map(c=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:700">🏟️ ${escHtml(c.nombre||'Cancha')}</div>
+          ${c.direccion?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📍 ${escHtml(c.direccion)}</div>`:''}
+          ${c.capacidad?`<div style="font-size:11px;color:var(--text3);margin-top:2px">Capacidad: ${c.capacidad} pers.</div>`:''}
+        </div>`).join('');
+    }
+    if(sedesClub.length){
+      html+=`<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:${canchasList.length?'12px':'4px'} 0 8px">Sedes de clubes</div>`;
+      html+=sedesClub.map(c=>`
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:700">🛡️ ${escHtml(c.nombre)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">📍 ${escHtml(c.direccion)}</div>
+        </div>`).join('');
+    }
+    el.innerHTML=html;
   }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
 }
 async function saveCancha(){
