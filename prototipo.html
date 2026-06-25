@@ -466,6 +466,17 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .view:not(.active){display:none!important;}
   body{background:#fff;color:#000;}
 }
+.plan-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.plan-card.featured{border-color:var(--accent)}
+.plan-price{font-size:24px;font-weight:900;color:var(--accent)}
+.plan-price small{font-size:13px;font-weight:600;color:var(--text2)}
+.plan-feature-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)}
+.plan-feature-row:last-child{border-bottom:none}
+.plan-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.plan-badge.starter{background:rgba(75,85,99,.15);color:#9ca3af}
+.plan-badge.pro{background:rgba(26,33,80,.2);color:var(--accent)}
+.plan-badge.premium{background:rgba(212,175,55,.2);color:#d4af37}
+.upgrade-lock{opacity:.5;cursor:not-allowed;position:relative}
 </style>
 </head>
 <body>
@@ -617,6 +628,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <div id="saUsuariosList" style="padding:0 16px 32px;display:flex;flex-direction:column;gap:8px"></div>
     </div>
+    <!-- PLANES SECTION in superadmin -->
+    <div style="padding:12px 16px;margin-top:4px;border-top:1px solid var(--border)">
+      <div onclick="toggleSAPlanes()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">💳 Planes de suscripción</div>
+        <span id="sa-planes-chevron" style="font-size:18px;color:var(--text3);transition:transform .2s">›</span>
+      </div>
+    </div>
+    <div id="saPlanesPanelSA" style="display:none"></div>
   </div>
 </div>
 
@@ -638,6 +657,86 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <button class="btn btn-secondary" style="flex:1" onclick="closeEditPass(null,true)">Cancelar</button>
         <button class="btn btn-primary" id="ep-save-btn" style="flex:1" onclick="saveEditPass()">Guardar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR PLAN -->
+<div class="modal-overlay" id="editPlanModal" onclick="closeEditPlan(event)">
+  <div class="modal-sheet" style="padding-bottom:28px;max-height:90vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Editar Plan</div>
+      <div id="ep-plan-nombre-label" style="font-size:15px;font-weight:900">—</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Nombre del plan</label><input class="form-input" id="ep-plan-nombre" type="text" placeholder="Ej: Starter"></div>
+      <div><label class="form-label">Descripción corta</label><input class="form-input" id="ep-plan-desc" type="text" placeholder="Para ligas pequeñas..."></div>
+      <div><label class="form-label">Precio mensual (ARS, 0 = gratis)</label><input class="form-input" id="ep-plan-precio" type="number" min="0" placeholder="0"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><label class="form-label">Max. Divisiones</label><input class="form-input" id="ep-plan-divs" type="number" placeholder="-1=ilimit."><small style="font-size:10px;color:var(--text3)">-1 = ilimitado</small></div>
+        <div><label class="form-label">Max. Equipos/Div</label><input class="form-input" id="ep-plan-equipos" type="number" placeholder="-1=ilimit."></div>
+        <div><label class="form-label">Max. Jugadores/Eq</label><input class="form-input" id="ep-plan-jugadores" type="number" placeholder="-1=ilimit."></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Features habilitadas</div>
+      <div style="display:flex;flex-direction:column;gap:6px" id="ep-plan-features"></div>
+      <div id="ep-plan-error" style="display:none;color:var(--red);font-size:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeEditPlan(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="ep-plan-save-btn" style="flex:1" onclick="saveEditPlan()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ASIGNAR PLAN A LIGA -->
+<div class="modal-overlay" id="asignarPlanModal" onclick="closeAsignarPlan(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Asignar Plan</div>
+      <div id="ap-liga-label" style="font-size:15px;font-weight:900">Liga</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Plan</label><select class="form-input" id="ap-plan-sel"></select></div>
+      <div><label class="form-label">Vencimiento (dejar vacío = sin vencimiento)</label><input class="form-input" id="ap-vencimiento" type="date"></div>
+      <div id="ap-error" style="display:none;color:var(--red);font-size:12px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeAsignarPlan(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="ap-save-btn" style="flex:1" onclick="saveAsignarPlan()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VER PLANES (liga admin) -->
+<div class="modal-overlay" id="verPlanesModal" onclick="closeVerPlanes(event)">
+  <div class="modal-sheet" style="max-height:92vh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:900">Planes disponibles</div>
+      <div style="font-size:12px;color:var(--text2)">Contactá al administrador para cambiar de plan</div>
+    </div>
+    <div id="ver-planes-list" style="overflow-y:auto;flex:1;padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>
+    </div>
+    <div style="padding:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" onclick="closeVerPlanes(null,true)">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: UPGRADE PROMPT -->
+<div class="modal-overlay" id="upgradeModal" onclick="document.getElementById('upgradeModal').classList.remove('open')">
+  <div class="modal-sheet" style="padding-bottom:28px;text-align:center">
+    <div class="modal-handle"></div>
+    <div style="padding:24px 20px 8px">
+      <div style="font-size:40px;margin-bottom:8px" id="upgrade-icon">🔒</div>
+      <div style="font-size:17px;font-weight:900;margin-bottom:6px" id="upgrade-title">Función no disponible</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="upgrade-msg">Esta función no está disponible en tu plan actual.</div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--text2)" id="upgrade-plan-info"></div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="closeUpgradeAndOpenPlanes()">Ver planes disponibles</button>
+      <button class="btn btn-secondary" style="width:100%" onclick="document.getElementById('upgradeModal').classList.remove('open')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -841,6 +940,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase">Logueado como</div>
         <div id="dash-admin-email" style="font-size:11px;color:var(--accent)">admin@liga-baires.com</div>
       </div>
+    </div>
+    <div id="dash-plan-banner" onclick="openVerPlanes()" style="padding:8px 16px;background:linear-gradient(90deg,rgba(26,33,80,.12),rgba(91,110,245,.08));border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px">
+      <span style="font-size:14px">💳</span>
+      <div style="flex:1">
+        <div id="dash-plan-nombre" style="font-size:12px;font-weight:800">Sin plan</div>
+        <div id="dash-plan-vence" style="font-size:10px;color:var(--text2)">Contactá al administrador</div>
+      </div>
+      <span style="font-size:12px;color:var(--accent)">Ver planes ›</span>
     </div>
     <div class="dashboard-grid">
       <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num">8</div><div class="stat-label">EQUIPOS</div></div>
@@ -1988,6 +2095,28 @@ header .subtitle{font-size:12px;color:var(--text2);}
 const SUPA_URL='https://qksdonfcqikcvmjztpwf.supabase.co';
 const SUPA_KEY='sb_publishable_JZ3V17H60UYA33u0mdD4kw_vKtt-F-o';
 const supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+/*
+── SQL: ejecutar en Supabase SQL Editor ──
+CREATE TABLE IF NOT EXISTS planes (
+  id SERIAL PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  precio_mensual DECIMAL(10,2) NOT NULL DEFAULT 0,
+  max_divisiones INTEGER NOT NULL DEFAULT 1,
+  max_equipos INTEGER NOT NULL DEFAULT 8,
+  max_jugadores INTEGER NOT NULL DEFAULT 20,
+  features JSONB NOT NULL DEFAULT '{}',
+  color TEXT NOT NULL DEFAULT '#1a2150',
+  orden INTEGER NOT NULL DEFAULT 1,
+  activo BOOLEAN NOT NULL DEFAULT true
+);
+ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
+ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
+INSERT INTO planes (nombre,descripcion,precio_mensual,max_divisiones,max_equipos,max_jugadores,features,color,orden) VALUES
+('Starter','Para ligas pequeñas que arrancan',0,1,10,20,'{"playoffs":false,"tv_mode":false,"comunicados":true,"multas":false,"historial":false,"inscripcion_online":false,"arbitros":false}','#4b5563',1),
+('Pro','Para ligas con varias divisiones',4990,3,20,30,'{"playoffs":true,"tv_mode":true,"comunicados":true,"multas":true,"historial":true,"inscripcion_online":true,"arbitros":true}','#1a2150',2),
+('Premium','Sin límites, todo habilitado',9990,-1,-1,-1,'{"playoffs":true,"tv_mode":true,"comunicados":true,"multas":true,"historial":true,"inscripcion_online":true,"arbitros":true}','#d4af37',3);
+*/
 let mesaMatchId=3; // partido en_vivo activo
 let mesaRealtimeSub=null;
 
@@ -2091,6 +2220,10 @@ function filterLeagues(q){
 let currentLeagueId=1,currentDivisionId=1;
 let currentAdminLeagueId=null,currentAdminTorneoId=null;
 let currentLeagueLimits={maxEquipos:null,maxJugadores:null};
+let saPlanes=[];
+let currentLigaPlan=null;
+let editPlanId=null;
+let asignarPlanLigaId=null;
 
 function formatFecha(str){
   if(!str)return '';
@@ -2293,7 +2426,7 @@ async function loadSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
   try{
     const [{data:ls},{data:ts}]=await Promise.all([
-      supa.from('ligas').select('*').order('id'),
+      supa.from('ligas').select('*, plan:plan_id(nombre,color)').order('id'),
       supa.from('torneos').select('id,liga_id,estado')
     ]);
     if(ls){
@@ -2301,7 +2434,8 @@ async function loadSuperLeagues(){
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
-        maxEquipos:l.max_equipos||null,maxJugadores:l.max_jugadores_por_equipo||null
+        maxEquipos:l.max_equipos||null,maxJugadores:l.max_jugadores_por_equipo||null,
+        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null
       }));
       const activas=ls.filter(l=>l.activa).length;
       const torneosCount=ts?ts.length:0;
