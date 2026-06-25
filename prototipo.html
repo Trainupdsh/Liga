@@ -2362,7 +2362,10 @@ function renderSAPlanes(){
         </div>
         <div style="text-align:right">
           <div style="font-size:18px;font-weight:900;color:${p.color||'var(--accent)'}">${precio}</div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="openEditPlan(${p.id})">✏️ Editar</button>
+          <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end">
+            <button class="btn btn-secondary btn-sm" onclick="openEditPlan(${p.id})">✏️ Editar</button>
+            <button class="btn btn-sm" style="background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)" onclick="deletePlan(${p.id},'${escHtml(p.nombre).replace(/'/g,"\\'")}')">🗑️</button>
+          </div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">
@@ -2373,6 +2376,16 @@ function renderSAPlanes(){
       </div>
     </div>`;
   }).join('')+'<button class="btn btn-primary" onclick="openNuevoPlan()" style="width:100%">+ Agregar plan</button>';
+}
+async function deletePlan(planId,planNombre){
+  if(!confirm('¿Estás seguro de que querés eliminar el plan "'+planNombre+'"?\nEsta acción no se puede deshacer.'))return;
+  try{
+    const {error}=await supa.from('planes').delete().eq('id',planId);
+    if(error)throw error;
+    showToast('Plan "'+planNombre+'" eliminado','success');
+    saPlanes=[];
+    await loadSAPlanes();
+  }catch(e){showToast('Error al eliminar: '+e.message,'error');}
 }
 function openEditPlan(planId){
   editPlanId=planId;
@@ -2655,11 +2668,7 @@ function showView(id){
 }
 
 const SUPERADMIN={email:'lucasmoreno',pass:'260110'};
-const extraUsers=[
-  {email:'arbitro@fixtar.com',pass:'1234',role:'arbitro',name:'Carlos Medina',league:'Liga Baires'},
-  {email:'mesa@fixtar.com',pass:'1234',role:'mesa',name:'Mesa Partido 5',league:'Liga Baires'},
-  {email:'delegado@fixtar.com',pass:'1234',role:'delegado',name:'Los Andes',league:'Liga Baires'},
-];
+const extraUsers=[];
 function showAdminLogin(){
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
@@ -2841,12 +2850,16 @@ function openNuevaLiga(){
   document.getElementById('nl-preview-icon').style.background='#1a2150';
   document.querySelectorAll('.nl-icon-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   document.querySelectorAll('.nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
-  // Populate plan selector
-  const sel=document.getElementById('nl-plan-sel');
-  sel.innerHTML='<option value="">Sin plan asignado</option>'+(saPlanes||[]).map(p=>`<option value="${p.id}">${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
   document.getElementById('nl-save-btn').disabled=false;
   document.getElementById('nl-save-btn').textContent='Crear Liga';
   document.getElementById('nuevaLigaModal').classList.add('open');
+  // Populate plan selector (load from Supabase if not yet loaded)
+  const sel=document.getElementById('nl-plan-sel');
+  const fillNlPlans=()=>{
+    sel.innerHTML='<option value="">Sin plan asignado</option>'+(saPlanes||[]).map(p=>`<option value="${p.id}">${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+  };
+  if(saPlanes.length){fillNlPlans();}
+  else{loadSAPlanes().then(fillNlPlans);}
   setTimeout(()=>document.getElementById('nl-nombre').focus(),300);
 }
 function nlOnPlanChange(){
@@ -5806,6 +5819,7 @@ function renderSARows(rows,q){
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
           <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px" onclick='openEditPass(${JSON.stringify(r)})'>✏️ Cambiar</button>
           <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3)" onclick='blanquearPass(${JSON.stringify(r)})'>↺ Blanquear</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)" onclick='deleteUser(${JSON.stringify(r)})'>🗑️ Borrar</button>
         </div>
       </div>
     </div>`).join('');
@@ -5859,6 +5873,27 @@ async function applyPassChange(r,newPass){
     const {error}=await supa.from('clubes').update({delegado_pass:newPass}).eq('id',r.clubId);
     if(error)throw error;
   }
+}
+async function deleteUser(r){
+  const label=r.name+' ('+r.email+')';
+  if(!confirm('¿Estás seguro de que querés borrar a "'+label+'"?\nEsta acción no se puede deshacer.'))return;
+  try{
+    if(r.tipo==='liga'){
+      const {error}=await supa.from('ligas').update({admin_email:null,admin_pass:null}).eq('id',r.ligaId);
+      if(error)throw error;
+      const liga=leagues.find(l=>l.id===r.ligaId);
+      if(liga){liga.adminEmail='—';liga.adminPass=null;}
+    } else if(r.tipo==='extra'){
+      const idx=extraUsers.findIndex(u=>u.email===r.email);
+      if(idx!==-1)extraUsers.splice(idx,1);
+    } else if(r.tipo==='club'){
+      const {error}=await supa.from('clubes').update({delegado_email:null,delegado_pass:null}).eq('id',r.clubId);
+      if(error)throw error;
+    }
+    showToast('"'+r.name+'" eliminado ✓','success');
+    await loadSAUsuarios();
+    filterSAUsuarios();
+  }catch(e){showToast('Error al borrar: '+e.message,'error');}
 }
 
 // ─── ALINEACIÓN ───
