@@ -867,6 +867,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
         </div>
       </div>
       <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Plan</label>
+        <select class="form-input" id="nl-plan-sel" style="width:100%" onchange="nlOnPlanChange()">
+          <option value="">Sin plan asignado</option>
+        </select>
+      </div>
+      <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Email del administrador</label>
         <input class="form-input" id="nl-email" type="email" placeholder="admin@miliga.com" style="width:100%">
       </div>
@@ -874,19 +880,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Contraseña del administrador</label>
         <input class="form-input" id="nl-pass" type="text" placeholder="Ej: miliga2025" style="width:100%">
         <div style="font-size:11px;color:var(--text3);margin-top:4px">El admin va a usar este email y contraseña para ingresar</div>
-      </div>
-      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Límites del plan</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <label style="font-size:11px;color:var(--text2);font-weight:600;display:block;margin-bottom:4px">Máx. equipos (total)</label>
-            <input class="form-input" id="nl-max-equipos" type="number" min="1" max="999" placeholder="Sin límite" style="width:100%">
-          </div>
-          <div>
-            <label style="font-size:11px;color:var(--text2);font-weight:600;display:block;margin-bottom:4px">Máx. jugadores/equipo</label>
-            <input class="form-input" id="nl-max-jugadores" type="number" min="1" max="999" placeholder="Sin límite" style="width:100%">
-          </div>
-        </div>
       </div>
       <div id="nl-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px;margin-top:4px">
@@ -2841,8 +2834,6 @@ function openNuevaLiga(){
   document.getElementById('nl-nombre').value='';
   document.getElementById('nl-email').value='';
   document.getElementById('nl-pass').value='';
-  document.getElementById('nl-max-equipos').value='';
-  document.getElementById('nl-max-jugadores').value='';
   document.getElementById('nl-deporte').value='Fútbol';
   document.getElementById('nl-error').style.display='none';
   document.getElementById('nl-preview-name').textContent='Sin nombre';
@@ -2850,10 +2841,16 @@ function openNuevaLiga(){
   document.getElementById('nl-preview-icon').style.background='#1a2150';
   document.querySelectorAll('.nl-icon-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   document.querySelectorAll('.nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  // Populate plan selector
+  const sel=document.getElementById('nl-plan-sel');
+  sel.innerHTML='<option value="">Sin plan asignado</option>'+(saPlanes||[]).map(p=>`<option value="${p.id}">${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
   document.getElementById('nl-save-btn').disabled=false;
   document.getElementById('nl-save-btn').textContent='Crear Liga';
   document.getElementById('nuevaLigaModal').classList.add('open');
   setTimeout(()=>document.getElementById('nl-nombre').focus(),300);
+}
+function nlOnPlanChange(){
+  // Reserved for future plan-based UI updates (e.g. showing plan limits)
 }
 function closeNuevaLiga(e,force){
   if(force||e.target===document.getElementById('nuevaLigaModal'))
@@ -2885,15 +2882,13 @@ async function saveNuevaLiga(){
   const btn=document.getElementById('nl-save-btn');
   btn.disabled=true; btn.textContent='Guardando…';
   try{
-    const maxEq=parseInt(document.getElementById('nl-max-equipos').value)||null;
-    const maxJug=parseInt(document.getElementById('nl-max-jugadores').value)||null;
+    const planId=document.getElementById('nl-plan-sel').value||null;
     const {data,error}=await supa.from('ligas').insert({
       nombre,deporte,icon:nlIconSel,color:nlColorSel,
       color_texto:'#ffffff',activa:true,
       admin_email:email||null,
       admin_pass:pass||null,
-      max_equipos:maxEq,
-      max_jugadores_por_equipo:maxJug
+      plan_id:planId?parseInt(planId):null
     }).select().single();
     if(error)throw error;
     closeNuevaLiga(null,true);
