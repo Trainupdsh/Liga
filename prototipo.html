@@ -1064,8 +1064,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <div>
             <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Formato</label>
             <select class="form-input" id="nt-formato" style="width:100%">
-              <option value="roundrobin">Round Robin — todos contra todos</option>
-              <option value="ida_vuelta">Ida y vuelta — dos veces cada enfrentamiento</option>
+              <option value="roundrobin">Round Robin — todos contra todos (ida)</option>
+              <option value="ida_vuelta">Ida y vuelta — todos contra todos dos veces</option>
+              <option value="eliminacion">Eliminación directa — brackets/llaves</option>
+              <option value="grupos_playoffs">Grupos + Playoffs — fase de grupos y eliminatoria</option>
             </select>
           </div>
           <div>
@@ -4157,14 +4159,29 @@ async function generarFixture(){
   if(!currentAdminTorneoId){showToast('No hay torneo seleccionado','error');return;}
   if(!adminDivEquipos.length)await loadAdminEquipos();
   if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 equipos','error');return;}
-  if(btn){btn.disabled=true;btn.textContent='Generando…';}
+  if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   try{
+    // Verificar si ya existen partidos — evitar duplicados
+    const {count}=await supa.from('partidos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId);
+    if(count>0){
+      if(!confirm(`Ya hay ${count} partido${count===1?'':'s'} en esta división.\n¿Eliminarlos y generar el fixture de nuevo?`)){return;}
+      const {error:delErr}=await supa.from('partidos').delete().eq('division_id',currentAdminDivisionId);
+      if(delErr)throw delErr;
+    }
+    if(btn)btn.textContent='Generando…';
     // Leer config del torneo
-    const {data:t}=await supa.from('torneos').select('formato,dias_semana,hora_default,fecha_inicio').eq('id',currentAdminTorneoId).single();
+    const {data:t,error:tErr}=await supa.from('torneos').select('formato,dias_semana,hora_default,fecha_inicio').eq('id',currentAdminTorneoId).single();
+    if(tErr)throw tErr;
     const formato=t?.formato||'roundrobin';
-    const diasSemana=(t?.dias_semana&&t.dias_semana.length)?t.dias_semana:[6];
+    // Asegurar que dias_semana sea array de números (Supabase puede devolver strings)
+    const rawDias=t?.dias_semana;
+    const diasSemana=(rawDias&&rawDias.length)?rawDias.map(Number):[6];
     const hora=t?.hora_default||'16:00';
     const fechaBase=t?.fecha_inicio||new Date().toISOString().split('T')[0];
+    if(formato==='eliminacion'||formato==='grupos_playoffs'){
+      showToast('Formato "'+formato+'" disponible próximamente. Usá Round Robin por ahora.','');
+      return;
+    }
     const equipos=[...adminDivEquipos];
     if(equipos.length%2!==0)equipos.push({id:null,nombre:'LIBRE'});
     const n=equipos.length,rondas=n-1;
@@ -4191,12 +4208,13 @@ async function generarFixture(){
       let fv=advanceToNextMatchDay(new Date(fechasPorRonda[rondas-1]+'T12:00:00'),diasSemana);
       const fechasVuelta=[];
       for(let r=0;r<rondas;r++){fechasVuelta.push(fv.toISOString().split('T')[0]);fv=advanceToNextMatchDay(fv,diasSemana);}
-      partidos.push(...partidos.map(p=>({...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:fechasVuelta[p.jornada-1]})));
+      const idaSnapshot=partidos.slice();
+      partidos.push(...idaSnapshot.map(p=>({...p,equipo_local_id:p.equipo_visita_id,equipo_visita_id:p.equipo_local_id,jornada:p.jornada+rondas,fecha:fechasVuelta[p.jornada-1]})));
     }
     const totalF=formato==='ida_vuelta'?rondas*2:rondas;
     const diasNombres=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     const diasLabel=diasSemana.slice().sort((a,b)=>a-b).map(d=>diasNombres[d]).join(', ');
-    if(!confirm(`¿Generar ${partidos.length} partidos para ${totalF} fechas?\nInicia el ${formatFecha(fechasPorRonda[0])} los ${diasLabel}.`)){return;}
+    if(!confirm(`¿Generar ${partidos.length} partidos en ${totalF} fechas?\nInicia el ${formatFecha(fechasPorRonda[0])} (${diasLabel}) a las ${hora}.`)){return;}
     const {error}=await supa.from('partidos').insert(partidos);
     if(error)throw error;
     showToast('Fixture generado: '+partidos.length+' partidos ✓','success');
