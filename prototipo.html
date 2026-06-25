@@ -1305,8 +1305,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
     </div>
     <div class="mesa-btns">
-      <button class="mesa-btn gol-local" onclick="mesaEvent('gol','local')"><span class="mb-icon">⚽</span><span class="mb-label">GOL LOCAL</span></button>
-      <button class="mesa-btn gol-visit" onclick="mesaEvent('gol','visita')"><span class="mb-icon">⚽</span><span class="mb-label">GOL VISITANTE</span></button>
+      <button class="mesa-btn gol-local" onclick="openMesaPicker('gol','local')"><span class="mb-icon">⚽</span><span class="mb-label">GOL LOCAL</span></button>
+      <button class="mesa-btn gol-visit" onclick="openMesaPicker('gol','visita')"><span class="mb-icon">⚽</span><span class="mb-label">GOL VISITANTE</span></button>
       <button class="mesa-btn amarilla" onclick="openMesaPicker('amarilla')"><span class="mb-icon">🟡</span><span class="mb-label">AMARILLA</span></button>
       <button class="mesa-btn roja" onclick="openMesaPicker('roja')"><span class="mb-icon">🔴</span><span class="mb-label">ROJA</span></button>
       <button class="mesa-btn exclusion" onclick="openMesaPicker('exclusion')"><span class="mb-icon">🚫</span><span class="mb-label">EXCLUSIÓN 2'</span></button>
@@ -1494,10 +1494,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="font-size:17px;font-weight:900" id="mp-titulo">—</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
-      <div>
+      <div id="mp-team-row">
         <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Equipo</div>
         <div style="display:flex;gap:8px">
-          <button id="mp-btn-local" onclick="mpSelectTeam('local')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px" id="mp-btn-local">🏠 LOCAL</button>
+          <button id="mp-btn-local" onclick="mpSelectTeam('local')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px">🏠 LOCAL</button>
           <button id="mp-btn-visita" onclick="mpSelectTeam('visita')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px">🚌 VISITANTE</button>
         </div>
         <div id="mp-team-names" style="display:flex;gap:8px;margin-top:4px">
@@ -1506,7 +1506,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         </div>
       </div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jugador (opcional)</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px" id="mp-jugador-label">Jugador (opcional)</div>
         <select class="form-input form-select" id="mp-jugador-sel" style="width:100%;display:none;margin-bottom:6px">
           <option value="">— Seleccionar jugador —</option>
         </select>
@@ -2962,11 +2962,11 @@ async function mesaEvent(type,side,jugador){
   }catch(e){console.warn('Error guardando evento',e);}
 }
 
-// ─── PICKER TARJETA / SUSTITUCIÓN ───
+// ─── PICKER TARJETA / SUSTITUCIÓN / GOL ───
 let mpPendingType='', mpTeamSel='', mesaLocalJugadores=[], mesaVisitaJugadores=[];
-function openMesaPicker(type){
+function openMesaPicker(type, sidePreset){
   mpPendingType=type;mpTeamSel='';
-  const labels={amarilla:'🟡 TARJETA AMARILLA',roja:'🔴 TARJETA ROJA',exclusion:"🚫 EXCLUSIÓN 2'",sust:'🔄 SUSTITUCIÓN'};
+  const labels={gol:'⚽ GOL',amarilla:'🟡 TARJETA AMARILLA',roja:'🔴 TARJETA ROJA',exclusion:"🚫 EXCLUSIÓN 2'",sust:'🔄 SUSTITUCIÓN'};
   document.getElementById('mp-titulo').textContent=labels[type]||type;
   document.getElementById('mp-local-name').textContent=document.getElementById('mesa-home-name').textContent;
   document.getElementById('mp-visita-name').textContent=document.getElementById('mesa-away-name').textContent;
@@ -2974,13 +2974,23 @@ function openMesaPicker(type){
     const b=document.getElementById(id);
     b.style.background='';b.style.color='';b.style.borderColor='';
   });
+  // When team is already known (GOL), hide team buttons and pre-select
+  const teamRow=document.getElementById('mp-team-row');
+  if(sidePreset){
+    if(teamRow)teamRow.style.display='none';
+  } else {
+    if(teamRow)teamRow.style.display='';
+  }
   document.getElementById('mp-jugador-txt').value='';
   document.getElementById('mp-jugador-sel').style.display='none';
   document.getElementById('mp-jugador-sel').innerHTML='<option value="">— Seleccionar jugador —</option>';
   document.getElementById('mp-error').style.display='none';
+  const lbl=document.getElementById('mp-jugador-label');
+  if(lbl)lbl.textContent=type==='gol'?'Quién hizo el gol (requerido)':'Jugador (opcional)';
   const confirmBtn=document.getElementById('mp-confirm-btn');
   confirmBtn.style.opacity='.4';confirmBtn.style.pointerEvents='none';
   document.getElementById('mesaPickerModal').classList.add('open');
+  if(sidePreset) mpSelectTeam(sidePreset);
 }
 function mpSelectTeam(side){
   mpTeamSel=side;
@@ -3014,6 +3024,9 @@ async function confirmMesaPicker(){
   const errEl=document.getElementById('mp-error');
   if(hayJugadores&&!jugadorSel){
     errEl.textContent='Seleccioná el jugador';errEl.style.display='';return;
+  }
+  if(mpPendingType==='gol'&&!jugador){
+    errEl.textContent='Indicá quién hizo el gol';errEl.style.display='';return;
   }
   closeMesaPicker(null,true);
   await mesaEvent(mpPendingType,mpTeamSel,jugador||'');
