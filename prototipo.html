@@ -605,6 +605,43 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .dt-node-div{padding-left:14px;border-left:2px solid var(--border);margin-left:44px;border-radius:0 6px 6px 0;font-size:12px;color:var(--text2);}
   .dt-node-div.sel{color:var(--accent);font-weight:700;background:var(--accent-dim);}
   .dt-node-div.nogroup{margin-left:30px;}
+  /* Partidos today view */
+  .mt-nav-btn{background:none;border:none;color:var(--text2);font-size:18px;padding:8px 10px;cursor:pointer;border-radius:6px;}
+  .mt-nav-btn:hover{background:var(--hover);}
+  .mt-day{background:none;border:none;cursor:pointer;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:8px;min-width:52px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mt-day:hover{background:var(--hover);}
+  .mt-day.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .mt-day-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .mt-day-num{font-size:18px;font-weight:800;line-height:1.1;}
+  .mt-day-month{font-size:9px;color:var(--text3);}
+  .mt-day.active .mt-day-month{color:var(--accent);}
+  .mt-ftab{background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap;margin-bottom:-1px;}
+  .mt-ftab:hover{color:var(--text);}
+  .mt-ftab.active{color:var(--text);border-bottom-color:var(--text);}
+  .mt-group{margin:8px 12px 0;border-radius:10px;overflow:hidden;background:var(--card);}
+  .mt-ghdr{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);}
+  .mt-ghdr:hover{background:var(--hover);}
+  .mt-cat-badge{display:inline-block;font-size:9px;font-weight:700;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;text-transform:uppercase;letter-spacing:.3px;}
+  .mt-ver-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0;}
+  .mt-ver-btn:hover{background:var(--hover);color:var(--text);}
+  .mt-row{display:flex;align-items:center;gap:0;padding:0 12px;border-bottom:1px solid var(--border);cursor:pointer;}
+  .mt-row:hover{background:var(--hover);}
+  .mt-row:last-child{border-bottom:none;}
+  .mt-row-status{width:44px;font-size:9px;font-weight:800;text-align:center;flex-shrink:0;letter-spacing:.3px;padding:4px 0;}
+  .mt-row-teams{flex:1;padding:6px 0;}
+  .mt-team-line{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:12px;}
+  .mt-team-line.winner{font-weight:700;color:var(--text);}
+  .mt-team-line:not(.winner){color:var(--text2);}
+  .mt-score-r{margin-left:auto;font-size:13px;font-weight:800;min-width:18px;text-align:right;}
+  .mt-score-r.winner{color:var(--text);}
+  .mt-score-r:not(.winner){color:var(--text3);}
+  /* Right panel match detail */
+  .dt-match-header{padding:16px 14px;text-align:center;border-bottom:1px solid var(--border);}
+  .dt-match-shields{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0;}
+  .dt-match-score{font-size:26px;font-weight:900;letter-spacing:6px;color:var(--text);}
+  .dt-match-status{font-size:9px;font-weight:800;letter-spacing:.6px;color:var(--text3);margin-bottom:6px;}
+  .dt-ev-row{display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid var(--border);font-size:11px;gap:6px;}
+  .dt-ev-min{width:26px;font-size:10px;color:var(--text3);text-align:right;flex-shrink:0;}
   /* Right sidebar */
   .dt-rs{padding:12px 14px 6px;font-size:10px;font-weight:800;color:var(--text3);
     text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
@@ -733,16 +770,17 @@ header .subtitle{font-size:12px;color:var(--text2);}
 </div>
 
 <!-- PARTIDOS DEL DÍA (desktop center panel) -->
-<div id="view-matches-today" class="view">
-  <div style="padding:20px 16px 0">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h2 style="font-size:18px;font-weight:700;margin:0">Partidos de hoy</h2>
-      <span id="mt-date" style="font-size:12px;color:var(--text3)"></span>
-    </div>
-    <div id="mt-live-section"></div>
-    <div id="mt-upcoming-section"></div>
-    <div id="mt-done-section"></div>
+<div id="view-matches-today" class="view" style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+  <!-- Date bar -->
+  <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
+    <button class="mt-nav-btn" onclick="_mtShiftDays(-1)">‹</button>
+    <div id="mt-days-row" style="display:flex;flex:1;overflow-x:auto;scrollbar-width:none"></div>
+    <button class="mt-nav-btn" onclick="_mtShiftDays(1)">›</button>
   </div>
+  <!-- Filter tabs -->
+  <div id="mt-filter-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px"></div>
+  <!-- Match list -->
+  <div id="mt-groups" style="flex:1;overflow-y:auto;padding-bottom:24px"></div>
 </div>
 
 <!-- LIGA DETAIL — Torneos & Divisiones -->
@@ -6998,6 +7036,10 @@ const _dtExpLigas=new Set(),_dtExpTorneos=new Set(),_dtExpGrupos=new Set();
 
 function isDesktop(){return window.innerWidth>=960;}
 
+let _mtFilterCur='todos',_mtDayOffset=0;
+const _DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const _MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
 function _dtSetActiveTab(btn){
   document.querySelectorAll('.dt-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
@@ -7015,45 +7057,145 @@ function dtGoPartidos(){
   document.getElementById('view-admin').style.display='none';
   showView('view-matches-today');
   _renderDtRight(null);
-  _renderMatchesToday();
+  _mtDayOffset=0;_mtFilterCur='todos';
+  _mtRenderDays();_mtRenderFilterBar();_mtRenderGroups();
 }
-function _renderMatchesToday(){
+
+// ── Partidos: date bar ──
+function _mtShiftDays(d){_mtDayOffset+=d;_mtRenderDays();_mtRenderGroups();}
+function _mtSetDay(offset){_mtDayOffset=offset;_mtRenderDays();_mtRenderGroups();}
+function _mtRenderDays(){
+  const el=document.getElementById('mt-days-row');if(!el)return;
   const today=new Date();
-  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const dateEl=document.getElementById('mt-date');
-  if(dateEl)dateEl.textContent=dias[today.getDay()]+' '+today.getDate()+' '+meses[today.getMonth()]+' '+today.getFullYear();
-
-  function matchCard(m,showDiv){
-    const home=getTeam(m.home),away=getTeam(m.away);
-    if(!home||!away)return'';
-    const isDone=m.status==='done',isLive=m.status==='live';
-    const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
-    const div=divisiones.find(d=>d.id===m.divId);
-    const liga=div?leagues.find(l=>torneos.find(t=>t.id===div.torneoId&&t.leagueId===l.id)):null;
-    const badge=showDiv&&div?`<span style="font-size:10px;color:var(--text3);background:var(--card2);padding:2px 6px;border-radius:4px;margin-left:auto;white-space:nowrap;flex-shrink:0">${liga?escHtml(liga.icon||'')+'  ':'' }${escHtml(div.name)}</span>`:'';
-    return`<div class="match-item" onclick="openMatch(${m.id})" style="cursor:pointer">
-      <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
-      <div class="match-teams" style="flex:1">
-        <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(home.name)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?m.homeScore??'—':'-')}</span></div>
-        <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(away.name)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?m.awayScore??'—':'-')}</span></div>
-      </div>${badge}<span class="chevron">›</span></div>`;
+  let h='';
+  for(let i=-3;i<=3;i++){
+    const d=new Date(today);d.setDate(today.getDate()+i+_mtDayOffset);
+    const rel=i+_mtDayOffset;
+    const label=rel===-1?'AYER':rel===0?'HOY':rel===1?'MAN':_DIAS[d.getDay()].toUpperCase();
+    h+=`<button class="mt-day${i===0?' active':''}" onclick="_mtSetDay(${i+_mtDayOffset})">
+      <span class="mt-day-name">${label}</span>
+      <span class="mt-day-num">${d.getDate()}</span>
+      <span class="mt-day-month">${_MESES[d.getMonth()]}</span>
+    </button>`;
   }
-  function section(title,icon,ms,color){
-    if(!ms.length)return'';
-    return`<div style="margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;color:${color};letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">${icon} ${title} <span style="font-size:10px;background:${color}22;color:${color};padding:1px 7px;border-radius:10px">${ms.length}</span></div>
-      <div style="display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;background:var(--card)">
-        ${ms.map(m=>matchCard(m,true)).join('')}
-      </div></div>`;
-  }
-  const live=matches.filter(m=>m.status==='live');
-  const upcoming=matches.filter(m=>m.status==='upcoming').slice(0,12);
-  const done=matches.filter(m=>m.status==='done').slice(-12).reverse();
+  el.innerHTML=h;
+}
 
-  document.getElementById('mt-live-section').innerHTML=section('EN VIVO','🔴',live,'var(--green)');
-  document.getElementById('mt-upcoming-section').innerHTML=section('PROGRAMADOS','📅',upcoming,'var(--accent)');
-  document.getElementById('mt-done-section').innerHTML=section('RESULTADOS','✅',done,'var(--text3)');
+// ── Partidos: filter bar ──
+function _mtSetFilter(f){_mtFilterCur=f;_mtRenderFilterBar();_mtRenderGroups();}
+function _mtRenderFilterBar(){
+  const el=document.getElementById('mt-filter-bar');if(!el)return;
+  const live=matches.filter(m=>m.status==='live').length;
+  const done=matches.filter(m=>m.status==='done').length;
+  const up=matches.filter(m=>m.status==='upcoming').length;
+  const tabs=[
+    {f:'todos',label:'TODOS'},
+    {f:'live',label:live?`⚡ EN VIVO`:'EN VIVO'},
+    {f:'done',label:`FINALIZADOS${done?` (${done})`:''}`},
+    {f:'upcoming',label:`PROGRAMADOS${up?` (${up})`:''}`},
+  ];
+  el.innerHTML=tabs.map(t=>`<button class="mt-ftab${_mtFilterCur===t.f?' active':''}" onclick="_mtSetFilter('${t.f}')">${t.label}</button>`).join('');
+}
+
+// ── Partidos: match groups ──
+function _mtRenderGroups(){
+  const el=document.getElementById('mt-groups');if(!el)return;
+  let ms=matches;
+  if(_mtFilterCur==='live')ms=ms.filter(m=>m.status==='live');
+  else if(_mtFilterCur==='done')ms=ms.filter(m=>m.status==='done');
+  else if(_mtFilterCur==='upcoming')ms=ms.filter(m=>m.status==='upcoming');
+  if(!ms.length){el.innerHTML='<div class="dt-empty">Sin partidos con este filtro</div>';return;}
+  const byDiv={};
+  ms.forEach(m=>{(byDiv[m.divId]=byDiv[m.divId]||[]).push(m);});
+  let h='';
+  Object.entries(byDiv).forEach(([dId,dMs])=>{
+    const div=divisiones.find(d=>d.id===parseInt(dId));
+    const torneo=div?torneos.find(t=>t.id===div.torneoId):null;
+    const liga=torneo?leagues.find(l=>l.id===torneo.leagueId):null;
+    const tName=torneo?torneo.name:'Liga Local';
+    const catName=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
+    const liveN=dMs.filter(m=>m.status==='live').length;
+    const doneN=dMs.filter(m=>m.status==='done').length;
+    const statusBadge=liveN?`<span style="font-size:10px;color:var(--green);font-weight:800">● EN VIVO</span>`
+      :`<span style="font-size:11px;color:var(--text3)">${doneN}/${dMs.length}</span>`;
+    h+=`<div class="mt-group">
+      <div class="mt-ghdr">
+        <div class="league-icon" style="background:${liga?.color||'#333'};width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${liga?.icon||'🏆'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${escHtml(tName)}${catName?`<span class="mt-cat-badge">${escHtml(catName)}</span>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--text3)">${liga?escHtml(liga.name):''}</div>
+        </div>
+        ${statusBadge}
+        <button class="mt-ver-btn" onclick="event.stopPropagation();_dtClickDiv(${dId})">VER</button>
+      </div>
+      ${dMs.map(m=>_mtMatchRow(m)).join('')}
+    </div>`;
+  });
+  el.innerHTML=h;
+}
+function _mtMatchRow(m){
+  const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return'';
+  const isDone=m.status==='done',isLive=m.status==='live';
+  const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
+  const statusLabel=isDone?'FIN':isLive?'VIVO':m.time;
+  const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
+  const scoreH=isDone||isLive?`<span class="mt-score-r${homeWon?' winner':''}">${m.homeScore??0}</span>`:'';
+  const scoreA=isDone||isLive?`<span class="mt-score-r${awayWon?' winner':''}">${m.awayScore??0}</span>`:'';
+  return`<div class="mt-row" onclick="_mtOpenMatch(${m.id})">
+    <div class="mt-row-status" style="color:${statusColor}">${statusLabel}</div>
+    <div class="mt-row-teams">
+      <div class="mt-team-line${homeWon?' winner':''}">
+        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${home.color};color:${home.text}">${home.short}</div>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(home.name)}</span>
+        ${scoreH}
+      </div>
+      <div class="mt-team-line${awayWon?' winner':''}">
+        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${away.color};color:${away.text}">${away.short}</div>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(away.name)}</span>
+        ${scoreA}
+      </div>
+    </div>
+  </div>`;
+}
+function _mtOpenMatch(id){
+  const m=matches.find(x=>x.id===id);if(!m)return;
+  const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return;
+  const el=document.getElementById('dt-rc');if(!el)return;
+  const isDone=m.status==='done',isLive=m.status==='live';
+  const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
+  const statusText=isDone?'FINALIZADO':isLive?'● EN VIVO':'PROGRAMADO';
+  const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
+  const evs=m.events||[];
+  let evHtml='';
+  if(!evs.length)evHtml='<div class="dt-empty" style="padding:16px">Sin eventos registrados</div>';
+  else evs.forEach(ev=>{
+    const isH=ev.team==='home';
+    const icon=ev.type==='gol'?'⚽':ev.type==='amarilla'?'🟡':'🔴';
+    evHtml+=`<div class="dt-ev-row">
+      <span class="dt-ev-min">${ev.min}'</span>
+      ${isH?`<span style="flex:1">${icon} ${escHtml(ev.player)}</span><span style="flex:1"></span>`
+           :`<span style="flex:1"></span><span style="flex:1;text-align:right">${escHtml(ev.player)} ${icon}</span>`}
+    </div>`;
+  });
+  el.innerHTML=`<div class="dt-match-header">
+    <div class="dt-match-status" style="color:${statusColor}">${statusText}</div>
+    <div class="dt-match-shields">
+      <div style="text-align:center;flex:1">
+        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${home.color};color:${home.text};margin:0 auto 4px">${home.short}</div>
+        <div style="font-size:10px;font-weight:700;max-width:70px;margin:0 auto;overflow:hidden;text-overflow:ellipsis">${escHtml(home.name)}</div>
+      </div>
+      <div class="dt-match-score">${isDone||isLive?`${m.homeScore??0}-${m.awayScore??0}`:'—'}</div>
+      <div style="text-align:center;flex:1">
+        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${away.color};color:${away.text};margin:0 auto 4px">${away.short}</div>
+        <div style="font-size:10px;font-weight:700;max-width:70px;margin:0 auto;overflow:hidden;text-overflow:ellipsis">${escHtml(away.name)}</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--text3)">Fecha ${m.round} · ${escHtml(m.venue||'')}</div>
+  </div>
+  <div class="dt-rs">Eventos</div>
+  ${evHtml}`;
 }
 function dtSearch(q){
   const inp=document.getElementById('leagueSearch');
