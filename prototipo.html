@@ -85,13 +85,16 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
 .nav-item.active .nav-label{color:var(--accent);}
 .nav-item.active .nav-icon{transform:translateY(-1px);}
-.date-strip{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);}
-.date-pill{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:20px;cursor:pointer;flex:1;background:var(--card2);border:1px solid var(--border);transition:all 0.2s;}
-.date-pill.active{background:var(--accent);border-color:var(--accent);}
-.date-pill .day-name{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;}
-.date-pill.active .day-name{color:rgba(255,255,255,0.8);}
-.date-pill .day-num{font-size:16px;font-weight:700;}
-.date-pill.active .day-num{color:#fff;}
+.date-strip{display:flex;gap:0;padding:0 8px;border-bottom:1px solid var(--border);}
+.date-pill{background:none;border:none;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;gap:1px;transition:color .15s;}
+.date-pill:hover{color:var(--text);}
+.date-pill.active{color:var(--accent);border-bottom-color:var(--accent);}
+.date-pill .day-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.date-pill.active .day-name{color:var(--accent);}
+.date-pill .day-num{font-size:18px;font-weight:800;line-height:1.1;}
+.date-pill.active .day-num{color:var(--accent);}
+.date-pill .day-month{font-size:9px;color:var(--text3);}
+.date-pill.active .day-month{color:var(--accent);}
 .filter-tabs{display:flex;padding:12px 16px;gap:8px;overflow-x:auto;scrollbar-width:none;}
 .filter-tabs::-webkit-scrollbar{display:none;}
 .filter-tab{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.4px;cursor:pointer;white-space:nowrap;background:var(--card2);border:1px solid var(--border);color:var(--text2);transition:all 0.2s;}
@@ -855,10 +858,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="screen active" id="screen-partidos">
       <div class="date-strip" id="dateStrip"></div>
       <div class="filter-tabs">
-        <div class="filter-tab active" onclick="filterMatches(this,'todos')">TODOS</div>
-        <div class="filter-tab" onclick="filterMatches(this,'live')">EN VIVO</div>
-        <div class="filter-tab" onclick="filterMatches(this,'done')">FINALIZADOS</div>
-        <div class="filter-tab" onclick="filterMatches(this,'upcoming')">PROGRAMADOS</div>
+        <div class="filter-tab active" data-filter="todos" onclick="filterMatches(this,'todos')">TODOS</div>
+        <div class="filter-tab" data-filter="live" onclick="filterMatches(this,'live')">EN VIVO</div>
+        <div class="filter-tab" data-filter="done" onclick="filterMatches(this,'done')">FINALIZADOS</div>
+        <div class="filter-tab" data-filter="upcoming" onclick="filterMatches(this,'upcoming')">PROGRAMADOS</div>
       </div>
       <div id="matchesList"></div>
     </div>
@@ -3571,13 +3574,33 @@ function switchTab(tab,el){
   el.classList.add('active');
 }
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const _MON=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+let _divDateOffset=0; // day offset from today for division view
 function buildDateStrip(){
   const strip=document.getElementById('dateStrip'),today=new Date();
   let html='';
-  for(let i=-3;i<=3;i++){const d=new Date(today);d.setDate(d.getDate()+i);const label=i===-1?'AYER':i===0?'HOY':i===1?'MAN':days[d.getDay()].toUpperCase();html+=`<div class="date-pill ${i===0?'active':''}" onclick="selectDate(this)"><span class="day-name">${label}</span><span class="day-num">${d.getDate()}</span><span style="font-size:9px;color:var(--text3)">${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()]}</span></div>`;}
+  for(let i=-3;i<=3;i++){
+    const d=new Date(today);d.setDate(d.getDate()+i);
+    const label=i===-1?'AYER':i===0?'HOY':i===1?'MAN':days[d.getDay()].toUpperCase();
+    html+=`<div class="date-pill${i===0?' active':''}" data-offset="${i}" onclick="selectDate(this,${i})">
+      <span class="day-name">${label}</span>
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-month">${_MON[d.getMonth()]}</span>
+    </div>`;
+  }
   strip.innerHTML=html;
+  _divDateOffset=0;
 }
-function selectDate(el){document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
+function selectDate(el,offset){
+  document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  _divDateOffset=offset;
+  // auto-select filter based on day
+  const autoFilter=offset<0?'done':offset===0?'todos':'upcoming';
+  const tabEl=document.querySelector(`.filter-tab[data-filter="${autoFilter}"]`);
+  if(tabEl){document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');currentFilter=autoFilter;}
+  renderMatches();
+}
 let currentFilter='todos';
 function filterMatches(el,filter){
   document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
