@@ -544,6 +544,63 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .player-profile-sheet{border-radius:20px;max-width:540px;transform:scale(.95) !important;transition:transform .25s cubic-bezier(.32,.72,0,1);}
   .player-profile-modal.open .player-profile-sheet{transform:scale(1) !important;}
 }
+
+/* ═══ DESKTOP LAYOUT (≥960px) ═══ */
+@media(min-width:960px){
+  body{overflow:hidden;}
+  #app{max-width:100vw;display:grid;
+    grid-template-areas:"dnav dnav dnav" "dleft dmain dright";
+    grid-template-columns:240px 1fr 290px;
+    grid-template-rows:58px calc(100vh - 58px);
+    height:100vh;overflow:hidden;}
+  .view,#view-admin{grid-area:dmain;overflow-y:auto;max-width:none;}
+  /* Desktop nav */
+  #dt-nav{grid-area:dnav;display:flex!important;align-items:center;
+    background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;gap:0;}
+  .dt-brand{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:20px;}
+  .dt-brand>span{font-size:16px;font-weight:800;}
+  .dt-tabs{display:flex;gap:2px;}
+  .dt-tab{padding:6px 14px;border-radius:8px;border:none;background:transparent;
+    color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .dt-tab:hover{background:var(--card2);color:var(--text);}
+  .dt-tab.active{background:var(--accent-dim);color:var(--accent);}
+  .dt-spacer{flex:1;}
+  .dt-search{display:flex;align-items:center;gap:8px;background:var(--input-bg);
+    border:1px solid var(--border);border-radius:10px;padding:6px 12px;margin-right:12px;}
+  .dt-search input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:160px;}
+  .dt-search input::placeholder{color:var(--text3);}
+  /* Sidebars */
+  #dt-left{grid-area:dleft;display:flex!important;flex-direction:column;overflow-y:auto;
+    background:var(--card);border-right:1px solid var(--border);}
+  #dt-right{grid-area:dright;display:flex!important;flex-direction:column;overflow-y:auto;
+    background:var(--card);border-left:1px solid var(--border);}
+  /* Left sidebar items */
+  .dt-lhdr{padding:12px 14px 8px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
+  .dt-li{padding:8px 10px;cursor:pointer;transition:background .12s;border-radius:8px;margin:1px 6px;}
+  .dt-li:hover{background:var(--card2);}
+  .dt-li.sel{background:var(--accent-dim);}
+  .dt-li-hd{display:flex;align-items:center;gap:8px;}
+  .dt-li-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .dt-li-nm{font-size:12px;font-weight:700;flex:1;}
+  .dt-li-sp{font-size:10px;color:var(--text3);}
+  .dt-li-divs{padding:4px 0 2px 36px;display:flex;flex-direction:column;gap:1px;}
+  .dt-li-div{font-size:12px;color:var(--text2);padding:4px 8px;border-radius:6px;cursor:pointer;}
+  .dt-li-div:hover{background:var(--card2);color:var(--text);}
+  .dt-li-div.sel{color:var(--accent);font-weight:700;background:rgba(116,128,255,0.09);}
+  /* Right sidebar */
+  .dt-rs{padding:12px 14px 6px;font-size:10px;font-weight:800;color:var(--text3);
+    text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
+  .dt-empty{padding:40px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.8;}
+  .dt-rrow{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:12px;border-bottom:1px solid var(--border);}
+  .dt-rpos{width:18px;text-align:right;color:var(--text3);font-weight:700;flex-shrink:0;}
+  .dt-rnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dt-rst{width:22px;text-align:center;color:var(--text2);}
+  .dt-rpt{width:32px;text-align:center;font-weight:800;color:var(--accent);}
+  /* Hide mobile-only elements */
+  .view>header,.bottom-nav,#view-home .home-banner,#view-home .admin-entry,
+  #view-home>div>div:last-child{display:none!important;}
+  .toast{max-width:460px!important;}
+}
 </style>
 </head>
 <body>
@@ -2280,6 +2337,38 @@ header .subtitle{font-size:12px;color:var(--text2);}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- DESKTOP NAV -->
+<nav id="dt-nav" style="display:none">
+  <div class="dt-brand" onclick="dtGoHome()">
+    <div class="logo-circle" style="width:32px;height:32px;font-size:12px">AT</div>
+    <span>Atlonis</span>
+  </div>
+  <div class="dt-tabs">
+    <button class="dt-tab active" onclick="dtGoHome()">⚡ Partidos</button>
+    <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
+  </div>
+  <div class="dt-spacer"></div>
+  <div class="dt-search">
+    <span style="color:var(--text3);font-size:14px">🔍</span>
+    <input type="text" placeholder="Buscar liga..." oninput="dtSearch(this.value)" id="dt-srch">
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()" style="margin-left:4px">🌙</button>
+</nav>
+
+<!-- DESKTOP LEFT SIDEBAR -->
+<aside id="dt-left" style="display:none">
+  <div class="dt-lhdr">Ligas</div>
+  <div id="dt-ll"></div>
+</aside>
+
+<!-- DESKTOP RIGHT SIDEBAR -->
+<aside id="dt-right" style="display:none">
+  <div id="dt-rc">
+    <div class="dt-empty">Seleccioná una<br>división para ver<br>la tabla</div>
+  </div>
+</aside>
+
 </div>
 
 <script>
@@ -6592,6 +6681,137 @@ async function saveAlineacion(){
     btn.disabled=false;btn.textContent='Confirmar alineación';
   }
 }
+
+// ═══ DESKTOP LAYOUT ═══
+let _dtSelLiga=null,_dtSelDiv=null,_dtDivs={};
+
+function isDesktop(){return window.innerWidth>=960;}
+
+function dtGoHome(){
+  _dtSelDiv=null;
+  showView('view-home');
+  document.getElementById('view-admin').style.display='none';
+  _renderDtRight(null);
+}
+
+function dtSearch(q){
+  const inp=document.getElementById('leagueSearch');
+  if(inp)inp.value=q;
+  filterLeagues(q);
+  _renderDtLeft();
+}
+
+function _renderDtLeft(){
+  const el=document.getElementById('dt-ll');
+  if(!el)return;
+  const q=(document.getElementById('dt-srch')?.value||'').toLowerCase();
+  const list=q?leagues.filter(l=>l.name.toLowerCase().includes(q)||l.sport.toLowerCase().includes(q)):leagues;
+  if(!list.length){el.innerHTML='<div class="dt-empty">Sin ligas</div>';return;}
+  el.innerHTML=list.map(l=>`
+    <div class="dt-li${_dtSelLiga===l.id?' sel':''}" onclick="_dtClickLiga(${l.id})">
+      <div class="dt-li-hd">
+        <div class="dt-li-ico" style="background:${l.color}">${l.icon}</div>
+        <span class="dt-li-nm">${escHtml(l.name)}</span>
+        <span class="dt-li-sp">${escHtml(l.sport)}</span>
+      </div>
+      ${_dtSelLiga===l.id&&_dtDivs[l.id]?`
+      <div class="dt-li-divs">${(_dtDivs[l.id]||[]).map(d=>`
+        <div class="dt-li-div${_dtSelDiv===d.id?' sel':''}" onclick="event.stopPropagation();_dtClickDiv(${d.id})">${d.icon||'⚽'} ${escHtml(d.nombre)}</div>
+      `).join('')}</div>`:''}
+    </div>`).join('');
+}
+
+async function _dtClickLiga(id){
+  _dtSelLiga=id;_dtSelDiv=null;
+  _renderDtLeft();
+  openLeague(id);
+  _renderDtRight(null);
+  try{
+    const {data:ts}=await supa.from('torneos').select('id').eq('liga_id',id).eq('estado','activo');
+    if(ts&&ts[0]){
+      const {data:ds}=await supa.from('divisiones').select('id,nombre,icon').eq('torneo_id',ts[0].id).order('id');
+      _dtDivs[id]=ds||[];
+      _renderDtLeft();
+    }
+  }catch(e){}
+}
+
+async function _dtClickDiv(id){
+  _dtSelDiv=id;
+  _renderDtLeft();
+  await openDivision(id);
+  _renderDtRight(id);
+}
+
+async function _renderDtRight(divId){
+  const el=document.getElementById('dt-rc');
+  if(!el)return;
+  if(!divId){el.innerHTML='<div class="dt-empty">Seleccioná una<br>división para ver<br>la tabla</div>';return;}
+  el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">⏳ Cargando...</div>';
+  try{
+    const [{data:ps},{data:eqs}]=await Promise.all([
+      supa.from('partidos').select('equipo_local_id,equipo_visit_id,goles_local,goles_visit').eq('division_id',divId).eq('estado','finalizado'),
+      supa.from('equipos').select('id,nombre').eq('division_id',divId)
+    ]);
+    const eqIds=(eqs||[]).map(e=>e.id);
+    const {data:jug}=eqIds.length?await supa.from('jugadores').select('id,nombre,equipo_id,goles').in('equipo_id',eqIds).order('goles',{ascending:false}).limit(8):{data:[]};
+
+    // Standings
+    const tbl={};
+    (eqs||[]).forEach(e=>{tbl[e.id]={n:e.nombre,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0};});
+    (ps||[]).forEach(p=>{
+      const h=tbl[p.equipo_local_id],a=tbl[p.equipo_visit_id];
+      if(!h||!a)return;
+      h.pj++;a.pj++;h.gf+=p.goles_local||0;h.gc+=p.goles_visit||0;
+      a.gf+=p.goles_visit||0;a.gc+=p.goles_local||0;
+      if((p.goles_local||0)>(p.goles_visit||0)){h.pg++;a.pp++;}
+      else if((p.goles_local||0)<(p.goles_visit||0)){a.pg++;h.pp++;}
+      else{h.pe++;a.pe++;}
+    });
+    const sorted=Object.values(tbl).map(r=>({...r,pts:r.pg*3+r.pe,dif:r.gf-r.gc})).sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
+
+    let html='<div class="dt-rs">Tabla de posiciones</div>';
+    html+=`<div class="dt-rrow" style="font-size:10px;color:var(--text3);font-weight:700">
+      <span class="dt-rpos">#</span><span class="dt-rnm">Club</span>
+      <span class="dt-rst">PJ</span><span class="dt-rpt">PTS</span></div>`;
+    html+=sorted.length?sorted.map((r,i)=>`
+      <div class="dt-rrow">
+        <span class="dt-rpos">${i+1}</span>
+        <span class="dt-rnm" style="font-weight:${i===0?700:400}">${escHtml(r.n)}</span>
+        <span class="dt-rst">${r.pj}</span>
+        <span class="dt-rpt">${r.pts}</span>
+      </div>`).join(''):'<div class="dt-empty" style="padding:12px 16px">Sin partidos aún</div>';
+
+    // Scorers
+    html+='<div class="dt-rs" style="margin-top:8px">Goleadores</div>';
+    const eqMap={};(eqs||[]).forEach(e=>eqMap[e.id]=e.nombre);
+    const topGol=(jug||[]).filter(j=>j.goles>0);
+    html+=topGol.length?topGol.map((j,i)=>`
+      <div class="dt-rrow">
+        <span class="dt-rpos">${i+1}</span>
+        <span class="dt-rnm">${escHtml(j.nombre)}<span style="font-size:10px;color:var(--text3);display:block">${escHtml(eqMap[j.equipo_id]||'')}</span></span>
+        <span class="dt-rpt">${j.goles} ⚽</span>
+      </div>`).join(''):'<div class="dt-empty" style="padding:12px 16px">Sin goles registrados</div>';
+
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div class="dt-empty">Error al cargar</div>';}
+}
+
+// Patch renderLeagues to also refresh desktop sidebar
+(function(){
+  const orig=renderLeagues;
+  renderLeagues=function(list){orig(list);if(isDesktop())_renderDtLeft();};
+})();
+
+function _dtApplyLayout(){
+  const d=isDesktop();
+  document.getElementById('dt-nav').style.display=d?'flex':'none';
+  document.getElementById('dt-left').style.display=d?'flex':'none';
+  document.getElementById('dt-right').style.display=d?'flex':'none';
+  if(d&&leagues.length)_renderDtLeft();
+}
+window.addEventListener('resize',_dtApplyLayout);
+document.addEventListener('DOMContentLoaded',_dtApplyLayout);
 </script>
 </body>
 </html>
