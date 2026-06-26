@@ -7778,8 +7778,8 @@ function _renderDtLeft(){
     ts.forEach(t=>{
       const expT=_dtExpTorneos.has(t.id),isAct=t.status==='active';
       const selT=_dtSelTorneo===t.id;
-      h+=`<div class="dt-node dt-node-torneo${selT?' sel':''}" onclick="event.stopPropagation();_dtToggleTorneo(${t.id})">
-        <span class="dt-chev${expT?' open':''}">›</span>
+      h+=`<div class="dt-node dt-node-torneo${selT?' sel':''}" onclick="event.stopPropagation();_dtShowTorneoCenter(${t.id})">
+        <span class="dt-chev${expT?' open':''}" onclick="event.stopPropagation();_dtToggleTorneo(${t.id})">›</span>
         <span class="dt-node-text">${escHtml(t.name)}</span>
         ${isAct?'<span class="dt-badge-act" title="Activo"></span>':'<span class="dt-badge-fin">FIN</span>'}
       </div>`;
@@ -7808,15 +7808,15 @@ function _dtToggleLiga(id){
 }
 let _dtSelTorneo=null;
 function _dtToggleTorneo(id){
-  const wasExp=_dtExpTorneos.has(id);
-  if(wasExp){_dtExpTorneos.delete(id);}else{_dtExpTorneos.add(id);}
+  if(_dtExpTorneos.has(id)){_dtExpTorneos.delete(id);}else{_dtExpTorneos.add(id);}
   _renderDtLeft();
-  _dtShowTorneoCenter(id); // always show standings on any torneo click
 }
 
 function _dtShowTorneoCenter(torneoId){
   _dtSelTorneo=torneoId;
   _dtSelDiv=null;
+  // ensure torneo is expanded in the tree so divisions are visible
+  _dtExpTorneos.add(torneoId);
   const torneo=torneos.find(t=>t.id===torneoId);if(!torneo)return;
   const liga=leagues.find(l=>l.id===torneo.leagueId);
   const ds=divisiones.filter(d=>d.torneoId===torneoId);
@@ -7890,6 +7890,7 @@ function _dtShowTorneoCenter(torneoId){
 
   document.getElementById('vtd-content').innerHTML=html;
   showView('view-torneo-detail');
+  _renderDtLeft();
   _renderDtRight(null);
 }
 
