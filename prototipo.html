@@ -2471,6 +2471,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
   <div class="dt-tabs">
     <button class="dt-tab active" onclick="dtGoPartidos()">⚡ Partidos</button>
+    <button class="dt-tab" onclick="dtGoLigas()">🏆 Ligas</button>
     <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
   </div>
   <div class="dt-spacer"></div>
@@ -7046,10 +7047,17 @@ function _dtSetActiveTab(btn){
   if(btn)btn.classList.add('active');
 }
 function dtGoHome(){
-  _dtSetActiveTab(document.querySelector('.dt-tab'));
+  _dtSetActiveTab(null);
   _dtSelDiv=null;
   showView('view-home');
   document.getElementById('view-admin').style.display='none';
+  _renderDtRight(null);
+}
+function dtGoLigas(){
+  _dtSetActiveTab(document.querySelectorAll('.dt-tab')[1]);
+  _dtSelDiv=null;
+  document.getElementById('view-admin').style.display='none';
+  showView('view-home');
   _renderDtRight(null);
 }
 function dtGoPartidos(){
