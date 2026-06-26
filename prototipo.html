@@ -10,12 +10,14 @@
 <title>Atlonis</title>
 <style>
 :root[data-theme="dark"] {
-  --bg: #08091a; --bg2: #060812; --card: #0f1222; --card2: #14182e;
-  --accent: #7480ff; --accent-dim: #1a2060;
-  --text: #ffffff; --text2: #8b98b0; --text3: #4d5870;
-  --border: #181e34; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
-  --gold: #f59e0b; --silver: #94a3b8; --bronze: #b45309;
-  --shadow: rgba(0,0,0,0.5); --input-bg: #181e30; --overlay: rgba(0,0,0,0.75);
+  --bg: #0c1017; --bg2: #060a10; --card: #131820; --card2: #1b2130;
+  --accent: #4f8cff; --accent-dim: #4f8cff18;
+  --text: #f0f2f5; --text2: #9aa0b0; --text3: #5c6274;
+  --border: #1b2130; --border-hover: #2d3548;
+  --green: #2ed573; --red: #ff4757; --yellow: #ffc312;
+  --gold: gold; --silver: silver; --bronze: #cd7f32;
+  --shadow: rgba(0,0,0,0.6); --input-bg: #131820; --overlay: rgba(0,0,0,0.8);
+  --hover: #1e2536; --gradient-start: #4f8cff; --gradient-end: #a855f7;
 }
 :root[data-theme="light"] {
   --bg: #f0f2f7; --bg2: #e5e8ef; --card: #ffffff; --card2: #f8f9fc;
@@ -32,7 +34,7 @@
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
 header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
-.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4a56e0,#1a2060);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
+.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4f8cff,#a855f7);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
 header h1{font-size:17px;font-weight:700;flex:1;}
 header .subtitle{font-size:12px;color:var(--text2);}
 .theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
@@ -41,9 +43,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .view.active{display:block;}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
 .view.slide{animation:slideIn 0.25s ease;}
-.home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a2060,#0c0e24);padding:24px 20px;position:relative;overflow:hidden;}
-.home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(116,128,255,0.15);}
-.home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(116,128,255,0.08);}
+.home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a3a6e,#0c1017);padding:24px 20px;position:relative;overflow:hidden;}
+.home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(79,140,255,0.15);}
+.home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(168,85,247,0.08);}
 .home-banner h2{font-size:22px;font-weight:900;margin-bottom:4px;}
 .home-banner p{font-size:13px;color:rgba(255,255,255,0.7);}
 .home-banner .sport-icons{font-size:28px;margin-bottom:12px;}
@@ -241,7 +243,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .list-actions{display:flex;gap:6px;}
 .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
 /* SUPER ADMIN */
-.crown-banner{background:linear-gradient(135deg,#12091f,#08091a);border-bottom:1px solid var(--border);padding:20px 16px 16px;}
+.crown-banner{background:linear-gradient(135deg,#0c1017,#060a10);border-bottom:1px solid var(--border);padding:20px 16px 16px;}
 .super-league-row{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 16px 10px;display:flex;align-items:center;gap:12px;}
 .super-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;display:inline-block;margin-top:4px;}
 .super-badge.active{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
@@ -430,7 +432,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .player-profile-modal.open{opacity:1;pointer-events:all;}
 .player-profile-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
 .player-profile-modal.open .player-profile-sheet{transform:translateY(0);}
-.pp-header{background:linear-gradient(135deg,#1a2060,#0c0e24);padding:24px 20px 20px;position:relative;}
+.pp-header{background:linear-gradient(135deg,#1a3a6e,#0c1017);padding:24px 20px 20px;position:relative;}
 .pp-avatar{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;margin-bottom:12px;}
 .pp-avatar-img{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;margin-bottom:12px;}
 .pp-name{font-size:20px;font-weight:900;color:#fff;}
