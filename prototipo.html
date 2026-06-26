@@ -3121,9 +3121,10 @@ async function openDivision(divId){
   currentDivisionId=divId;
   showView('view-division');
   try{
-    const {data:d}=await supa.from('divisiones')
+    const {data:d,error:de}=await supa.from('divisiones')
       .select('*, torneo:torneos(nombre, liga:ligas(nombre))')
       .eq('id',divId).single();
+    if(de)throw de;
     if(d){
       document.getElementById('division-header-name').textContent=d.nombre;
       document.getElementById('division-header-sub').textContent=d.torneo.nombre+' · '+d.torneo.liga.nombre;
@@ -3499,7 +3500,7 @@ async function renderMatches(){
       .order('jornada',{ascending:false})
       .order('fecha',{ascending:false});
     if(error)throw error;
-    if(!data||!data.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">Sin partidos en esta división</div>';return;}
+    if(!data||!data.length){renderMatchesLocal();return;}
     const filtered=currentFilter==='todos'?data:data.filter(p=>{
       if(currentFilter==='live')return p.estado==='en_curso';
       if(currentFilter==='done')return p.estado==='finalizado';
@@ -3651,7 +3652,7 @@ async function renderStandings(){
       .eq('division_id',currentDivisionId).eq('estado','finalizado');
     if(error)throw error;
     const regularData=(data||[]).filter(p=>!p.fase||p.fase==='regular');
-    if(!regularData.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin partidos finalizados</div>';return;}
+    if(!regularData.length){renderStandingsLocal();return;}
     const table={};
     regularData.forEach(p=>{
       const lId=p.equipo_local_id,vId=p.equipo_visita_id;
@@ -3691,14 +3692,14 @@ async function renderScorers(){
   document.getElementById('scorersList').innerHTML='<div class="empty-state">⏳ Cargando...</div>';
   try{
     const {data:equipos}=await supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto').eq('division_id',currentDivisionId);
-    if(!equipos||!equipos.length){document.getElementById('scorersList').innerHTML='<div class="empty-state">Sin equipos en esta división</div>';return;}
+    if(!equipos||!equipos.length){renderScorersLocal();return;}
     const equipoIds=equipos.map(e=>e.id);
     const equipoMap=Object.fromEntries(equipos.map(e=>[e.id,e]));
     const {data:jugadores}=await supa.from('jugadores')
       .select('id,nombre,numero,equipo_id,goles').in('equipo_id',equipoIds)
       .order('goles',{ascending:false}).limit(30);
     const list=(jugadores||[]).filter(j=>(j.goles||0)>0);
-    if(!list.length){document.getElementById('scorersList').innerHTML='<div class="empty-state">Sin goleadores registrados aún</div>';return;}
+    if(!list.length){renderScorersLocal();return;}
     const medals=['🥇','🥈','🥉'];
     document.getElementById('scorersList').innerHTML=list.map((j,i)=>{
       const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
