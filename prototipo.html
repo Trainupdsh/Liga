@@ -85,14 +85,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
 .nav-item.active .nav-label{color:var(--accent);}
 .nav-item.active .nav-icon{transform:translateY(-1px);}
-.date-strip{display:flex;gap:0;padding:0 8px;border-bottom:1px solid var(--border);}
-.date-pill{background:none;border:none;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;gap:1px;transition:color .15s;}
-.date-pill:hover{color:var(--text);}
+.date-pill{background:none;border:none;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;gap:1px;border-radius:8px;}
+.date-pill:hover{background:var(--hover);}
 .date-pill.active{color:var(--accent);border-bottom-color:var(--accent);}
 .date-pill .day-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
-.date-pill.active .day-name{color:var(--accent);}
 .date-pill .day-num{font-size:18px;font-weight:800;line-height:1.1;}
-.date-pill.active .day-num{color:var(--accent);}
 .date-pill .day-month{font-size:9px;color:var(--text3);}
 .date-pill.active .day-month{color:var(--accent);}
 .filter-tabs{display:flex;padding:12px 16px;gap:8px;overflow-x:auto;scrollbar-width:none;}
@@ -856,13 +853,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </header>
   <div class="content">
     <div class="screen active" id="screen-partidos">
-      <div class="date-strip" id="dateStrip"></div>
-      <div class="filter-tabs">
-        <div class="filter-tab active" data-filter="todos" onclick="filterMatches(this,'todos')">TODOS</div>
-        <div class="filter-tab" data-filter="live" onclick="filterMatches(this,'live')">EN VIVO</div>
-        <div class="filter-tab" data-filter="done" onclick="filterMatches(this,'done')">FINALIZADOS</div>
-        <div class="filter-tab" data-filter="upcoming" onclick="filterMatches(this,'upcoming')">PROGRAMADOS</div>
+      <div style="position:relative;display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
+        <button class="mt-nav-btn" onclick="_divShiftDays(-1)">‹</button>
+        <div id="dateStrip" style="display:flex;flex:1"></div>
+        <button class="mt-nav-btn" onclick="_divShiftDays(1)">›</button>
+        <button class="mt-hoy-btn" style="margin-left:6px" onclick="_divGoToday()">HOY</button>
       </div>
+      <div id="div-filter-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px"></div>
       <div id="matchesList"></div>
     </div>
     <div class="screen" id="screen-tabla">
@@ -3235,6 +3232,7 @@ async function openDivision(divId){
     }
   }
   switchTab('partidos',document.querySelector('#view-division .nav-item'));
+  _divShift=0;currentFilter='todos';
   buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
 function goBackToLeague(){showView('view-league');}
@@ -3576,36 +3574,47 @@ function switchTab(tab,el){
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const _MON=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 let _divDateOffset=0; // day offset from today for division view
+let _divShift=0;
 function buildDateStrip(){
-  const strip=document.getElementById('dateStrip'),today=new Date();
+  const strip=document.getElementById('dateStrip');if(!strip)return;
+  const today=new Date();
   let html='';
   for(let i=-3;i<=3;i++){
-    const d=new Date(today);d.setDate(d.getDate()+i);
-    const label=i===-1?'AYER':i===0?'HOY':i===1?'MAN':days[d.getDay()].toUpperCase();
-    html+=`<div class="date-pill${i===0?' active':''}" data-offset="${i}" onclick="selectDate(this,${i})">
+    const d=new Date(today);d.setDate(today.getDate()+i+_divShift);
+    const rel=i+_divShift;
+    const label=rel===-1?'AYER':rel===0?'HOY':rel===1?'MAN':days[d.getDay()].toUpperCase();
+    html+=`<button class="date-pill${i===0?' active':''}" onclick="selectDate(this,${rel})">
       <span class="day-name">${label}</span>
       <span class="day-num">${d.getDate()}</span>
       <span class="day-month">${_MON[d.getMonth()]}</span>
-    </div>`;
+    </button>`;
   }
   strip.innerHTML=html;
-  _divDateOffset=0;
+  _divDateOffset=_divShift;
+  _divRenderFilterBar();
 }
+function _divShiftDays(d){_divShift+=d;buildDateStrip();renderMatches();}
+function _divGoToday(){_divShift=0;_divDateOffset=0;currentFilter='todos';buildDateStrip();renderMatches();}
 function selectDate(el,offset){
   document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
   _divDateOffset=offset;
-  // auto-select filter based on day
-  const autoFilter=offset<0?'done':offset===0?'todos':'upcoming';
-  const tabEl=document.querySelector(`.filter-tab[data-filter="${autoFilter}"]`);
-  if(tabEl){document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');currentFilter=autoFilter;}
+  currentFilter=offset<0?'done':offset===0?'todos':'upcoming';
+  _divRenderFilterBar();
   renderMatches();
 }
 let currentFilter='todos';
-function filterMatches(el,filter){
-  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');currentFilter=filter;renderMatches();
+function _divRenderFilterBar(){
+  const el=document.getElementById('div-filter-bar');if(!el)return;
+  const tabs=[
+    {f:'todos',label:'TODOS'},
+    {f:'live',label:'⚡ EN VIVO'},
+    {f:'done',label:'FINALIZADOS'},
+    {f:'upcoming',label:'PROGRAMADOS'},
+  ];
+  el.innerHTML=tabs.map(t=>`<button class="mt-ftab${currentFilter===t.f?' active':''}" onclick="filterMatches('${t.f}')">${t.label}</button>`).join('');
 }
+function filterMatches(filter){currentFilter=filter;_divRenderFilterBar();renderMatches();}
 function getTeam(id){return teamsData.find(t=>t.id===id);}
 
 async function renderMatches(){
