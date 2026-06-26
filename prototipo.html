@@ -20,16 +20,19 @@
   --hover: #1e2536; --gradient-start: #4f8cff; --gradient-end: #a855f7;
 }
 :root[data-theme="light"] {
-  --bg: #f0f2f7; --bg2: #e5e8ef; --card: #ffffff; --card2: #f8f9fc;
-  --accent: #5b6ef5; --accent-dim: #e8eaff;
-  --text: #0d1117; --text2: #4a5568; --text3: #8892a4;
-  --border: #e2e5ef; --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
+  --bg: #f5f7fa; --bg2: #e4e7ec; --card: #ffffff; --card2: #f0f2f5;
+  --accent: #2563eb; --accent-dim: rgba(37,99,235,0.1);
+  --text: #0f1419; --text2: #536471; --text3: #8899a6;
+  --border: #e4e7ec; --border-hover: #c8cdd5;
+  --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
   --gold: #d97706; --silver: #64748b; --bronze: #92400e;
-  --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f7; --overlay: rgba(0,0,0,0.5);
+  --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f5; --overlay: rgba(0,0,0,0.5);
+  --hover: #e8ebf0; --gradient-start: #2563eb; --gradient-end: #9333ea;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-thumb{background:#232a3a;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:var(--border-hover);}
 ::-webkit-scrollbar-track{background:transparent;}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
@@ -610,6 +613,31 @@ header .subtitle{font-size:12px;color:var(--text2);}
   #view-home>div>div:last-child{display:none!important;}
   .toast{max-width:460px!important;}
 }
+
+/* ═══ WEBALL-INSPIRED UTILITIES ═══ */
+/* Glass card */
+.glass-card{border:1px solid var(--border);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:linear-gradient(135deg,rgba(19,24,32,.93),rgba(27,33,48,.8));border-radius:16px;}
+[data-theme="light"] .glass-card{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(240,242,245,.85));}
+/* Gradient text */
+.gradient-text{background:linear-gradient(135deg,var(--gradient-start),var(--gradient-end));-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;}
+/* Hero radial glow */
+.hero-gradient{background:radial-gradient(ellipse at 50% 0%,rgba(79,140,255,.18) 0%,transparent 65%);}
+/* Animations */
+@keyframes fadeInUp{0%{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInRight{0%{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{0%{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.fade-in{animation:.3s ease-out fadeInUp;}
+.slide-in-right{animation:.25s ease-out slideInRight;}
+.scale-in{animation:.2s ease-out scaleIn;}
+/* Position gradient badges */
+.pos-badge.gold{background:linear-gradient(135deg,gold,#fa0);color:#7a4800;border:none;}
+.pos-badge.silver{background:linear-gradient(135deg,#d0d8e0,#a0a8b0);color:#3a4050;border:none;}
+.pos-badge.bronze{background:linear-gradient(135deg,#cd7f32,#a06020);color:#fff;border:none;}
+/* Form indicators */
+.form-W{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-size:9px;font-weight:800;}
+.form-D{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--yellow);color:#fff;font-size:9px;font-weight:800;}
+.form-L{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:800;}
+.form-strip{display:flex;gap:3px;align-items:center;}
 </style>
 </head>
 <body>
@@ -623,9 +651,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:24px">
-    <div class="home-banner">
+    <div class="home-banner hero-gradient">
       <div class="sport-icons">🤾 ⚽ 🏀 🏐</div>
-      <h2>Tu liga, online</h2>
+      <h2 class="gradient-text">Tu liga, online</h2>
       <p>Resultados, tabla y goleadores en tiempo real</p>
     </div>
     <div class="section-title">BUSCAR LIGA</div>
