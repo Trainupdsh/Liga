@@ -7845,55 +7845,7 @@ function _dtShowTorneoCenter(torneoId){
   if(!ds.length){
     html+='<div class="dt-empty">Sin divisiones en este torneo</div>';
   } else {
-    ds.forEach(div=>{
-      const divStandings=standings.filter(s=>s.divId===div.id)
-        .map(s=>({...s,pts:s.pg*3+s.pe,dif:s.gf-s.gc}))
-        .sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
-
-      html+=`<div style="margin:16px 16px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)">
-        <div class="vtd-div-hdr" onclick="_dtClickDiv(${div.id})">
-          <span style="font-size:16px">${div.icon||'📋'}</span>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
-            <div style="font-size:10px;color:var(--text3)">Fecha ${div.currentRound||'?'} de ${div.rounds||'?'} · ${div.teams||0} equipos</div>
-          </div>
-          <span style="font-size:11px;color:var(--accent);font-weight:700">VER →</span>
-        </div>
-        <div style="display:flex;padding:5px 16px;border-bottom:1px solid var(--border);background:var(--card2)">
-          <div class="vtd-pos">#</div>
-          <div style="width:22px;flex-shrink:0"></div>
-          <div class="vtd-nm" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">Club</div>
-          <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PJ</div>
-          <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PG</div>
-          <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PE</div>
-          <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PP</div>
-          <div class="vtd-dif" style="font-size:9px;font-weight:700;color:var(--text3)">Dif</div>
-          <div class="vtd-pts" style="font-size:9px;font-weight:700;color:var(--accent)">Pts</div>
-        </div>`;
-
-      if(!divStandings.length){
-        html+='<div style="padding:12px 16px;font-size:11px;color:var(--text3)">Sin datos</div>';
-      } else {
-        divStandings.forEach((s,i)=>{
-          const t=teamsData.find(x=>x.id===s.teamId)||{name:'?',short:'?',color:'#333',text:'#fff'};
-          const dif=s.dif>=0?'+'+s.dif:s.dif;
-          html+=`<div class="vtd-st-row" id="vtd-row-${s.teamId}-${div.id}"
-              onclick="_dtStandingsClickTeam(${s.teamId})"
-              ondblclick="_dtDblClickClub(${s.teamId})">
-            <div class="vtd-pos">${i+1}</div>
-            <div class="vtd-shield" style="background:${t.color};color:${t.text}">${t.short}</div>
-            <div class="vtd-nm">${escHtml(t.name)}</div>
-            <div class="vtd-st">${s.pj}</div>
-            <div class="vtd-st">${s.pg}</div>
-            <div class="vtd-st">${s.pe}</div>
-            <div class="vtd-st">${s.pp}</div>
-            <div class="vtd-dif">${dif}</div>
-            <div class="vtd-pts">${s.pts}</div>
-          </div>`;
-        });
-      }
-      html+='</div>';
-    });
+    ds.forEach(div=>{html+=_dtDivStandingsCard(div);});
     html+='<div style="height:32px"></div>';
   }
 
@@ -7901,6 +7853,96 @@ function _dtShowTorneoCenter(torneoId){
   showView('view-torneo-detail');
   _renderDtLeft();
   _renderDtRight(null);
+}
+
+// Renders one division's standings table card (shared by torneo & division views)
+function _dtDivStandingsCard(div){
+  const divStandings=standings.filter(s=>s.divId===div.id)
+    .map(s=>({...s,pts:s.pg*3+s.pe,dif:s.gf-s.gc}))
+    .sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
+
+  let html=`<div style="margin:16px 16px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)">
+    <div class="vtd-div-hdr" onclick="_dtViewDivPartidos(${div.id})">
+      <span style="font-size:16px">${div.icon||'📋'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
+        <div style="font-size:10px;color:var(--text3)">Fecha ${div.currentRound||'?'} de ${div.rounds||'?'} · ${div.teams||0} equipos</div>
+      </div>
+      <span style="font-size:11px;color:var(--accent);font-weight:700">PARTIDOS →</span>
+    </div>
+    <div style="display:flex;padding:5px 16px;border-bottom:1px solid var(--border);background:var(--card2)">
+      <div class="vtd-pos">#</div>
+      <div style="width:22px;flex-shrink:0"></div>
+      <div class="vtd-nm" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">Club</div>
+      <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PJ</div>
+      <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PG</div>
+      <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PE</div>
+      <div class="vtd-st" style="font-size:9px;font-weight:700;color:var(--text3)">PP</div>
+      <div class="vtd-dif" style="font-size:9px;font-weight:700;color:var(--text3)">Dif</div>
+      <div class="vtd-pts" style="font-size:9px;font-weight:700;color:var(--accent)">Pts</div>
+    </div>`;
+
+  if(!divStandings.length){
+    html+='<div style="padding:12px 16px;font-size:11px;color:var(--text3)">Sin datos</div>';
+  } else {
+    divStandings.forEach((s,i)=>{
+      const t=teamsData.find(x=>x.id===s.teamId)||{name:'?',short:'?',color:'#333',text:'#fff'};
+      const dif=s.dif>=0?'+'+s.dif:s.dif;
+      html+=`<div class="vtd-st-row" id="vtd-row-${s.teamId}-${div.id}"
+          onclick="_dtStandingsClickTeam(${s.teamId})"
+          ondblclick="_dtDblClickClub(${s.teamId})">
+        <div class="vtd-pos">${i+1}</div>
+        <div class="vtd-shield" style="background:${t.color};color:${t.text}">${t.short}</div>
+        <div class="vtd-nm">${escHtml(t.name)}</div>
+        <div class="vtd-st">${s.pj}</div>
+        <div class="vtd-st">${s.pg}</div>
+        <div class="vtd-st">${s.pe}</div>
+        <div class="vtd-st">${s.pp}</div>
+        <div class="vtd-dif">${dif}</div>
+        <div class="vtd-pts">${s.pts}</div>
+      </div>`;
+    });
+  }
+  html+='</div>';
+  return html;
+}
+
+// Shows a single division's standings table in the center panel
+function _dtShowDivisionCenter(divId){
+  const div=divisiones.find(d=>d.id===divId);if(!div)return;
+  const torneo=torneos.find(t=>t.id===div.torneoId);
+  const liga=torneo?leagues.find(l=>l.id===torneo.leagueId):null;
+  _dtSelTorneo=div.torneoId;
+  _dtSelDiv=divId;
+  _dtExpTorneos.add(div.torneoId);
+  if(div.grupo)_dtExpGrupos.add(div.torneoId+'-'+div.grupo);
+  const statusLabel=torneo&&torneo.status==='active'?'● ACTIVO':'FINALIZADO';
+  const statusColor=torneo&&torneo.status==='active'?'var(--green)':'var(--text3)';
+
+  let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px">
+      <div class="league-icon" style="background:${liga?.color||'#333'};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${div.icon||liga?.icon||'🏆'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${torneo?escHtml(torneo.name)+' · ':''}${liga?escHtml(liga.name):''} · <span style="color:${statusColor};font-weight:700">${statusLabel}</span></div>
+      </div>
+    </div>
+  </div>`;
+  html+=_dtDivStandingsCard(div);
+  html+='<div style="height:32px"></div>';
+
+  document.getElementById('vtd-content').innerHTML=html;
+  showView('view-torneo-detail');
+  _renderDtLeft();
+  _renderDtRight(divId);
+}
+
+// Opens the partidos (fixture) view for a division
+async function _dtViewDivPartidos(id){
+  _dtSelDiv=id;
+  _renderDtLeft();
+  await openDivision(id);
+  _renderDtRight(id);
 }
 
 let _vtdSelTeam=null;
@@ -7917,11 +7959,9 @@ function _dtToggleGrupo(key){
   if(_dtExpGrupos.has(key)){_dtExpGrupos.delete(key);}else _dtExpGrupos.add(key);
   _renderDtLeft();
 }
-async function _dtClickDiv(id){
-  _dtSelDiv=id;
-  _renderDtLeft();
-  await openDivision(id);
-  _renderDtRight(id);
+function _dtClickDiv(id){
+  // Clicking a division in the left tree shows its standings table (not partidos)
+  _dtShowDivisionCenter(id);
 }
 
 async function _renderDtRight(divId){
