@@ -85,9 +85,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
 .nav-item.active .nav-label{color:var(--accent);}
 .nav-item.active .nav-icon{transform:translateY(-1px);}
-.date-strip{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
-.date-strip::-webkit-scrollbar{display:none;}
-.date-pill{display:flex;flex-direction:column;align-items:center;padding:8px 14px;border-radius:20px;cursor:pointer;min-width:52px;background:var(--card2);border:1px solid var(--border);transition:all 0.2s;flex-shrink:0;}
+.date-strip{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);}
+.date-pill{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:20px;cursor:pointer;flex:1;background:var(--card2);border:1px solid var(--border);transition:all 0.2s;}
 .date-pill.active{background:var(--accent);border-color:var(--accent);}
 .date-pill .day-name{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;}
 .date-pill.active .day-name{color:rgba(255,255,255,0.8);}
@@ -3575,9 +3574,8 @@ const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function buildDateStrip(){
   const strip=document.getElementById('dateStrip'),today=new Date();
   let html='';
-  for(let i=-3;i<=10;i++){const d=new Date(today);d.setDate(d.getDate()+i);html+=`<div class="date-pill ${i===0?'active':''}" onclick="selectDate(this)"><span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span></div>`;}
+  for(let i=-3;i<=3;i++){const d=new Date(today);d.setDate(d.getDate()+i);const label=i===-1?'AYER':i===0?'HOY':i===1?'MAN':days[d.getDay()].toUpperCase();html+=`<div class="date-pill ${i===0?'active':''}" onclick="selectDate(this)"><span class="day-name">${label}</span><span class="day-num">${d.getDate()}</span><span style="font-size:9px;color:var(--text3)">${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()]}</span></div>`;}
   strip.innerHTML=html;
-  strip.children[3].scrollIntoView({block:'nearest',inline:'center'});
 }
 function selectDate(el){document.querySelectorAll('.date-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
 let currentFilter='todos';
