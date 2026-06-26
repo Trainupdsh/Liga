@@ -4479,17 +4479,36 @@ function renderPartidoCard(p){
       </div>
     </div>
     ${(p.cancha||p.local?.club?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha||p.local?.club?.direccion)}</div>`:''}
-    ${p.arbitro?.nombre?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:2px">🟡 Árb: ${escHtml(p.arbitro.nombre)}</div>`:''}
-    ${p.estado!=='finalizado'?`<div style="margin-top:8px;display:flex;gap:6px">
-      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'})">✏️ Editar</button>
-    </div>`:''}
+    ${p.estado!=='finalizado'?`
+    <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+      <span style="font-size:13px;flex-shrink:0">🟡</span>
+      <select style="flex:1;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text)" onchange="asignarArbitroPartido(${p.id},this.value)">
+        <option value="">Sin árbitro</option>
+        ${ligaArbitros.map(a=>`<option value="${a.id}"${p.arbitro?.id===a.id?' selected':''}>${escHtml(a.nombre)}</option>`).join('')}
+      </select>
+      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px;flex-shrink:0" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'})">✏️</button>
+    </div>`
+    :p.arbitro?.nombre?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">🟡 ${escHtml(p.arbitro.nombre)}</div>`:''}
   </div>`;
+}
+async function asignarArbitroPartido(matchId, arbitroId){
+  const arb=ligaArbitros.find(a=>a.id===parseInt(arbitroId));
+  try{
+    await supa.from('partidos').update({
+      arbitro_id:arbitroId?parseInt(arbitroId):null,
+      arbitro_email:arb?.email||null
+    }).eq('id',matchId);
+    showToast(arb?`🟡 ${arb.nombre} asignado`:'Árbitro removido','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function loadAdminPartidos(){
   const el=document.getElementById('adminPartidosList');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   const playoffBtn=document.getElementById('btn-gen-playoffs');
   if(playoffBtn)playoffBtn.style.display='none';
+  if(!ligaArbitros.length){
+    try{const {data}=await supa.from('arbitros').select('id,nombre,email').eq('liga_id',currentAdminLeagueId).order('nombre');ligaArbitros=data||[];}catch(e){}
+  }
   try{
     const {data,error}=await supa.from('partidos')
       .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal,club:club_id(direccion)), visita:equipo_visita_id(id,nombre,abreviacion,color_principal), arbitro:arbitro_id(id,nombre)')
