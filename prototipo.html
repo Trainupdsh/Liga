@@ -732,6 +732,19 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- PARTIDOS DEL DÍA (desktop center panel) -->
+<div id="view-matches-today" class="view">
+  <div style="padding:20px 16px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:700;margin:0">Partidos de hoy</h2>
+      <span id="mt-date" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div id="mt-live-section"></div>
+    <div id="mt-upcoming-section"></div>
+    <div id="mt-done-section"></div>
+  </div>
+</div>
+
 <!-- LIGA DETAIL — Torneos & Divisiones -->
 <div id="view-league" class="view">
   <header>
@@ -2418,7 +2431,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <span>Atlonis</span>
   </div>
   <div class="dt-tabs">
-    <button class="dt-tab active" onclick="dtGoHome()">⚡ Partidos</button>
+    <button class="dt-tab active" onclick="dtGoPartidos()">⚡ Partidos</button>
     <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
   </div>
   <div class="dt-spacer"></div>
@@ -6985,11 +6998,62 @@ const _dtExpLigas=new Set(),_dtExpTorneos=new Set(),_dtExpGrupos=new Set();
 
 function isDesktop(){return window.innerWidth>=960;}
 
+function _dtSetActiveTab(btn){
+  document.querySelectorAll('.dt-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
 function dtGoHome(){
+  _dtSetActiveTab(document.querySelector('.dt-tab'));
   _dtSelDiv=null;
   showView('view-home');
   document.getElementById('view-admin').style.display='none';
   _renderDtRight(null);
+}
+function dtGoPartidos(){
+  _dtSetActiveTab(document.querySelector('.dt-tab'));
+  _dtSelDiv=null;
+  document.getElementById('view-admin').style.display='none';
+  showView('view-matches-today');
+  _renderDtRight(null);
+  _renderMatchesToday();
+}
+function _renderMatchesToday(){
+  const today=new Date();
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const dateEl=document.getElementById('mt-date');
+  if(dateEl)dateEl.textContent=dias[today.getDay()]+' '+today.getDate()+' '+meses[today.getMonth()]+' '+today.getFullYear();
+
+  function matchCard(m,showDiv){
+    const home=getTeam(m.home),away=getTeam(m.away);
+    if(!home||!away)return'';
+    const isDone=m.status==='done',isLive=m.status==='live';
+    const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
+    const div=divisiones.find(d=>d.id===m.divId);
+    const liga=div?leagues.find(l=>torneos.find(t=>t.id===div.torneoId&&t.leagueId===l.id)):null;
+    const badge=showDiv&&div?`<span style="font-size:10px;color:var(--text3);background:var(--card2);padding:2px 6px;border-radius:4px;margin-left:auto;white-space:nowrap;flex-shrink:0">${liga?escHtml(liga.icon||'')+'  ':'' }${escHtml(div.name)}</span>`:'';
+    return`<div class="match-item" onclick="openMatch(${m.id})" style="cursor:pointer">
+      <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
+      <div class="match-teams" style="flex:1">
+        <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(home.name)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?m.homeScore??'—':'-')}</span></div>
+        <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(away.name)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?m.awayScore??'—':'-')}</span></div>
+      </div>${badge}<span class="chevron">›</span></div>`;
+  }
+  function section(title,icon,ms,color){
+    if(!ms.length)return'';
+    return`<div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:${color};letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">${icon} ${title} <span style="font-size:10px;background:${color}22;color:${color};padding:1px 7px;border-radius:10px">${ms.length}</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;background:var(--card)">
+        ${ms.map(m=>matchCard(m,true)).join('')}
+      </div></div>`;
+  }
+  const live=matches.filter(m=>m.status==='live');
+  const upcoming=matches.filter(m=>m.status==='upcoming').slice(0,12);
+  const done=matches.filter(m=>m.status==='done').slice(-12).reverse();
+
+  document.getElementById('mt-live-section').innerHTML=section('EN VIVO','🔴',live,'var(--green)');
+  document.getElementById('mt-upcoming-section').innerHTML=section('PROGRAMADOS','📅',upcoming,'var(--accent)');
+  document.getElementById('mt-done-section').innerHTML=section('RESULTADOS','✅',done,'var(--text3)');
 }
 function dtSearch(q){
   const inp=document.getElementById('leagueSearch');
@@ -7135,7 +7199,7 @@ function _dtApplyLayout(){
   document.getElementById('dt-nav').style.display=d?'flex':'none';
   document.getElementById('dt-left').style.display=d?'flex':'none';
   document.getElementById('dt-right').style.display=d?'flex':'none';
-  if(d&&leagues.length)_renderDtLeft();
+  if(d&&leagues.length){_renderDtLeft();dtGoPartidos();}
 }
 window.addEventListener('resize',_dtApplyLayout);
 document.addEventListener('DOMContentLoaded',_dtApplyLayout);
