@@ -1516,12 +1516,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div style="padding-bottom:24px">
     <div style="padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
       <span style="font-size:22px">📅</span>
-      <div><div style="font-size:13px;font-weight:700" id="arb-today-label">Hoy</div><div style="font-size:11px;color:var(--text2)" id="arb-match-count">Cargando...</div></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700" id="arb-today-label">Hoy</div>
+        <div style="font-size:11px;color:var(--text2)" id="arb-match-count">Cargando...</div>
+      </div>
+      <button class="btn btn-sm" style="font-size:11px;padding:4px 10px" onclick="loadArbitroPartidos(arbitroCurrentUser)">↺ Actualizar</button>
     </div>
-    <div class="section-title">MIS PARTIDOS</div>
-    <div id="arbitro-matches"></div>
-    <div class="section-title" style="margin-top:8px">PRÓXIMOS</div>
-    <div id="arbitro-next"></div>
+    <div id="arbitro-matches" style="padding-bottom:24px"></div>
+    <div id="arbitro-next" style="display:none"></div>
   </div>
 </div>
 
@@ -4967,46 +4969,95 @@ let arbitroCurrentUser=null;
 async function loadArbitroPartidos(user){
   arbitroCurrentUser=user;
   const el=document.getElementById('arbitro-matches');
-  const nextEl=document.getElementById('arbitro-next');
   el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">⏳ Cargando...</div>';
-  nextEl.innerHTML='';
+  document.getElementById('arbitro-next').style.display='none';
   try{
     let q=supa.from('partidos')
-      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal), visita:equipo_visita_id(nombre,abreviacion,color_principal)')
+      .select('*, local:equipo_local_id(nombre,abreviacion,color_principal,club:club_id(nombre,direccion)), visita:equipo_visita_id(nombre,abreviacion,color_principal), division:division_id(nombre,torneo:torneo_id(nombre))')
       .order('fecha').order('hora');
     if(user?.email)q=q.eq('arbitro_email',user.email);
     const {data,error}=await q;
     if(error)throw error;
     const list=data||[];
-    const activos=list.filter(p=>p.estado!=='finalizado');
-    const pasados=list.filter(p=>p.estado==='finalizado').slice(0,3);
-    const renderP=(p)=>{
+    const today=new Date().toISOString().split('T')[0];
+    const hoy=list.filter(p=>p.fecha===today&&p.estado!=='finalizado');
+    const enCurso=list.filter(p=>p.estado==='en_curso');
+    const proximos=list.filter(p=>p.estado==='programado'&&p.fecha&&p.fecha>today);
+    const pasados=list.filter(p=>p.estado==='finalizado').slice(0,5);
+    const todayAll=[...new Set([...enCurso,...hoy].map(p=>p.id))].map(id=>list.find(p=>p.id===id));
+
+    const sede=(p)=>p.cancha||p.local?.club?.direccion||'';
+    const renderP=(p,showDate=true)=>{
       const isLive=p.estado==='en_curso',isDone=p.estado==='finalizado';
-      const label=isLive?'EN VIVO':isDone?'FINALIZADO':'PROGRAMADO';
+      const label=isLive?'🔴 EN VIVO':isDone?'✓ FINALIZADO':'PROGRAMADO';
       const bg=isLive?'rgba(34,197,94,0.15)':isDone?'var(--card2)':'var(--accent-dim)';
       const fg=isLive?'var(--green)':isDone?'var(--text3)':'var(--accent)';
-      return `<div class="arbitro-match">
-        <div style="display:flex;align-items:center;gap:10px" onclick="openPlanillaDB(${p.id})">
-          <div class="arb-status ${isLive?'live':isDone?'done':'pending'}"></div>
+      const sedeStr=sede(p);
+      const divNombre=p.division?.nombre||'';
+      const tornNombre=p.division?.torneo?.nombre||'';
+      const contexto=[tornNombre,divNombre,p.jornada?'Fecha '+p.jornada:''].filter(Boolean).join(' · ');
+      return `<div class="arbitro-match" style="${isLive?'border-color:var(--green);':isDone?'opacity:.85;':''}">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px">
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:800">${escHtml(p.local?.nombre||'Local')} <span style="color:var(--text3)">vs</span> ${escHtml(p.visita?.nombre||'Visitante')}</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px">${p.jornada?'Fecha '+p.jornada+' · ':''}${p.cancha?escHtml(p.cancha)+' · ':''}${p.fecha?formatFecha(p.fecha)+' ':''}${p.hora?p.hora.slice(0,5):''}</div>
+            ${contexto?`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">${escHtml(contexto)}</div>`:''}
+            <div style="font-size:15px;font-weight:800">${escHtml(p.local?.nombre||'Local')} <span style="color:var(--text3);font-weight:400">vs</span> ${escHtml(p.visita?.nombre||'Visitante')}</div>
+            ${showDate&&p.fecha?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📅 ${formatFecha(p.fecha)}${p.hora?' · 🕐 '+p.hora.slice(0,5):''}</div>`:''}
+            ${p.hora&&!showDate?`<div style="font-size:12px;color:var(--text2);margin-top:2px">🕐 ${p.hora.slice(0,5)}</div>`:''}
+            ${sedeStr?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📍 ${escHtml(sedeStr)}</div>`:''}
           </div>
-          <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:${bg};color:${fg}">${label}</div>
+          <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:${bg};color:${fg};white-space:nowrap;flex-shrink:0">${label}</div>
         </div>
-        ${isDone?`<div style="text-align:center;font-size:16px;font-weight:900;padding:4px 0 0">${p.goles_local??0} - ${p.goles_visita??0}</div>`:''}
-        <div style="margin-top:8px;display:flex;gap:8px">
+        ${isDone?`<div style="text-align:center;font-size:20px;font-weight:900;padding:2px 0 6px;letter-spacing:2px">${p.goles_local??0} — ${p.goles_visita??0}</div>`:''}
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:6px" onclick="openPlanillaDB(${p.id})">📋 Planilla</button>
           <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:6px" onclick="openInformeArbitro(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📝 Informe</button>
-          ${isDone?`<button class="btn btn-sm" style="flex:1;font-size:12px;padding:6px;background:${p.validado_arbitro?'rgba(34,197,94,0.15)':'rgba(212,175,55,0.15)'};color:${p.validado_arbitro?'var(--green)':'#d4af37'};border:1px solid ${p.validado_arbitro?'rgba(34,197,94,0.3)':'rgba(212,175,55,0.3)'}" onclick="validarResultado(${p.id},${p.validado_arbitro?'true':'false'})">${p.validado_arbitro?'✓ Validado':'✔ Validar resultado'}</button>`:''}
+          ${isDone?`<button class="btn btn-sm" style="flex:1;font-size:12px;padding:6px;background:${p.validado_arbitro?'rgba(34,197,94,0.15)':'rgba(212,175,55,0.15)'};color:${p.validado_arbitro?'var(--green)':'#d4af37'};border:1px solid ${p.validado_arbitro?'rgba(34,197,94,0.3)':'rgba(212,175,55,0.3)'}" onclick="validarResultado(${p.id},${!!p.validado_arbitro})">${p.validado_arbitro?'✓ Validado':'✔ Validar'}</button>`:''}
         </div>
       </div>`;
     };
-    el.innerHTML=activos.length?activos.map(renderP).join(''):'<div style="text-align:center;color:var(--text3);padding:32px;font-size:14px">Sin partidos próximos asignados.</div>';
-    nextEl.innerHTML=pasados.length?`<div style="padding:4px 16px 4px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">RECIENTES</div>`+pasados.map(renderP).join(''):'';
+
+    let html='';
+    if(todayAll.length){
+      html+=`<div style="padding:10px 16px 6px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">HOY — ${document.getElementById('arb-today-label').textContent}</div>`;
+      html+=`<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">`;
+      html+=todayAll.map(p=>renderP(p,false)).join('');
+      html+=`</div>`;
+    }
+    if(proximos.length){
+      html+=`<div style="padding:14px 16px 6px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">PRÓXIMOS PARTIDOS</div>`;
+      html+=`<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">`;
+      html+=proximos.map(p=>renderP(p,true)).join('');
+      html+=`</div>`;
+    }
+    if(pasados.length){
+      html+=`<div style="padding:14px 16px 6px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">RECIENTES</div>`;
+      html+=`<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">`;
+      html+=pasados.map(p=>renderP(p,true)).join('');
+      html+=`</div>`;
+    }
+    if(!html)html='<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">Sin partidos asignados.</div>';
+    el.innerHTML=html;
+
+    const total=todayAll.length+proximos.length;
     const cEl=document.getElementById('arb-match-count');
-    if(cEl)cEl.textContent=activos.length?activos.length+' partido'+(activos.length===1?'':'s')+' asignado'+(activos.length===1?'':'s'):'Sin partidos próximos';
+    if(cEl)cEl.textContent=todayAll.length?`${todayAll.length} partido${todayAll.length>1?'s':''} hoy · ${proximos.length} próximo${proximos.length!==1?'s':''}`:proximos.length?`${proximos.length} próximo${proximos.length!==1?'s':''}` :'Sin partidos próximos';
+
+    // Notificaciones del navegador para partidos de hoy
+    if(todayAll.length&&'Notification' in window){
+      Notification.requestPermission().then(perm=>{
+        if(perm!=='granted')return;
+        todayAll.forEach(p=>{
+          const hora=p.hora?p.hora.slice(0,5):'';
+          const sedeStr=sede(p);
+          new Notification(`🟡 Partido hoy${hora?' a las '+hora:''}`,{
+            body:`${p.local?.nombre||'Local'} vs ${p.visita?.nombre||'Visitante'}${sedeStr?'\n📍 '+sedeStr:''}`,
+            tag:'partido-'+p.id
+          });
+        });
+      });
+    }
   }catch(e){
-    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Sin conexión a Supabase.</div>';
+    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Error al cargar partidos.</div>';
     renderArbitroMatchesLocal();
   }
 }
