@@ -1389,11 +1389,33 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Equipo</div><div id="ne-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Club</label>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Club</label>
         <select class="form-input" id="ne-club" style="width:100%" onchange="neOnClubChange()">
-          <option value="">Seleccionar club existente...</option>
+          <option value="">Seleccionar club...</option>
         </select>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">Si el club no existe, crealo primero en el menú "Clubes"</div>
+      </div>
+      <!-- Formulario inline para crear club nuevo -->
+      <div id="ne-nuevo-club-form" style="display:none;background:var(--card2);border:1px solid var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.4px">Nuevo club</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:4px">Nombre *</label>
+            <input class="form-input" id="ne-nc-nombre" type="text" placeholder="Ej: Club Atlético" style="padding:8px 10px;font-size:13px">
+          </div>
+          <div style="flex:0 0 80px">
+            <label style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:4px">Abrev.</label>
+            <input class="form-input" id="ne-nc-abrev" type="text" maxlength="4" placeholder="CAT" style="padding:8px 10px;font-size:13px;text-transform:uppercase">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="flex:0 0 80px">
+            <label style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:4px">Color</label>
+            <input type="color" id="ne-nc-color" value="#1a2150" style="width:100%;height:36px;border:none;border-radius:8px;cursor:pointer;background:none">
+          </div>
+          <button class="btn btn-primary" style="flex:1;margin-top:16px" onclick="neCrearClubInline()">Crear club →</button>
+        </div>
+        <div id="ne-nc-error" style="color:var(--red);font-size:12px;display:none"></div>
       </div>
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre en esta división (opcional)</label>
         <input class="form-input" id="ne-nombre" type="text" placeholder="Deja vacío para usar el nombre del club" oninput="neUpdatePreview()" style="width:100%"></div>
@@ -4185,6 +4207,12 @@ async function loadAdminEquipos(){
     }
     const lim=currentLeagueLimits.maxEquipos;
     const usoBanner=lim?`<div style="padding:8px 14px;background:${adminDivEquipos.length>=lim?'rgba(239,68,68,0.1)':'rgba(91,110,245,0.08)'};border:1px solid ${adminDivEquipos.length>=lim?'rgba(239,68,68,0.3)':'var(--border)'};border-radius:10px;font-size:12px;color:${adminDivEquipos.length>=lim?'var(--red)':'var(--text2)'};margin-bottom:8px">Equipos en esta división: <b>${adminDivEquipos.length}</b>${lim?' · Límite total de la liga: <b>'+lim+'</b>':''}</div>`:'';
+    const fixtureBanner=adminDivEquipos.length>=2?`
+      <div style="margin-top:4px;padding:14px;background:linear-gradient(135deg,rgba(91,110,245,0.1),rgba(34,197,94,0.06));border:1px solid var(--accent);border-radius:12px;text-align:center">
+        <div style="font-size:13px;font-weight:800;margin-bottom:4px">¿Listo para empezar? ⚡</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${adminDivEquipos.length} equipos cargados — podés generar el fixture ahora</div>
+        <button class="btn btn-primary" style="width:100%" onclick="openFixtureScreen()">⚡ Generar fixture automático</button>
+      </div>`:'<div style="padding:8px 0 4px;font-size:11px;color:var(--text3);text-align:center">Agregá al menos 2 equipos para generar el fixture</div>';
     el.innerHTML=usoBanner+adminDivEquipos.map(e=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
         <div style="width:40px;height:40px;border-radius:50%;background:${e.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(e.abreviacion||'?')}</div>
@@ -4192,7 +4220,7 @@ async function loadAdminEquipos(){
           <div style="font-size:13px;font-weight:700">${escHtml(e.nombre)}</div>
         </div>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarEquipo(${e.id},'${escHtml(e.nombre)}')">✕</button>
-      </div>`).join('');
+      </div>`).join('')+fixtureBanner;
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
@@ -4204,12 +4232,40 @@ async function openNuevoEquipo(){
   document.getElementById('ne-preview-icon').style.background='#1a2150';
   document.getElementById('ne-save-btn').disabled=false;
   document.getElementById('ne-save-btn').textContent='Agregar Equipo';
-  // Cargar clubes de la liga
+  document.getElementById('ne-nuevo-club-form').style.display='none';
   if(!adminLigaClubes.length) await loadAdminClubesQuiet();
+  neRefreshClubSelect();
+  document.getElementById('nuevoEquipoModal').classList.add('open');
+}
+function neRefreshClubSelect(){
   const clubSel=document.getElementById('ne-club');
   clubSel.innerHTML='<option value="">Seleccionar club...</option>'
-    +adminLigaClubes.map(c=>`<option value="${c.id}" data-nombre="${escHtml(c.nombre)}" data-abrev="${escHtml(c.abreviacion||'')}" data-color="${c.color_principal||'#1a2150'}">${escHtml(c.nombre)}</option>`).join('');
-  document.getElementById('nuevoEquipoModal').classList.add('open');
+    +adminLigaClubes.map(c=>`<option value="${c.id}" data-nombre="${escHtml(c.nombre)}" data-abrev="${escHtml(c.abreviacion||'')}" data-color="${c.color_principal||'#1a2150'}">${escHtml(c.nombre)}</option>`).join('')
+    +'<option value="__nuevo__">➕ Crear nuevo club aquí</option>';
+}
+async function neCrearClubInline(){
+  const nombre=document.getElementById('ne-nc-nombre').value.trim();
+  const abrev=document.getElementById('ne-nc-abrev').value.trim().toUpperCase().slice(0,4);
+  const color=document.getElementById('ne-nc-color').value;
+  const errEl=document.getElementById('ne-nc-error');
+  if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  errEl.style.display='none';
+  try{
+    const {data:newClub,error}=await supa.from('clubes').insert({
+      liga_id:currentAdminLeagueId,nombre,abreviacion:abrev||nombre.slice(0,3).toUpperCase(),
+      color_principal:color,color_texto:'#ffffff'
+    }).select().single();
+    if(error)throw error;
+    adminLigaClubes.push(newClub);
+    neRefreshClubSelect();
+    const clubSel=document.getElementById('ne-club');
+    clubSel.value=String(newClub.id);
+    document.getElementById('ne-nuevo-club-form').style.display='none';
+    document.getElementById('ne-preview-nombre').textContent=nombre;
+    document.getElementById('ne-preview-icon').textContent=abrev||nombre.slice(0,2).toUpperCase();
+    document.getElementById('ne-preview-icon').style.background=color;
+    showToast('Club "'+nombre+'" creado ✓','success');
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';}
 }
 async function loadAdminClubesQuiet(){
   try{
@@ -4224,13 +4280,24 @@ function closeNuevoEquipo(e,force){
 function neOnClubChange(){
   const sel=document.getElementById('ne-club');
   const opt=sel.options[sel.selectedIndex];
-  if(opt&&opt.value){
-    const nombre=opt.dataset.nombre||'';
-    const abrev=opt.dataset.abrev||'';
-    const color=opt.dataset.color||'#1a2150';
-    document.getElementById('ne-preview-nombre').textContent=nombre;
-    document.getElementById('ne-preview-icon').textContent=abrev||nombre.slice(0,2).toUpperCase();
-    document.getElementById('ne-preview-icon').style.background=color;
+  const form=document.getElementById('ne-nuevo-club-form');
+  if(opt&&opt.value==='__nuevo__'){
+    form.style.display='flex';
+    document.getElementById('ne-nc-nombre').value='';
+    document.getElementById('ne-nc-abrev').value='';
+    document.getElementById('ne-nc-color').value='#1a2150';
+    document.getElementById('ne-nc-error').style.display='none';
+    setTimeout(()=>document.getElementById('ne-nc-nombre').focus(),100);
+  } else {
+    form.style.display='none';
+    if(opt&&opt.value){
+      const nombre=opt.dataset.nombre||'';
+      const abrev=opt.dataset.abrev||'';
+      const color=opt.dataset.color||'#1a2150';
+      document.getElementById('ne-preview-nombre').textContent=nombre;
+      document.getElementById('ne-preview-icon').textContent=abrev||nombre.slice(0,2).toUpperCase();
+      document.getElementById('ne-preview-icon').style.background=color;
+    }
   }
 }
 function neUpdatePreview(){
@@ -4238,10 +4305,11 @@ function neUpdatePreview(){
   if(n)document.getElementById('ne-preview-nombre').textContent=n;
 }
 async function saveNuevoEquipo(){
-  const clubId=parseInt(document.getElementById('ne-club').value)||null;
+  const clubRaw=document.getElementById('ne-club').value;
+  const clubId=clubRaw&&clubRaw!=='__nuevo__'?parseInt(clubRaw)||null:null;
   const nombreOverride=document.getElementById('ne-nombre').value.trim();
   const errEl=document.getElementById('ne-error');
-  if(!clubId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
+  if(!clubId){errEl.textContent=clubRaw==='__nuevo__'?'Primero creá el club usando el formulario de arriba':'Seleccioná un club';errEl.style.display='';return;}
   const club=adminLigaClubes.find(c=>c.id===clubId);
   const nombre=nombreOverride||club?.nombre||'';
   const btn=document.getElementById('ne-save-btn');
@@ -4744,15 +4812,17 @@ async function saveNuevoTorneo(){
       try{logoUrl=await uploadImageToStorage(window._ntLogoBlob,'torneos',`torneo_${currentAdminLeagueId}_${Date.now()}.webp`);}
       catch(imgErr){console.warn('Logo torneo upload failed:',imgErr);}
     }
-    const {error}=await supa.from('torneos').insert({
+    const {data:newTorneo,error}=await supa.from('torneos').insert({
       liga_id:currentAdminLeagueId,nombre,temporada,estado,formato,dias_semana,hora_default,fecha_inicio,
       logo_url:logoUrl||null
-    });
+    }).select().single();
     if(error)throw error;
     window._ntLogoBlob=null;
     closeNuevoTorneo(null,true);
-    showToast('Torneo "'+nombre+'" creado ✓','success');
+    showToast('Torneo creado ✓ — Ahora creá la primera división','success');
     await loadAdminTorneos();
+    openTorneoDetail(newTorneo.id,nombre,estado,temporada);
+    setTimeout(()=>openNuevaDivision(),350);
   }catch(e){
     errEl.textContent='Error: '+e.message;errEl.style.display='';
     btn.disabled=false;btn.textContent='Crear Torneo';
@@ -4797,13 +4867,14 @@ async function saveNuevaDivision(){
         }
       }
     }
-    const {error}=await supa.from('divisiones').insert({
+    const {data:newDiv,error}=await supa.from('divisiones').insert({
       torneo_id:currentAdminTorneoId,nombre,categoria:categoria||null,genero
-    });
+    }).select().single();
     if(error)throw error;
     closeNuevaDivision(null,true);
-    showToast('División "'+nombre+'" creada ✓','success');
+    showToast('División creada ✓ — Ahora agregá los equipos','success');
     await loadAdminDivisiones();
+    openDivisionFromAdmin(newDiv.id,nombre);
   }catch(e){
     errEl.textContent='Error: '+e.message;errEl.style.display='';
     btn.disabled=false;btn.textContent='Crear División';
