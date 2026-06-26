@@ -805,6 +805,21 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div id="mt-groups" style="flex:1;overflow-y:auto;padding-bottom:24px"></div>
 </div>
 
+<!-- CLUBES (desktop center panel) -->
+<div id="view-clubes" class="view">
+  <div style="padding:20px 16px 0">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:700;margin:0;flex:1">Clubes</h2>
+      <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px">
+        <span style="color:var(--text3);font-size:13px">🔍</span>
+        <input type="text" id="clubes-search" placeholder="Buscar club..." oninput="_clubesFilter(this.value)"
+          style="background:none;border:none;outline:none;color:var(--text);font-size:13px;width:160px">
+      </div>
+    </div>
+    <div id="clubes-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding-bottom:32px"></div>
+  </div>
+</div>
+
 <!-- LIGA DETAIL — Torneos & Divisiones -->
 <div id="view-league" class="view">
   <header>
@@ -2492,6 +2507,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
   <div class="dt-tabs">
     <button class="dt-tab active" onclick="dtGoPartidos()">⚡ Partidos</button>
+    <button class="dt-tab" onclick="dtGoClubes()">🛡️ Clubes</button>
     <button class="dt-tab" onclick="dtGoLigas()">🏆 Ligas</button>
     <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
   </div>
@@ -7074,13 +7090,49 @@ function dtGoHome(){
   document.getElementById('view-admin').style.display='none';
   _renderDtRight(null);
 }
-function dtGoLigas(){
+function dtGoClubes(){
   _dtSetActiveTab(document.querySelectorAll('.dt-tab')[1]);
+  _dtSelDiv=null;
+  document.getElementById('view-admin').style.display='none';
+  showView('view-clubes');
+  _renderDtRight(null);
+  _clubesRender('');
+  const si=document.getElementById('clubes-search');if(si)si.value='';
+}
+function dtGoLigas(){
+  _dtSetActiveTab(document.querySelectorAll('.dt-tab')[2]);
   _dtSelDiv=null;
   document.getElementById('view-admin').style.display='none';
   showView('view-home');
   _renderDtRight(null);
 }
+function _clubesRender(q){
+  const el=document.getElementById('clubes-list');if(!el)return;
+  const src=teamsData.filter(t=>t.id>=100); // solo demo teams
+  const list=q?src.filter(t=>t.name.toLowerCase().includes(q.toLowerCase())):src;
+  if(!list.length){el.innerHTML='<div style="color:var(--text3);padding:32px;grid-column:1/-1;text-align:center">Sin clubes</div>';return;}
+  el.innerHTML=list.map(t=>{
+    // find divisions this team plays in
+    const divIds=Object.entries(window._DIV_TEAMS||{}).filter(([,tms])=>tms.includes(t.id)).map(([d])=>parseInt(d));
+    const divNames=divIds.map(id=>divisiones.find(d=>d.id===id)).filter(Boolean);
+    const liga=divNames.length?leagues.find(l=>torneos.find(tr=>tr.id===divNames[0].torneoId&&tr.leagueId===l.id)):null;
+    const goles=players.filter(p=>p.team===t.id).reduce((s,p)=>s+p.goals,0);
+    return`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='var(--card)'">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="shield" style="width:40px;height:40px;font-size:14px;background:${t.color};color:${t.text};border-radius:10px;flex-shrink:0">${t.short}</div>
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
+          <div style="font-size:10px;color:var(--text3)">${liga?escHtml(liga.name):''}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${divNames.slice(0,2).map(d=>`<span style="font-size:9px;font-weight:700;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:4px">${escHtml(d.name)}</span>`).join('')}
+        <span style="font-size:9px;color:var(--text3);margin-left:auto">⚽ ${goles}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _clubesFilter(q){_clubesRender(q);}
 function dtGoPartidos(){
   _dtSetActiveTab(document.querySelector('.dt-tab'));
   _dtSelDiv=null;
@@ -7112,7 +7164,11 @@ function _mtRenderDays(){
 }
 
 // ── Partidos: filter bar ──
-function _mtSetFilter(f){_mtFilterCur=f;_mtRenderFilterBar();_mtRenderGroups();}
+function _mtSetFilter(f){
+  _mtFilterCur=f;
+  if(f==='live'){_mtDayOffset=0;_mtRenderDays();}  // EN VIVO → saltar a HOY
+  _mtRenderFilterBar();_mtRenderGroups();
+}
 function _mtRenderFilterBar(){
   const el=document.getElementById('mt-filter-bar');if(!el)return;
   const dayMs=matches.filter(m=>m.dayOff===_mtDayOffset);
