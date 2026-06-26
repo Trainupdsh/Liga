@@ -4103,7 +4103,7 @@ async function loadAdminClubes(){
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.delegado_email||'Sin delegado asignado'}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-sm" style="font-size:12px" onclick='openEditClub(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✏️</button>
+          <button class="btn btn-sm" style="font-size:12px" onclick='openAdminEditClub(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✏️</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
         </div>
       </div>`).join('');
@@ -4136,7 +4136,7 @@ function openNuevoClub(){
   document.getElementById('nuevoClubModal').classList.add('open');
   setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
 }
-function openEditClub(c){
+function openAdminEditClub(c){
   if(typeof c==='string')c=JSON.parse(c);
   _editingClubId=c.id;
   ncColorSel=c.color_principal||'#1a2150';
