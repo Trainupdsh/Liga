@@ -2149,6 +2149,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <label class="form-label">Teléfono</label>
         <input class="form-input" type="tel" id="arb-telefono" placeholder="+54 9 11 1234-5678">
       </div>
+      <div id="arb-pass-group">
+        <label class="form-label">Contraseña de acceso *</label>
+        <input class="form-input" type="password" id="arb-password" placeholder="Contraseña para que inicie sesión">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">El árbitro usará su email y esta contraseña para ingresar y validar partidos.</div>
+      </div>
       <div id="arb-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeNuevoArbitro(null,true)">Cancelar</button>
@@ -2787,6 +2792,16 @@ async function doAdminLogin(){
       .select('*, liga:ligas(nombre,deporte)')
       .eq('delegado_email',email).eq('delegado_pass',pass).single();
     if(club){showDelegadoView(club);return;}
+  }catch(e){}
+  // Check árbitros desde Supabase
+  try{
+    const {data:arb}=await supa.from('arbitros')
+      .select('*, liga:liga_id(nombre)')
+      .eq('email',email).eq('password',pass).single();
+    if(arb){
+      showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga?.nombre,foto:arb.foto_url});
+      return;
+    }
   }catch(e){}
   // Wrong credentials
   document.getElementById('login-error').style.display='block';
@@ -4982,6 +4997,7 @@ async function loadArbitroPartidos(user){
         ${isDone?`<div style="text-align:center;font-size:16px;font-weight:900;padding:4px 0 0">${p.goles_local??0} - ${p.goles_visita??0}</div>`:''}
         <div style="margin-top:8px;display:flex;gap:8px">
           <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:6px" onclick="openInformeArbitro(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}')">📝 Informe</button>
+          ${isDone?`<button class="btn btn-sm" style="flex:1;font-size:12px;padding:6px;background:${p.validado_arbitro?'rgba(34,197,94,0.15)':'rgba(212,175,55,0.15)'};color:${p.validado_arbitro?'var(--green)':'#d4af37'};border:1px solid ${p.validado_arbitro?'rgba(34,197,94,0.3)':'rgba(212,175,55,0.3)'}" onclick="validarResultado(${p.id},${p.validado_arbitro?'true':'false'})">${p.validado_arbitro?'✓ Validado':'✔ Validar resultado'}</button>`:''}
         </div>
       </div>`;
     };
@@ -5021,6 +5037,17 @@ async function openPlanillaDB(id){
     renderList(resV.data,'plan-away-players');
     document.getElementById('planillaModal').classList.add('open');
   }catch(e){showToast('Error al cargar la planilla','error');}
+}
+
+async function validarResultado(matchId, yaValidado){
+  if(yaValidado){showToast('Este resultado ya fue validado','');return;}
+  if(!confirm('¿Confirmás el resultado cargado para este partido?'))return;
+  try{
+    const {error}=await supa.from('partidos').update({validado_arbitro:true}).eq('id',matchId);
+    if(error)throw error;
+    showToast('Resultado validado ✓','success');
+    if(arbitroCurrentUser)loadArbitroPartidos(arbitroCurrentUser);
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 
 // ═══ FIXTURE AUTOMÁTICO (ROUND-ROBIN) ═══
@@ -5661,6 +5688,8 @@ function openNuevoArbitro(){
   document.getElementById('arb-nombre').value='';
   document.getElementById('arb-email').value='';
   document.getElementById('arb-telefono').value='';
+  document.getElementById('arb-password').value='';
+  document.getElementById('arb-pass-group').style.display='';
   document.getElementById('arb-error').style.display='none';
   document.getElementById('arb-save-btn').disabled=false;
   document.getElementById('arb-save-btn').textContent='Guardar';
@@ -5680,6 +5709,8 @@ function openEditArbitro(a){
   document.getElementById('arb-nombre').value=a.nombre||'';
   document.getElementById('arb-email').value=a.email||'';
   document.getElementById('arb-telefono').value=a.telefono||'';
+  document.getElementById('arb-password').value='';
+  document.getElementById('arb-pass-group').style.display='';
   document.getElementById('arb-error').style.display='none';
   document.getElementById('arb-save-btn').disabled=false;
   document.getElementById('arb-save-btn').textContent='Guardar cambios';
@@ -5699,24 +5730,30 @@ async function saveArbitro(){
   const nombre=document.getElementById('arb-nombre').value.trim();
   const email=document.getElementById('arb-email').value.trim();
   const telefono=document.getElementById('arb-telefono').value.trim();
+  const password=document.getElementById('arb-password').value;
   const errEl=document.getElementById('arb-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(!_editingArbitroId&&!email){errEl.textContent='El email es obligatorio para crear el acceso';errEl.style.display='';return;}
+  if(!_editingArbitroId&&!password){errEl.textContent='La contraseña es obligatoria';errEl.style.display='';return;}
   const btn=document.getElementById('arb-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
     let foto_url=undefined;
     if(window._arbLogoBlob){
-      const path=`arb_${currentAdminLeagueId}_${Date.now()}.webp`;
-      foto_url=await uploadImageToStorage(window._arbLogoBlob,'arbitros',path);
+      try{
+        const path=`arb_${currentAdminLeagueId}_${Date.now()}.webp`;
+        foto_url=await uploadImageToStorage(window._arbLogoBlob,'arbitros',path);
+      }catch(fe){/* foto no es crítica */}
     }
     if(_editingArbitroId){
       const updates={nombre,email:email||null,telefono:telefono||null};
+      if(password)updates.password=password;
       if(foto_url!==undefined)updates.foto_url=foto_url;
       const {error}=await supa.from('arbitros').update(updates).eq('id',_editingArbitroId);
       if(error)throw error;
       showToast('Árbitro actualizado ✓','success');
     } else {
-      const row={liga_id:currentAdminLeagueId,nombre,email:email||null,telefono:telefono||null};
+      const row={liga_id:currentAdminLeagueId,nombre,email,password,telefono:telefono||null};
       if(foto_url!==undefined)row.foto_url=foto_url;
       const {error}=await supa.from('arbitros').insert(row);
       if(error)throw error;
