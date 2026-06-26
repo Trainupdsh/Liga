@@ -7823,11 +7823,12 @@ function _dtToggleTorneo(id){
 function _dtShowTorneoCenter(torneoId){
   _dtSelTorneo=torneoId;
   _dtSelDiv=null;
-  // ensure torneo is expanded in the tree so divisions are visible
+  // ensure torneo and all its groups are expanded so divisions are visible
   _dtExpTorneos.add(torneoId);
   const torneo=torneos.find(t=>t.id===torneoId);if(!torneo)return;
   const liga=leagues.find(l=>l.id===torneo.leagueId);
   const ds=divisiones.filter(d=>d.torneoId===torneoId);
+  ds.forEach(d=>{if(d.grupo)_dtExpGrupos.add(torneoId+'-'+d.grupo);});
   const statusLabel=torneo.status==='active'?'● ACTIVO':'FINALIZADO';
   const statusColor=torneo.status==='active'?'var(--green)':'var(--text3)';
 
