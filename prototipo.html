@@ -1191,7 +1191,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
       <div id="nc-preview-icon" style="width:44px;height:44px;border-radius:12px;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;flex-shrink:0">CL</div>
-      <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Club</div><div id="nc-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
+      <div><div id="nc-modal-subtitle" style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Club</div><div id="nc-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre del club</label>
@@ -4102,13 +4102,18 @@ async function loadAdminClubes(){
           </div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.delegado_email||'Sin delegado asignado'}</div>
         </div>
-        <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-sm" style="font-size:12px" onclick='openEditClub(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✏️</button>
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
+        </div>
       </div>`).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
 let ncColorSel='#1a2150';
+let _editingClubId=null;
 function openNuevoClub(){
+  _editingClubId=null;
   ncColorSel='#1a2150';
   document.getElementById('nc-nombre').value='';
   document.getElementById('nc-abrev').value='';
@@ -4120,8 +4125,40 @@ function openNuevoClub(){
   document.getElementById('nc-preview-icon').textContent='CL';
   document.getElementById('nc-preview-icon').style.background='#1a2150';
   document.querySelectorAll('#nc-colores .nl-color-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.getElementById('nc-modal-subtitle').textContent='Nuevo Club';
   document.getElementById('nc-save-btn').disabled=false;
   document.getElementById('nc-save-btn').textContent='Crear Club';
+  const prev=document.getElementById('nc-logo-preview');
+  const ph=document.getElementById('nc-logo-placeholder');
+  if(prev){prev.src='';prev.classList.remove('visible');}
+  if(ph)ph.style.display='';
+  window._ncLogoBlob=null;
+  document.getElementById('nuevoClubModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
+}
+function openEditClub(c){
+  if(typeof c==='string')c=JSON.parse(c);
+  _editingClubId=c.id;
+  ncColorSel=c.color_principal||'#1a2150';
+  document.getElementById('nc-nombre').value=c.nombre||'';
+  document.getElementById('nc-abrev').value=c.abreviacion||'';
+  document.getElementById('nc-email').value=c.delegado_email||'';
+  document.getElementById('nc-pass').value=c.delegado_pass||'';
+  document.getElementById('nc-dir').value=c.direccion||'';
+  document.getElementById('nc-error').style.display='none';
+  document.getElementById('nc-preview-nombre').textContent=c.nombre||'Sin nombre';
+  document.getElementById('nc-preview-icon').style.background=ncColorSel;
+  const prev=document.getElementById('nc-logo-preview');
+  const ph=document.getElementById('nc-logo-placeholder');
+  if(c.logo_url&&prev){prev.src=c.logo_url;prev.classList.add('visible');if(ph)ph.style.display='none';}
+  else{if(prev){prev.src='';prev.classList.remove('visible');}if(ph)ph.style.display='';}
+  if(c.abreviacion){document.getElementById('nc-preview-icon').textContent=c.abreviacion;}
+  else{document.getElementById('nc-preview-icon').textContent=c.nombre?.slice(0,2).toUpperCase()||'CL';}
+  document.querySelectorAll('#nc-colores .nl-color-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('nc-modal-subtitle').textContent='Editar Club';
+  document.getElementById('nc-save-btn').disabled=false;
+  document.getElementById('nc-save-btn').textContent='Guardar cambios';
+  window._ncLogoBlob=null;
   document.getElementById('nuevoClubModal').classList.add('open');
   setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
 }
@@ -4150,6 +4187,7 @@ async function saveNuevoClub(){
   const errEl=document.getElementById('nc-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
   const btn=document.getElementById('nc-save-btn');
+  const isEdit=!!_editingClubId;
   btn.disabled=true;btn.textContent='Guardando…';
   try{
     let logoUrl=null;
@@ -4160,18 +4198,26 @@ async function saveNuevoClub(){
         logoUrl=await uploadImageToStorage(logoFile,'escudos',`${currentAdminLeagueId}_${abrev||ts}.webp`);
       }catch(imgErr){console.warn('Logo upload failed:',imgErr);}
     }
-    const {error}=await supa.from('clubes').insert({
-      liga_id:currentAdminLeagueId, nombre, abreviacion:abrev||null,
-      color_principal:ncColorSel, color_texto:'#ffffff',
-      delegado_email:email||null, delegado_pass:pass||null,
-      logo_url:logoUrl, direccion:dir||null
-    });
-    if(error)throw error;
+    if(isEdit){
+      const updates={nombre, abreviacion:abrev||null, color_principal:ncColorSel,
+        delegado_email:email||null, delegado_pass:pass||null, direccion:dir||null};
+      if(logoUrl)updates.logo_url=logoUrl;
+      const {error}=await supa.from('clubes').update(updates).eq('id',_editingClubId);
+      if(error)throw error;
+    } else {
+      const {error}=await supa.from('clubes').insert({
+        liga_id:currentAdminLeagueId, nombre, abreviacion:abrev||null,
+        color_principal:ncColorSel, color_texto:'#ffffff',
+        delegado_email:email||null, delegado_pass:pass||null,
+        logo_url:logoUrl, direccion:dir||null
+      });
+      if(error)throw error;
+    }
     window._ncLogoBlob=null;
     closeNuevoClub(null,true);
-    showToast('"'+nombre+'" creado ✓','success');
+    showToast('"'+nombre+'"'+(isEdit?' actualizado':' creado')+' ✓','success');
     await loadAdminClubes();
-  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Crear Club';}
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent=isEdit?'Guardar cambios':'Crear Club';}
 }
 async function confirmarEliminarClub(id,nombre){
   if(!confirm('¿Eliminar el club "'+nombre+'"?'))return;
