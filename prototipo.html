@@ -819,6 +819,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- CLUB DETAIL — Full view on double click -->
+<div id="view-club-detail" class="view">
+  <div id="vcd-content" style="padding:0 16px 40px"></div>
+</div>
+
 <!-- LIGA DETAIL — Torneos & Divisiones -->
 <div id="view-league" class="view">
   <header>
@@ -7136,18 +7141,22 @@ function dtGoLigas(){
   showView('view-home');
   _renderDtRight(null);
 }
+let _clubesSel=null;
 function _clubesRender(q){
   const el=document.getElementById('clubes-list');if(!el)return;
-  const src=teamsData.filter(t=>t.id>=100); // solo demo teams
+  const src=teamsData.filter(t=>t.id>=100);
   const list=q?src.filter(t=>t.name.toLowerCase().includes(q.toLowerCase())):src;
   if(!list.length){el.innerHTML='<div style="color:var(--text3);padding:32px;grid-column:1/-1;text-align:center">Sin clubes</div>';return;}
   el.innerHTML=list.map(t=>{
-    // find divisions this team plays in
     const divIds=Object.entries(window._DIV_TEAMS||{}).filter(([,tms])=>tms.includes(t.id)).map(([d])=>parseInt(d));
     const divNames=divIds.map(id=>divisiones.find(d=>d.id===id)).filter(Boolean);
     const liga=divNames.length?leagues.find(l=>torneos.find(tr=>tr.id===divNames[0].torneoId&&tr.leagueId===l.id)):null;
     const goles=players.filter(p=>p.team===t.id).reduce((s,p)=>s+p.goals,0);
-    return`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='var(--card)'">
+    const sel=_clubesSel===t.id;
+    return`<div id="club-card-${t.id}" style="background:${sel?'var(--accent-dim)':'var(--card)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:12px;padding:14px;cursor:pointer;transition:all .15s"
+        onclick="_dtClickClub(${t.id})" ondblclick="_dtDblClickClub(${t.id})"
+        onmouseover="if(_clubesSel!==${t.id})this.style.background='var(--hover)'"
+        onmouseout="if(_clubesSel!==${t.id})this.style.background='var(--card)'">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div class="shield" style="width:40px;height:40px;font-size:14px;background:${t.color};color:${t.text};border-radius:10px;flex-shrink:0">${t.short}</div>
         <div style="min-width:0">
@@ -7159,10 +7168,202 @@ function _clubesRender(q){
         ${divNames.slice(0,2).map(d=>`<span style="font-size:9px;font-weight:700;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:4px">${escHtml(d.name)}</span>`).join('')}
         <span style="font-size:9px;color:var(--text3);margin-left:auto">⚽ ${goles}</span>
       </div>
+      <div style="margin-top:8px;font-size:9px;color:var(--text3);text-align:center;opacity:.6">doble clic → ver detalle</div>
     </div>`;
   }).join('');
 }
 function _clubesFilter(q){_clubesRender(q);}
+
+function _dtClickClub(id){
+  // Update card selection styles without full re-render
+  if(_clubesSel!=null){
+    const prev=document.getElementById('club-card-'+_clubesSel);
+    if(prev){prev.style.background='var(--card)';prev.style.borderColor='var(--border)';}
+  }
+  _clubesSel=id;
+  const sel=document.getElementById('club-card-'+id);
+  if(sel){sel.style.background='var(--accent-dim)';sel.style.borderColor='var(--accent)';}
+  // build right panel summary
+  const t=teamsData.find(x=>x.id===id);if(!t)return;
+  const el=document.getElementById('dt-rc');if(!el)return;
+  document.getElementById('dt-right').style.display='flex';
+
+  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(id)).map(([d])=>parseInt(d));
+  const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
+  const myLiga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
+
+  // Aggregate stats
+  let pj=0,pg=0,pe=0,pp=0,gf=0,gc=0;
+  standings.filter(s=>s.teamId===id).forEach(s=>{pj+=s.pj;pg+=s.pg;pe+=s.pe;pp+=s.pp;gf+=s.gf;gc+=s.gc;});
+  const pts=pg*3+pe;
+
+  // Recent matches (last 5 done/live)
+  const myMs=matches.filter(m=>(m.home===id||m.away===id)&&(m.status==='done'||m.status==='live'))
+    .sort((a,b)=>b.id-a.id).slice(0,5);
+
+  // Top scorers
+  const topScorers=players.filter(p=>p.team===id).sort((a,b)=>b.goals-a.goals).slice(0,5);
+
+  const stat=(label,val)=>`<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--text)">${val}</div><div style="font-size:9px;color:var(--text3);font-weight:700">${label}</div></div>`;
+
+  const matchRow=m=>{
+    const isHome=m.home===id;
+    const opp=teamsData.find(x=>x.id===(isHome?m.away:m.home));
+    const ms=m.homeScore!==null?(isHome?`${m.homeScore}-${m.awayScore}`:`${m.awayScore}-${m.homeScore}`):'–';
+    const myScore=isHome?m.homeScore:m.awayScore, oppScore=isHome?m.awayScore:m.homeScore;
+    const res=m.status!=='done'?'':''+( myScore>oppScore?'G':myScore===oppScore?'E':'P');
+    const resColor=res==='G'?'var(--green)':res==='P'?'var(--red)':'var(--text3)';
+    return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:16px;height:16px;background:${opp?.color||'#333'};color:${opp?.text||'#fff'};border-radius:4px;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${opp?.short||'?'}</div>
+      <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(opp?.name||'?')}</span>
+      <span style="font-size:11px;font-weight:700">${ms}</span>
+      ${res?`<span style="font-size:9px;font-weight:800;color:${resColor};width:12px">${res}</span>`:''}
+    </div>`;
+  };
+
+  const scorerRow=p=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+    <div style="width:20px;height:20px;background:${t.color};color:${t.text};border-radius:5px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${p.jersey}</div>
+    <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</span>
+    <span style="font-size:11px;font-weight:700;color:var(--accent)">⚽ ${p.goals}</span>
+  </div>`;
+
+  el.innerHTML=`
+    <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border)">
+      <div class="shield" style="width:56px;height:56px;font-size:20px;background:${t.color};color:${t.text};border-radius:14px;margin:0 auto 10px">${t.short}</div>
+      <div style="font-size:15px;font-weight:800">${escHtml(t.name)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${myLiga?escHtml(myLiga.name):''}</div>
+    </div>
+    <div style="display:flex;justify-content:space-around;padding:12px 8px;border-bottom:1px solid var(--border)">
+      ${stat('PJ',pj)}${stat('PG',pg)}${stat('PE',pe)}${stat('PP',pp)}${stat('PTS',pts)}
+    </div>
+    <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Divisiones</div>
+    <div style="padding:0 12px">
+      ${myDivs.map(d=>{
+        const tr=torneos.find(x=>x.id===d.torneoId);
+        return`<div style="font-size:11px;padding:4px 0;color:var(--text2)">${d.icon||'📋'} ${escHtml(d.name)} · ${escHtml(tr?.name||'')}</div>`;
+      }).join('')||'<div style="font-size:11px;color:var(--text3)">Sin divisiones</div>'}
+    </div>
+    ${myMs.length?`<div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:8px">Últimos partidos</div>
+    <div style="padding:0 12px">${myMs.map(matchRow).join('')}</div>`:''}
+    ${topScorers.length?`<div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:8px">Goleadores</div>
+    <div style="padding:0 12px">${topScorers.map(scorerRow).join('')}</div>`:''}
+    <div style="padding:16px 12px">
+      <button onclick="_dtDblClickClub(${id})" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer">Ver ficha completa</button>
+    </div>`;
+}
+
+function _dtDblClickClub(id){
+  const t=teamsData.find(x=>x.id===id);if(!t)return;
+  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(id)).map(([d])=>parseInt(d));
+  const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
+  const myLiga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
+
+  // Stats per division
+  const myStandings=standings.filter(s=>s.teamId===id);
+  let tpj=0,tpg=0,tpe=0,tpp=0,tgf=0,tgc=0;
+  myStandings.forEach(s=>{tpj+=s.pj;tpg+=s.pg;tpe+=s.pe;tpp+=s.pp;tgf+=s.gf;tgc+=s.gc;});
+  const tpts=tpg*3+tpe;
+
+  // All players
+  const myPlayers=players.filter(p=>p.team===id).sort((a,b)=>b.goals-a.goals);
+
+  // All matches
+  const myMs=matches.filter(m=>m.home===id||m.away===id).sort((a,b)=>b.id-a.id);
+  const doneMs=myMs.filter(m=>m.status==='done');
+  const upcomingMs=myMs.filter(m=>m.status==='upcoming');
+  const liveMs=myMs.filter(m=>m.status==='live');
+
+  const stat2=(label,val,sub)=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;flex:1">
+    <div style="font-size:22px;font-weight:800;color:var(--accent)">${val}</div>
+    <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase">${label}</div>
+    ${sub?`<div style="font-size:9px;color:var(--text3);margin-top:2px">${sub}</div>`:''}
+  </div>`;
+
+  const matchRow2=m=>{
+    const isHome=m.home===id;
+    const opp=teamsData.find(x=>x.id===(isHome?m.away:m.home));
+    const div=divisiones.find(d=>d.id===m.divId);
+    const ms=m.homeScore!==null?(isHome?`${m.homeScore}–${m.awayScore}`:`${m.awayScore}–${m.homeScore}`):'–';
+    const myScore=isHome?m.homeScore:m.awayScore, oppScore=isHome?m.awayScore:m.homeScore;
+    const res=m.status!=='done'?'':''+( myScore>oppScore?'G':myScore===oppScore?'E':'P');
+    const resColor=res==='G'?'var(--green)':res==='P'?'var(--red)':'var(--text3)';
+    const statusColor=m.status==='live'?'var(--green)':m.status==='done'?'var(--text3)':'var(--accent)';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;background:${opp?.color||'#333'};color:${opp?.text||'#fff'};border-radius:8px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${opp?.short||'?'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(opp?.name||'Rival')}</div>
+        <div style="font-size:10px;color:var(--text3)">${isHome?'Local':'Visitante'} · ${escHtml(div?.name||'')} · F${m.round}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:800">${ms}</div>
+        ${res?`<div style="font-size:9px;font-weight:800;color:${resColor}">${res==='G'?'GANÓ':res==='E'?'EMPATÓ':'PERDIÓ'}</div>`:`<div style="font-size:9px;color:${statusColor}">${m.status==='live'?'● EN VIVO':'PROGRAMADO'}</div>`}
+      </div>
+    </div>`;
+  };
+
+  const playerRow=p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+    <div style="width:28px;height:28px;background:${t.color};color:${t.text};border-radius:7px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">#${p.jersey}</div>
+    <div style="flex:1;font-size:12px;font-weight:600">${escHtml(p.name)}</div>
+    <div style="display:flex;gap:10px;font-size:11px">
+      <span title="Goles">⚽ ${p.goals}</span>
+      <span title="Amarillas">🟡 ${p.yellows}</span>
+      ${p.reds?`<span title="Rojas">🔴 ${p.reds}</span>`:''}
+    </div>
+  </div>`;
+
+  const divStRow=s=>{
+    const d=divisiones.find(x=>x.id===s.divId);
+    const tr=torneos.find(x=>x.id===d?.torneoId);
+    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:14px">${d?.icon||'📋'}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700">${escHtml(d?.name||'')} <span style="font-size:10px;color:var(--text3)">· ${escHtml(tr?.name||'')}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;font-size:11px;color:var(--text2)">
+        <span>${s.pj}PJ</span><span>${s.pg}PG</span><span>${s.pe}PE</span><span>${s.pp}PP</span>
+        <span style="font-weight:800;color:var(--accent)">${s.pj>0?s.pg*3+s.pe:0}pts</span>
+      </div>
+    </div>`;
+  };
+
+  const html=`
+    <div style="display:flex;align-items:center;gap:6px;padding:16px 0 8px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <button onclick="showView('view-clubes');dtGoClubes()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">‹</button>
+      <div class="shield" style="width:44px;height:44px;font-size:16px;background:${t.color};color:${t.text};border-radius:12px;flex-shrink:0">${t.short}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${myLiga?escHtml(myLiga.name):''} · ${myDivs.length} división${myDivs.length!==1?'es':''}</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Estadísticas globales</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      ${stat2('Partidos',tpj)}${stat2('Ganados',tpg)}${stat2('Empatados',tpe)}${stat2('Perdidos',tpp)}${stat2('Puntos',tpts)}
+      ${stat2('Goles F.',tgf)}${stat2('Goles C.',tgc)}${stat2('Dif.',tgf-tgc)}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Divisiones (${myDivs.length})</div>
+    <div style="margin-bottom:20px">
+      ${myStandings.map(divStRow).join('')||'<div style="color:var(--text3);font-size:12px">Sin datos</div>'}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Plantel (${myPlayers.length} jugadores)</div>
+    <div style="margin-bottom:20px">${myPlayers.map(playerRow).join('')}</div>
+
+    ${liveMs.length?`<div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">● En vivo (${liveMs.length})</div>
+    <div style="margin-bottom:20px">${liveMs.map(matchRow2).join('')}</div>`:''}
+
+    ${upcomingMs.length?`<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Próximos partidos (${upcomingMs.length})</div>
+    <div style="margin-bottom:20px">${upcomingMs.slice(0,8).map(matchRow2).join('')}</div>`:''}
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Historial (${doneMs.length} partidos)</div>
+    <div style="margin-bottom:20px">${doneMs.slice(0,20).map(matchRow2).join('')}</div>
+  `;
+
+  document.getElementById('vcd-content').innerHTML=html;
+  showView('view-club-detail');
+  document.getElementById('dt-right').style.display='none';
+}
 function dtGoPartidos(){
   _dtSetActiveTab(document.querySelector('.dt-tab'));
   _dtSelDiv=null;
