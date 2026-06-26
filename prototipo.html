@@ -588,17 +588,23 @@ header .subtitle{font-size:12px;color:var(--text2);}
     background:var(--card);border-left:1px solid var(--border);}
   /* Left sidebar items */
   .dt-lhdr{padding:12px 14px 8px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
-  .dt-li{padding:8px 10px;cursor:pointer;transition:background .12s;border-radius:8px;margin:1px 6px;}
-  .dt-li:hover{background:var(--card2);}
-  .dt-li.sel{background:var(--accent-dim);}
-  .dt-li-hd{display:flex;align-items:center;gap:8px;}
-  .dt-li-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-  .dt-li-nm{font-size:12px;font-weight:700;flex:1;}
-  .dt-li-sp{font-size:10px;color:var(--text3);}
-  .dt-li-divs{padding:4px 0 2px 36px;display:flex;flex-direction:column;gap:1px;}
-  .dt-li-div{font-size:12px;color:var(--text2);padding:4px 8px;border-radius:6px;cursor:pointer;}
-  .dt-li-div:hover{background:var(--card2);color:var(--text);}
-  .dt-li-div.sel{color:var(--accent);font-weight:700;background:rgba(116,128,255,0.09);}
+  /* Tree nodes */
+  .dt-node{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;border-radius:8px;margin:1px 6px;transition:background .15s;user-select:none;}
+  .dt-node:hover{background:var(--hover);}
+  .dt-chev{font-size:15px;color:var(--text3);transition:transform .2s;min-width:12px;text-align:center;flex-shrink:0;display:inline-block;}
+  .dt-chev.open{transform:rotate(90deg);}
+  .dt-node-liga{font-weight:700;font-size:12px;}
+  .dt-node-liga.sel{background:var(--accent-dim);}
+  .dt-li-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+  .dt-node-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+  .dt-node-badge{font-size:10px;color:var(--text3);flex-shrink:0;}
+  .dt-node-torneo{padding-left:14px;border-left:2px solid var(--border);margin-left:18px;border-radius:0 6px 6px 0;font-size:12px;}
+  .dt-badge-act{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;}
+  .dt-badge-fin{font-size:9px;font-weight:700;color:var(--text3);background:var(--card2);padding:1px 5px;border-radius:4px;}
+  .dt-node-grupo{padding-left:14px;border-left:2px solid var(--border);margin-left:30px;border-radius:0 6px 6px 0;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;}
+  .dt-node-div{padding-left:14px;border-left:2px solid var(--border);margin-left:44px;border-radius:0 6px 6px 0;font-size:12px;color:var(--text2);}
+  .dt-node-div.sel{color:var(--accent);font-weight:700;background:var(--accent-dim);}
+  .dt-node-div.nogroup{margin-left:30px;}
   /* Right sidebar */
   .dt-rs{padding:12px 14px 6px;font-size:10px;font-weight:800;color:var(--text3);
     text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
@@ -2590,31 +2596,31 @@ const divisiones=[
   {id:12,torneoId:5,name:'Cat. A Mixto',teams:16,rounds:8,currentRound:4,icon:'🎾'},
   {id:13,torneoId:5,name:'Cat. B Mixto',teams:16,rounds:8,currentRound:3,icon:'🎾'},
   // ── Divisiones demo — Handball BA (t101) ──
-  {id:101,torneoId:101,name:'Mayores Masculino',teams:6,rounds:10,currentRound:7,icon:'🤾‍♂️'},
-  {id:102,torneoId:101,name:'Mayores Femenino',teams:6,rounds:10,currentRound:6,icon:'🤾‍♀️'},
-  {id:103,torneoId:101,name:'Sub-18 Masculino',teams:6,rounds:8,currentRound:5,icon:'👦'},
-  {id:104,torneoId:101,name:'Sub-15',teams:6,rounds:6,currentRound:3,icon:'🧒'},
+  {id:101,torneoId:101,name:'Masculino',grupo:'Mayores',teams:6,rounds:10,currentRound:7,icon:'🤾‍♂️'},
+  {id:102,torneoId:101,name:'Femenino',grupo:'Mayores',teams:6,rounds:10,currentRound:6,icon:'🤾‍♀️'},
+  {id:103,torneoId:101,name:'Masculino',grupo:'Sub-18',teams:6,rounds:8,currentRound:5,icon:'👦'},
+  {id:104,torneoId:101,name:'Mixto',grupo:'Sub-15',teams:6,rounds:6,currentRound:3,icon:'🧒'},
   // Fútbol CABA (t103)
-  {id:105,torneoId:103,name:'Primera División',teams:6,rounds:10,currentRound:8,icon:'⚽'},
-  {id:106,torneoId:103,name:'Reserva',teams:6,rounds:10,currentRound:7,icon:'⚽'},
-  {id:107,torneoId:103,name:'Sub-20',teams:6,rounds:8,currentRound:6,icon:'⚽'},
+  {id:105,torneoId:103,name:'Primera División',grupo:'Masculino',teams:6,rounds:10,currentRound:8,icon:'⚽'},
+  {id:106,torneoId:103,name:'Reserva',grupo:'Masculino',teams:6,rounds:10,currentRound:7,icon:'⚽'},
+  {id:107,torneoId:103,name:'Sub-20',grupo:'Masculino',teams:6,rounds:8,currentRound:6,icon:'⚽'},
   // Basketball Zona Norte (t105)
-  {id:108,torneoId:105,name:'Mayores Masculino',teams:6,rounds:10,currentRound:6,icon:'🏀'},
-  {id:109,torneoId:105,name:'Mayores Femenino',teams:6,rounds:8,currentRound:5,icon:'🏀'},
-  {id:110,torneoId:105,name:'Sub-18',teams:6,rounds:8,currentRound:4,icon:'🏀'},
+  {id:108,torneoId:105,name:'Mayores',grupo:'Masculino',teams:6,rounds:10,currentRound:6,icon:'🏀'},
+  {id:109,torneoId:105,name:'Mayores',grupo:'Femenino',teams:6,rounds:8,currentRound:5,icon:'🏀'},
+  {id:110,torneoId:105,name:'Sub-18',grupo:'Masculino',teams:6,rounds:8,currentRound:4,icon:'🏀'},
   // Volleyball Mendoza (t106)
-  {id:111,torneoId:106,name:'Primera Damas',teams:6,rounds:10,currentRound:7,icon:'🏐'},
-  {id:112,torneoId:106,name:'Primera Caballeros',teams:6,rounds:10,currentRound:8,icon:'🏐'},
+  {id:111,torneoId:106,name:'Primera',grupo:'Damas',teams:6,rounds:10,currentRound:7,icon:'🏐'},
+  {id:112,torneoId:106,name:'Primera',grupo:'Caballeros',teams:6,rounds:10,currentRound:8,icon:'🏐'},
   // Fútbol 5 (t107)
-  {id:113,torneoId:107,name:'Categoría A',teams:6,rounds:10,currentRound:5,icon:'⚡'},
-  {id:114,torneoId:107,name:'Categoría B',teams:6,rounds:10,currentRound:4,icon:'⚡'},
+  {id:113,torneoId:107,name:'Categoría A',grupo:'Mixto',teams:6,rounds:10,currentRound:5,icon:'⚡'},
+  {id:114,torneoId:107,name:'Categoría B',grupo:'Mixto',teams:6,rounds:10,currentRound:4,icon:'⚡'},
   // Club Náutico (t108)
-  {id:115,torneoId:108,name:'Masculino',teams:6,rounds:10,currentRound:6,icon:'⛵'},
-  {id:116,torneoId:108,name:'Femenino',teams:6,rounds:8,currentRound:4,icon:'⛵'},
+  {id:115,torneoId:108,name:'Primera',grupo:'Masculino',teams:6,rounds:10,currentRound:6,icon:'⛵'},
+  {id:116,torneoId:108,name:'Primera',grupo:'Femenino',teams:6,rounds:8,currentRound:4,icon:'⛵'},
   // Tenis (t109)
-  {id:117,torneoId:109,name:'Cat. A Mixto',teams:8,rounds:7,currentRound:5,icon:'🎾'},
-  {id:118,torneoId:109,name:'Cat. B Masculino',teams:8,rounds:7,currentRound:4,icon:'🎾'},
-  {id:119,torneoId:109,name:'Cat. C Femenino',teams:8,rounds:7,currentRound:3,icon:'🎾'},
+  {id:117,torneoId:109,name:'Categoría A',grupo:'Mixto',teams:8,rounds:7,currentRound:5,icon:'🎾'},
+  {id:118,torneoId:109,name:'Categoría B',grupo:'Masculino',teams:8,rounds:7,currentRound:4,icon:'🎾'},
+  {id:119,torneoId:109,name:'Categoría C',grupo:'Femenino',teams:8,rounds:7,currentRound:3,icon:'🎾'},
   // Rugby (t110)
   {id:120,torneoId:110,name:'Primera División',teams:6,rounds:10,currentRound:7,icon:'🏉'},
   {id:121,torneoId:110,name:'Desarrollo',teams:6,rounds:8,currentRound:5,icon:'🏉'},
@@ -6974,7 +6980,8 @@ async function saveAlineacion(){
 }
 
 // ═══ DESKTOP LAYOUT ═══
-let _dtSelLiga=null,_dtSelDiv=null,_dtDivs={};
+let _dtSelLiga=null,_dtSelDiv=null;
+const _dtExpLigas=new Set(),_dtExpTorneos=new Set(),_dtExpGrupos=new Set();
 
 function isDesktop(){return window.innerWidth>=960;}
 
@@ -6984,49 +6991,78 @@ function dtGoHome(){
   document.getElementById('view-admin').style.display='none';
   _renderDtRight(null);
 }
-
 function dtSearch(q){
   const inp=document.getElementById('leagueSearch');
   if(inp)inp.value=q;
   filterLeagues(q);
   _renderDtLeft();
 }
-
+function _dtGetTorneos(ligaId){return torneos.filter(t=>t.leagueId===ligaId);}
+function _dtGetDivs(torneoId){return divisiones.filter(d=>d.torneoId===torneoId);}
+function _dtDivNode(d,noGroup){
+  const sel=_dtSelDiv===d.id;
+  const cls='dt-node dt-node-div'+(sel?' sel':'')+(noGroup?' nogroup':'');
+  return`<div class="${cls}" onclick="event.stopPropagation();_dtClickDiv(${d.id})">
+    <span style="width:3px;height:14px;background:${sel?'var(--accent)':'transparent'};border-radius:2px;flex-shrink:0;display:inline-block;margin-right:2px"></span>
+    <span style="font-size:13px;flex-shrink:0">${d.icon||'📋'}</span>
+    <span class="dt-node-text">${escHtml(d.name||d.nombre||'División')}</span>
+    <span class="dt-node-badge">F${d.currentRound||'?'}</span>
+  </div>`;
+}
 function _renderDtLeft(){
-  const el=document.getElementById('dt-ll');
-  if(!el)return;
+  const el=document.getElementById('dt-ll');if(!el)return;
   const q=(document.getElementById('dt-srch')?.value||'').toLowerCase();
   const list=q?leagues.filter(l=>l.name.toLowerCase().includes(q)||l.sport.toLowerCase().includes(q)):leagues;
   if(!list.length){el.innerHTML='<div class="dt-empty">Sin ligas</div>';return;}
-  el.innerHTML=list.map(l=>`
-    <div class="dt-li${_dtSelLiga===l.id?' sel':''}" onclick="_dtClickLiga(${l.id})">
-      <div class="dt-li-hd">
-        <div class="dt-li-ico" style="background:${l.color}">${l.icon}</div>
-        <span class="dt-li-nm">${escHtml(l.name)}</span>
-        <span class="dt-li-sp">${escHtml(l.sport)}</span>
-      </div>
-      ${_dtSelLiga===l.id&&_dtDivs[l.id]?`
-      <div class="dt-li-divs">${(_dtDivs[l.id]||[]).map(d=>`
-        <div class="dt-li-div${_dtSelDiv===d.id?' sel':''}" onclick="event.stopPropagation();_dtClickDiv(${d.id})">${d.icon||'⚽'} ${escHtml(d.nombre)}</div>
-      `).join('')}</div>`:''}
-    </div>`).join('');
+  el.innerHTML=list.map(l=>{
+    const expL=_dtExpLigas.has(l.id);
+    let h=`<div class="dt-node dt-node-liga${expL?' sel':''}" onclick="_dtToggleLiga(${l.id})">
+      <span class="dt-chev${expL?' open':''}">›</span>
+      <div class="dt-li-ico" style="background:${l.color}">${l.icon}</div>
+      <span class="dt-node-text">${escHtml(l.name)}</span>
+      <span class="dt-node-badge">${escHtml(l.sport)}</span>
+    </div>`;
+    if(!expL)return h;
+    const ts=_dtGetTorneos(l.id);
+    if(!ts.length)h+=`<div style="padding:4px 8px 4px 32px;font-size:11px;color:var(--text3)">Sin torneos</div>`;
+    ts.forEach(t=>{
+      const expT=_dtExpTorneos.has(t.id),isAct=t.status==='active';
+      h+=`<div class="dt-node dt-node-torneo" onclick="event.stopPropagation();_dtToggleTorneo(${t.id})">
+        <span class="dt-chev${expT?' open':''}">›</span>
+        <span class="dt-node-text">${escHtml(t.name)}</span>
+        ${isAct?'<span class="dt-badge-act" title="Activo"></span>':'<span class="dt-badge-fin">FIN</span>'}
+      </div>`;
+      if(!expT)return;
+      const ds=_dtGetDivs(t.id);
+      if(!ds.length){h+=`<div style="padding:4px 8px 4px 48px;font-size:11px;color:var(--text3)">Sin divisiones</div>`;return;}
+      const grouped={};const noGrp=[];
+      ds.forEach(d=>d.grupo?((grouped[d.grupo]=grouped[d.grupo]||[]).push(d)):noGrp.push(d));
+      Object.entries(grouped).forEach(([g,gds])=>{
+        const gk=t.id+'-'+g,expG=_dtExpGrupos.has(gk);
+        h+=`<div class="dt-node dt-node-grupo" onclick="event.stopPropagation();_dtToggleGrupo('${gk}')">
+          <span class="dt-chev${expG?' open':''}">›</span>
+          <span class="dt-node-text">${escHtml(g)}</span>
+          <span class="dt-node-badge">${gds.length}</span>
+        </div>`;
+        if(expG)gds.forEach(d=>{h+=_dtDivNode(d,false);});
+      });
+      noGrp.forEach(d=>{h+=_dtDivNode(d,true);});
+    });
+    return h;
+  }).join('');
 }
-
-async function _dtClickLiga(id){
-  _dtSelLiga=id;_dtSelDiv=null;
+function _dtToggleLiga(id){
+  if(_dtExpLigas.has(id)){_dtExpLigas.delete(id);}else{_dtExpLigas.add(id);openLeague(id);}
   _renderDtLeft();
-  openLeague(id);
-  _renderDtRight(null);
-  try{
-    const {data:ts}=await supa.from('torneos').select('id').eq('liga_id',id).eq('estado','activo');
-    if(ts&&ts[0]){
-      const {data:ds}=await supa.from('divisiones').select('id,nombre,icon').eq('torneo_id',ts[0].id).order('id');
-      _dtDivs[id]=ds||[];
-      _renderDtLeft();
-    }
-  }catch(e){}
 }
-
+function _dtToggleTorneo(id){
+  if(_dtExpTorneos.has(id)){_dtExpTorneos.delete(id);}else _dtExpTorneos.add(id);
+  _renderDtLeft();
+}
+function _dtToggleGrupo(key){
+  if(_dtExpGrupos.has(key)){_dtExpGrupos.delete(key);}else _dtExpGrupos.add(key);
+  _renderDtLeft();
+}
 async function _dtClickDiv(id){
   _dtSelDiv=id;
   _renderDtLeft();
