@@ -7811,7 +7811,7 @@ function _dtToggleTorneo(id){
   const wasExp=_dtExpTorneos.has(id);
   if(wasExp){_dtExpTorneos.delete(id);}else{_dtExpTorneos.add(id);}
   _renderDtLeft();
-  if(!wasExp) _dtShowTorneoCenter(id); // show standings when expanding
+  _dtShowTorneoCenter(id); // always show standings on any torneo click
 }
 
 function _dtShowTorneoCenter(torneoId){
