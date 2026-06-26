@@ -609,7 +609,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   #view-matches-today.active{display:flex!important;}
   .mt-nav-btn{background:none;border:none;color:var(--text2);font-size:18px;padding:8px 10px;cursor:pointer;border-radius:6px;}
   .mt-nav-btn:hover{background:var(--hover);}
-  .mt-day{background:none;border:none;cursor:pointer;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:8px;min-width:52px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mt-day{background:none;border:none;cursor:pointer;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:8px;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
   .mt-day:hover{background:var(--hover);}
   .mt-day.active{color:var(--accent);border-bottom-color:var(--accent);}
   .mt-day-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
@@ -775,7 +775,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <!-- Date bar -->
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
     <button class="mt-nav-btn" onclick="_mtShiftDays(-1)">‹</button>
-    <div id="mt-days-row" style="display:flex;flex:1;overflow-x:auto;scrollbar-width:none"></div>
+    <div id="mt-days-row" style="display:flex;flex:1"></div>
     <button class="mt-nav-btn" onclick="_mtShiftDays(1)">›</button>
   </div>
   <!-- Filter tabs -->
