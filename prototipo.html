@@ -606,6 +606,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .dt-node-div.sel{color:var(--accent);font-weight:700;background:var(--accent-dim);}
   .dt-node-div.nogroup{margin-left:30px;}
   /* Partidos today view */
+  #view-matches-today.active{display:flex!important;}
   .mt-nav-btn{background:none;border:none;color:var(--text2);font-size:18px;padding:8px 10px;cursor:pointer;border-radius:6px;}
   .mt-nav-btn:hover{background:var(--hover);}
   .mt-day{background:none;border:none;cursor:pointer;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:8px;min-width:52px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
@@ -770,7 +771,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 </div>
 
 <!-- PARTIDOS DEL DÍA (desktop center panel) -->
-<div id="view-matches-today" class="view" style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+<div id="view-matches-today" class="view" style="flex-direction:column;height:100%;overflow:hidden">
   <!-- Date bar -->
   <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
     <button class="mt-nav-btn" onclick="_mtShiftDays(-1)">‹</button>
