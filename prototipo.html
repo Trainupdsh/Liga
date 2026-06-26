@@ -620,7 +620,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="section-title-sm">TABLA DE POSICIONES</div>
       <div class="standings-card">
         <div class="standings-header">
-          <span class="col-pos">#</span><span class="col-team">EQUIPO</span>
+          <span class="col-pos">#</span><span class="col-team">CLUB</span>
           <span class="col-stat">PJ</span><span class="col-stat">PG</span><span class="col-stat">PE</span><span class="col-stat">PP</span><span class="col-stat">DIF</span><span class="col-pts">PTS</span>
         </div>
         <div id="standingsList"></div>
@@ -1007,7 +1007,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <span style="font-size:12px;color:var(--accent)">Ver planes ›</span>
     </div>
     <div class="dashboard-grid">
-      <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num" id="dash-stat-equipos">—</div><div class="stat-label">EQUIPOS</div></div>
+      <div class="stat-card accent"><span class="stat-icon">🏆</span><div class="stat-num" id="dash-stat-equipos">—</div><div class="stat-label">CLUBES</div></div>
       <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-num" id="dash-stat-jugadores">—</div><div class="stat-label">JUGADORES</div></div>
       <div class="stat-card"><span class="stat-icon">📅</span><div class="stat-num" id="dash-stat-partidos">—</div><div class="stat-label">PARTIDOS</div></div>
       <div class="stat-card"><span class="stat-icon">⚽</span><div class="stat-num" id="dash-stat-goles">—</div><div class="stat-label">GOLES</div></div>
@@ -1028,14 +1028,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
   </div>
   <div id="admin-teams" class="admin-screen" style="display:none">
-    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Equipos</h2></div>
-    <div style="padding:16px 16px 8px"><button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar equipo','')">+ Agregar equipo</button></div>
+    <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Clubes</h2></div>
+    <div style="padding:16px 16px 8px"><button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar club','')">+ Agregar club</button></div>
     <div class="admin-list" id="teamsList"></div>
   </div>
   <div id="admin-players" class="admin-screen" style="display:none">
     <div class="admin-header-bar"><span style="color:var(--accent);cursor:pointer" onclick="goAdmin('dashboard')">‹ Volver</span><h2>Jugadores</h2></div>
     <div style="padding:16px 16px 8px;display:flex;gap:8px;align-items:center">
-      <select class="form-input form-select" style="flex:1;padding:10px 12px;font-size:13px" onchange="renderAdminPlayers()" id="playerTeamFilter"><option value="">Todos los equipos</option></select>
+      <select class="form-input form-select" style="flex:1;padding:10px 12px;font-size:13px" onchange="renderAdminPlayers()" id="playerTeamFilter"><option value="">Todos los clubes</option></select>
       <button class="btn btn-primary btn-sm" onclick="showToast('Modal: Agregar jugador','')">+ Jugador</button>
     </div>
     <div class="admin-list" id="playersList"></div>
@@ -1081,7 +1081,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <h2>Clubes</h2>
       <button class="btn btn-primary btn-sm" onclick="openNuevoClub()">+ Nuevo</button>
     </div>
-    <div style="padding:8px 16px;font-size:12px;color:var(--text2)">Paso 1: creá los clubes de la liga. Luego en <b>Torneos → División → Equipos</b> inscribís cada club como equipo participante.</div>
+    <div style="padding:8px 16px;font-size:12px;color:var(--text2)">Paso 1: creá los clubes de la liga. Luego en <b>Torneos → División → Clubes</b> inscribís cada club en la división.</div>
     <div id="adminClubesList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:10px"></div>
   </div>
   <!-- TORNEOS LIST -->
@@ -1125,7 +1125,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <h2 id="admin-div-nombre" style="font-size:15px">División</h2>
     </div>
     <div style="display:flex;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none">
-      <div id="adtab-equipos" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('equipos',this)">EQUIPOS</div>
+      <div id="adtab-equipos" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('equipos',this)">CLUBES</div>
       <div id="adtab-jugadores" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('jugadores',this)">JUGADORES</div>
       <div id="adtab-partidos" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('partidos',this)">PARTIDOS</div>
       <div id="adtab-tabla" style="flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchAdminDivTab('tabla',this)">TABLA</div>
@@ -1133,7 +1133,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <!-- TAB: EQUIPOS -->
     <div id="admin-div-equipos">
       <div style="padding:12px 16px 8px;display:flex;justify-content:flex-end">
-        <button class="btn btn-primary btn-sm" onclick="openNuevoEquipo()">+ Agregar equipo</button>
+        <button class="btn btn-primary btn-sm" onclick="openNuevoEquipo()">+ Agregar club</button>
       </div>
       <div id="adminEquiposList" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px"></div>
     </div>
@@ -1166,12 +1166,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Generar Playoffs</div>
-      <div style="font-size:15px;font-weight:900">¿Cuántos equipos pasan?</div>
+      <div style="font-size:15px;font-weight:900">¿Cuántos clubes pasan?</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px;max-height:75vh;overflow-y:auto">
       <div id="playoffs-tabla-preview"></div>
       <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Equipos clasificados</label>
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Clubes clasificados</label>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" id="poff-n2" onclick="setPoffN(2)" style="flex:1;font-weight:800">2</button>
           <button class="btn btn-secondary" id="poff-n4" onclick="setPoffN(4)" style="flex:1;font-weight:800">4</button>
@@ -1386,7 +1386,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
       <div id="ne-preview-icon" style="width:44px;height:44px;border-radius:50%;background:#1a2150;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;flex-shrink:0">EQ</div>
-      <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Nuevo Equipo</div><div id="ne-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Inscribir club</div><div id="ne-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div></div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1422,7 +1422,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div id="ne-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="closeNuevoEquipo(null,true)">Cancelar</button>
-        <button class="btn btn-primary" id="ne-save-btn" style="flex:1" onclick="saveNuevoEquipo()">Agregar Equipo</button>
+        <button class="btn btn-primary" id="ne-save-btn" style="flex:1" onclick="saveNuevoEquipo()">Inscribir club</button>
       </div>
     </div>
   </div>
@@ -1448,7 +1448,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
             <option>Pivot</option><option>Lateral</option><option>Armador</option><option>Otro</option>
           </select></div>
       </div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Equipo</label>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Club</label>
         <select class="form-input" id="nj-equipo" style="width:100%"><option value="">Cargando...</option></select></div>
       <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Foto del jugador (opcional)</label>
@@ -1727,7 +1727,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
             <option>Pivot</option><option>Lateral</option><option>Armador</option><option>Otro</option>
           </select></div>
       </div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Equipo / División</label>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Club / División</label>
         <select class="form-input" id="dj-equipo" style="width:100%"><option value="">Cargando...</option></select></div>
       <div>
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Foto del jugador (opcional)</label>
@@ -1801,7 +1801,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
       <div id="mp-team-row">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Equipo</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Club</div>
         <div style="display:flex;gap:8px">
           <button id="mp-btn-local" onclick="mpSelectTeam('local')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px">🏠 LOCAL</button>
           <button id="mp-btn-visita" onclick="mpSelectTeam('visita')" class="btn btn-secondary" style="flex:1;font-weight:700;font-size:13px">🚌 VISITANTE</button>
@@ -1906,7 +1906,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <div class="cred-id" id="cred-id">ID: LB-2025-001</div>
         </div>
         <div class="cred-details">
-          <div class="cred-detail"><div class="cred-detail-label">Equipo</div><div class="cred-detail-value" id="cred-team">Los Andes</div></div>
+          <div class="cred-detail"><div class="cred-detail-label">Club</div><div class="cred-detail-value" id="cred-team">Los Andes</div></div>
           <div class="cred-detail"><div class="cred-detail-label">Goles</div><div class="cred-detail-value" id="cred-goals">12</div></div>
           <div class="cred-detail"><div class="cred-detail-label">Amarillas</div><div class="cred-detail-value" id="cred-yellows" style="color:var(--yellow)">1 🟡</div></div>
           <div class="cred-detail"><div class="cred-detail-label">Rojas</div><div class="cred-detail-value" id="cred-reds" style="color:var(--red)">0 🔴</div></div>
@@ -1929,7 +1929,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Alineación</div>
-      <div id="alin-team-name" style="font-size:16px;font-weight:900;margin-top:2px">Equipo</div>
+      <div id="alin-team-name" style="font-size:16px;font-weight:900;margin-top:2px">Club</div>
       <div id="alin-counter" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:700">0 jugadores seleccionados</div>
     </div>
     <div id="alin-list" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px"></div>
@@ -3368,7 +3368,7 @@ function goAdmin(page){
   if(page==='fixture'){
     const divEl=document.getElementById('fixture-div-nombre');
     if(divEl){
-      const div=currentAdminDivisionId?adminDivEquipos.length+' equipos en la división actual':'Ninguna — entrá a Gestionar una división';
+      const div=currentAdminDivisionId?adminDivEquipos.length+' clubes en la división actual':'Ninguna — entrá a Gestionar una división';
       divEl.textContent=div;
     }
     const fi=document.getElementById('fixture-fecha-inicio');
@@ -3833,7 +3833,7 @@ async function loadDelegPlantel(){
     // Obtener equipos del club
     const {data:equipos}=await supa.from('equipos').select('id,nombre,division_id').eq('club_id',delegadoClub.id);
     if(!equipos||!equipos.length){
-      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">El club no tiene equipos inscriptos en ninguna división aún.</div>';
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">El club no está inscripto en ninguna división aún.</div>';
       document.getElementById('deleg-plantel-count').textContent='0 jugadores';
       delegadoClub._equipos=[];
       return;
@@ -3869,7 +3869,7 @@ async function loadDelegPartidos(){
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
     const equipos=delegadoClub._equipos||[];
-    if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin equipos inscriptos aún.</div>';return;}
+    if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin inscripciones en ninguna división aún.</div>';return;}
     const ids=equipos.map(e=>e.id);
     const {data}=await supa.from('partidos')
       .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
@@ -3931,7 +3931,7 @@ async function loadDelegPartidos(){
 }
 
 function openDelegAgregarJugador(){
-  if(!delegadoClub?._equipos?.length){showToast('El club no tiene equipos inscriptos','error');return;}
+  if(!delegadoClub?._equipos?.length){showToast('El club no está inscripto en ninguna división aún','error');return;}
   document.getElementById('dj-nombre').value='';
   document.getElementById('dj-numero').value='';
   document.getElementById('dj-posicion').value='Mediocampista';
@@ -3954,7 +3954,7 @@ async function saveDelegJugador(){
   const equipoId=parseInt(document.getElementById('dj-equipo').value)||null;
   const errEl=document.getElementById('dj-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
-  if(!equipoId){errEl.textContent='Seleccioná un equipo';errEl.style.display='';return;}
+  if(!equipoId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
   const btn=document.getElementById('dj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
@@ -4202,17 +4202,17 @@ async function loadAdminEquipos(){
     if(error)throw error;
     adminDivEquipos=data||[];
     if(!adminDivEquipos.length){
-      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin equipos.<br>Tocá + Agregar equipo.</div>';
+      el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin clubes.<br>Tocá + Agregar club.</div>';
       return;
     }
     const lim=currentLeagueLimits.maxEquipos;
-    const usoBanner=lim?`<div style="padding:8px 14px;background:${adminDivEquipos.length>=lim?'rgba(239,68,68,0.1)':'rgba(91,110,245,0.08)'};border:1px solid ${adminDivEquipos.length>=lim?'rgba(239,68,68,0.3)':'var(--border)'};border-radius:10px;font-size:12px;color:${adminDivEquipos.length>=lim?'var(--red)':'var(--text2)'};margin-bottom:8px">Equipos en esta división: <b>${adminDivEquipos.length}</b>${lim?' · Límite total de la liga: <b>'+lim+'</b>':''}</div>`:'';
+    const usoBanner=lim?`<div style="padding:8px 14px;background:${adminDivEquipos.length>=lim?'rgba(239,68,68,0.1)':'rgba(91,110,245,0.08)'};border:1px solid ${adminDivEquipos.length>=lim?'rgba(239,68,68,0.3)':'var(--border)'};border-radius:10px;font-size:12px;color:${adminDivEquipos.length>=lim?'var(--red)':'var(--text2)'};margin-bottom:8px">Clubes en esta división: <b>${adminDivEquipos.length}</b>${lim?' · Límite total de la liga: <b>'+lim+'</b>':''}</div>`:'';
     const fixtureBanner=adminDivEquipos.length>=2?`
       <div style="margin-top:4px;padding:14px;background:linear-gradient(135deg,rgba(91,110,245,0.1),rgba(34,197,94,0.06));border:1px solid var(--accent);border-radius:12px;text-align:center">
         <div style="font-size:13px;font-weight:800;margin-bottom:4px">¿Listo para empezar? ⚡</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${adminDivEquipos.length} equipos cargados — podés generar el fixture ahora</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${adminDivEquipos.length} clubes inscriptos — podés generar el fixture ahora</div>
         <button class="btn btn-primary" style="width:100%" onclick="openFixtureScreen()">⚡ Generar fixture automático</button>
-      </div>`:'<div style="padding:8px 0 4px;font-size:11px;color:var(--text3);text-align:center">Agregá al menos 2 equipos para generar el fixture</div>';
+      </div>`:'<div style="padding:8px 0 4px;font-size:11px;color:var(--text3);text-align:center">Agregá al menos 2 clubes para generar el fixture</div>';
     el.innerHTML=usoBanner+adminDivEquipos.map(e=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
         <div style="width:40px;height:40px;border-radius:50%;background:${e.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${escHtml(e.abreviacion||'?')}</div>
@@ -4231,7 +4231,7 @@ async function openNuevoEquipo(){
   document.getElementById('ne-preview-icon').textContent='EQ';
   document.getElementById('ne-preview-icon').style.background='#1a2150';
   document.getElementById('ne-save-btn').disabled=false;
-  document.getElementById('ne-save-btn').textContent='Agregar Equipo';
+  document.getElementById('ne-save-btn').textContent='Inscribir club';
   document.getElementById('ne-nuevo-club-form').style.display='none';
   if(!adminLigaClubes.length) await loadAdminClubesQuiet();
   neRefreshClubSelect();
@@ -4319,8 +4319,8 @@ async function saveNuevoEquipo(){
     if(planMaxEq!=null&&planMaxEq!==-1){
       const {count}=await supa.from('equipos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId);
       if(count>=planMaxEq){
-        errEl.textContent=`Límite del plan: máx. ${planMaxEq} equipos por división. Actualizá tu plan.`;
-        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Equipo';return;
+        errEl.textContent=`Límite del plan: máx. ${planMaxEq} clubes por división. Actualizá tu plan.`;
+        errEl.style.display='';btn.disabled=false;btn.textContent='Inscribir club';return;
       }
     } else if(currentLeagueLimits.maxEquipos){
       const {data:divs}=await supa.from('divisiones').select('id,torneo:torneos!inner(liga_id)').eq('torneo.liga_id',currentAdminLeagueId);
@@ -4328,8 +4328,8 @@ async function saveNuevoEquipo(){
       if(divIds.length){
         const {count}=await supa.from('equipos').select('id',{count:'exact',head:true}).in('division_id',divIds);
         if(count>=currentLeagueLimits.maxEquipos){
-          errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxEquipos} equipos para esta liga`;
-          errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Equipo';return;
+          errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxEquipos} clubes para esta liga`;
+          errEl.style.display='';btn.disabled=false;btn.textContent='Inscribir club';return;
         }
       }
     }
@@ -4342,13 +4342,13 @@ async function saveNuevoEquipo(){
     closeNuevoEquipo(null,true);
     showToast('"'+nombre+'" agregado ✓','success');
     await loadAdminEquipos();
-  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Equipo';}
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Inscribir club';}
 }
 async function confirmarEliminarEquipo(id,nombre){
-  if(!confirm('¿Eliminar el equipo "'+nombre+'"? También se eliminan sus jugadores.'))return;
+  if(!confirm('¿Quitar el club "'+nombre+'" de esta división? También se eliminan sus jugadores.'))return;
   try{
     await supa.from('equipos').delete().eq('id',id);
-    showToast('Equipo eliminado','error');
+    showToast('Club removido','error');
     await loadAdminEquipos();
   }catch(e){showToast('Error: '+e.message,'error');}
 }
@@ -4360,7 +4360,7 @@ async function loadAdminJugadores(){
   if(!adminDivEquipos.length) await loadAdminEquipos();
   try{
     const equipoIds=adminDivEquipos.map(e=>e.id);
-    if(!equipoIds.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Primero agregá equipos.</div>';return;}
+    if(!equipoIds.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Primero inscribí clubes.</div>';return;}
     const {data,error}=await supa.from('jugadores').select('*, equipo:equipos(nombre,color_principal)').in('equipo_id',equipoIds).order('equipo_id').order('numero');
     if(error)throw error;
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin jugadores aún.</div>';return;}
@@ -4388,7 +4388,7 @@ function openNuevoJugador(){
   const sel=document.getElementById('nj-equipo');
   sel.innerHTML=adminDivEquipos.length
     ? adminDivEquipos.map(e=>`<option value="${e.id}">${escHtml(e.nombre)}</option>`).join('')
-    : '<option value="">Sin equipos — agregá uno primero</option>';
+    : '<option value="">Sin clubes — inscribí uno primero</option>';
   document.getElementById('nj-save-btn').disabled=false;
   document.getElementById('nj-save-btn').textContent='Agregar Jugador';
   document.getElementById('nuevoJugadorModal').classList.add('open');
@@ -4408,7 +4408,7 @@ async function saveNuevoJugador(){
   const equipoId=parseInt(document.getElementById('nj-equipo').value)||null;
   const errEl=document.getElementById('nj-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
-  if(!equipoId){errEl.textContent='Seleccioná un equipo';errEl.style.display='';return;}
+  if(!equipoId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
   const btn=document.getElementById('nj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
@@ -4576,7 +4576,7 @@ function renderTabla(tabla){
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="color:var(--text2);font-size:10px;font-weight:700;text-transform:uppercase">
         <th style="padding:6px 4px;text-align:left">#</th>
-        <th style="padding:6px 4px;text-align:left">Equipo</th>
+        <th style="padding:6px 4px;text-align:left">Club</th>
         <th style="padding:6px 4px;text-align:center">PJ</th>
         <th style="padding:6px 4px;text-align:center">G</th>
         <th style="padding:6px 4px;text-align:center">E</th>
@@ -4646,7 +4646,7 @@ function setPoffN(n){
   const prevEl=document.getElementById('playoffs-bracket-preview');
   const genBtn=document.getElementById('playoffs-gen-btn');
   if(poffTabla.length<n){
-    errEl.textContent=`No hay suficientes equipos (${poffTabla.length} disponibles)`;
+    errEl.textContent=`No hay suficientes clubes (${poffTabla.length} disponibles)`;
     errEl.style.display='';prevEl.style.display='none';genBtn.style.display='none';return;
   }
   errEl.style.display='none';
@@ -4722,7 +4722,7 @@ async function generarSiguienteRonda(faseActual, partidosFase){
 }
 
 function openNuevoPartido(){
-  if(!adminDivEquipos.length){showToast('Primero agregá equipos','error');return;}
+  if(!adminDivEquipos.length){showToast('Primero inscribí clubes','error');return;}
   const opts=adminDivEquipos.map(e=>`<option value="${e.id}">${escHtml(e.nombre)}</option>`).join('');
   document.getElementById('np-local').innerHTML='<option value="">Local...</option>'+opts;
   document.getElementById('np-visita').innerHTML='<option value="">Visitante...</option>'+opts;
@@ -4756,7 +4756,7 @@ async function saveNuevoPartido(){
   const jornada=parseInt(document.getElementById('np-jornada').value)||null;
   const arbitroEmail=document.getElementById('np-arbitro')?.value?.trim()||null;
   const errEl=document.getElementById('np-error');
-  if(!localId||!visitaId){errEl.textContent='Seleccioná ambos equipos';errEl.style.display='';return;}
+  if(!localId||!visitaId){errEl.textContent='Seleccioná ambos clubes';errEl.style.display='';return;}
   if(localId===visitaId){errEl.textContent='Local y visitante deben ser distintos';errEl.style.display='';return;}
   const btn=document.getElementById('np-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
@@ -4891,7 +4891,7 @@ async function saveNuevaDivision(){
     }).select().single();
     if(error)throw error;
     closeNuevaDivision(null,true);
-    showToast('División creada ✓ — Ahora agregá los equipos','success');
+    showToast('División creada ✓ — Ahora inscribí los clubes','success');
     await loadAdminDivisiones();
     openDivisionFromAdmin(newDiv.id,nombre);
   }catch(e){
@@ -5231,9 +5231,9 @@ async function openFixtureScreen(){
     const totalF=t.formato==='ida_vuelta'?rondas*2:rondas;
     if(preview&&n>=2){
       preview.innerHTML=`<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Vista previa estimada</div>
-        <div style="font-size:15px;font-weight:800">${n} equipos · ${totalP} partidos · ${totalF} fechas</div>`;
+        <div style="font-size:15px;font-weight:800">${n} clubes · ${totalP} partidos · ${totalF} fechas</div>`;
     } else if(n<2){
-      preview.innerHTML='<div style="font-size:13px;color:var(--text3)">Necesitás al menos 2 equipos en la división.</div>';
+      preview.innerHTML='<div style="font-size:13px;color:var(--text3)">Necesitás al menos 2 clubes en la división.</div>';
     }
   }catch(e){if(resumen)resumen.textContent='Error cargando config';}
 }
@@ -5242,7 +5242,7 @@ async function generarFixture(){
   if(!currentAdminDivisionId){showToast('Primero seleccioná una división','error');return;}
   if(!currentAdminTorneoId){showToast('No hay torneo seleccionado','error');return;}
   if(!adminDivEquipos.length)await loadAdminEquipos();
-  if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 equipos','error');return;}
+  if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 clubes','error');return;}
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   try{
     // Verificar si ya existen partidos — evitar duplicados
