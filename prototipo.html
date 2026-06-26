@@ -643,6 +643,25 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .mt-score-r{margin-left:auto;font-size:13px;font-weight:800;min-width:18px;text-align:right;}
   .mt-score-r.winner{color:var(--text);}
   .mt-score-r:not(.winner){color:var(--text3);}
+  .mt-row.sel{background:var(--accent-dim)!important;border-left:2px solid var(--accent);}
+  /* Prediction panel */
+  .prd-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:12px;gap:8px;padding:32px}
+  .prd-match{padding:18px 16px;border-bottom:1px solid var(--border);text-align:center}
+  .prd-teams{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0}
+  .prd-score{font-size:28px;font-weight:800;color:var(--text);min-width:48px;text-align:center}
+  .prd-team-name{font-size:12px;font-weight:700;color:var(--text2);max-width:90px;text-align:center}
+  .prd-vote-section{padding:16px}
+  .prd-vote-title{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+  .prd-vote-btns{display:flex;gap:8px;margin-bottom:14px}
+  .prd-vbtn{flex:1;padding:10px 6px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+  .prd-vbtn:hover{background:var(--hover);border-color:var(--accent)}
+  .prd-vbtn.voted{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .prd-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+  .prd-bar-label{width:52px;font-weight:700;color:var(--text2);text-align:right;flex-shrink:0}
+  .prd-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .prd-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+  .prd-bar-pct{width:36px;font-size:10px;color:var(--text3);text-align:right;flex-shrink:0}
+  .prd-stat-section{padding:0 16px 16px;border-top:1px solid var(--border);margin-top:4px}
   /* Right panel match detail */
   .dt-match-header{padding:16px 14px;text-align:center;border-bottom:1px solid var(--border);}
   .dt-match-shields{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0;}
@@ -800,8 +819,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
   <!-- Filter tabs -->
   <div id="mt-filter-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px"></div>
-  <!-- Match list -->
-  <div id="mt-groups" style="flex:1;overflow-y:auto;padding-bottom:24px"></div>
+  <!-- Match list + Prediction split -->
+  <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+    <div id="mt-groups" style="flex:0 0 52%;overflow-y:auto;padding-bottom:24px;border-right:1px solid var(--border)"></div>
+    <div id="mt-predict" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+      <div class="prd-empty"><span style="font-size:28px">🏆</span>Tocá un partido para ver predicciones</div>
+    </div>
+  </div>
 </div>
 
 <!-- CLUBES (desktop center panel) -->
@@ -7142,9 +7166,28 @@ function dtGoLigas(){
   _renderDtRight(null);
 }
 let _clubesSel=null;
+function _clubVisit(id){
+  try{
+    const key='club_visits';
+    const all=JSON.parse(localStorage.getItem(key)||'[]');
+    all.push({id,ts:Date.now()});
+    // keep only last 90 days to avoid bloat
+    const cutoff=Date.now()-90*864e5;
+    localStorage.setItem(key,JSON.stringify(all.filter(v=>v.ts>cutoff)));
+  }catch{}
+}
+function _clubVisits30d(id){
+  try{
+    const all=JSON.parse(localStorage.getItem('club_visits')||'[]');
+    const cutoff=Date.now()-30*864e5;
+    return all.filter(v=>v.id===id&&v.ts>cutoff).length;
+  }catch{return 0;}
+}
 function _clubesRender(q){
   const el=document.getElementById('clubes-list');if(!el)return;
   const src=teamsData.filter(t=>t.id>=100);
+  // sort by visits in last 30 days desc, then by name
+  src.sort((a,b)=>_clubVisits30d(b.id)-_clubVisits30d(a.id)||a.name.localeCompare(b.name));
   const list=q?src.filter(t=>t.name.toLowerCase().includes(q.toLowerCase())):src;
   if(!list.length){el.innerHTML='<div style="color:var(--text3);padding:32px;grid-column:1/-1;text-align:center">Sin clubes</div>';return;}
   el.innerHTML=list.map(t=>{
@@ -7152,6 +7195,7 @@ function _clubesRender(q){
     const divNames=divIds.map(id=>divisiones.find(d=>d.id===id)).filter(Boolean);
     const liga=divNames.length?leagues.find(l=>torneos.find(tr=>tr.id===divNames[0].torneoId&&tr.leagueId===l.id)):null;
     const goles=players.filter(p=>p.team===t.id).reduce((s,p)=>s+p.goals,0);
+    const visits=_clubVisits30d(t.id);
     const sel=_clubesSel===t.id;
     return`<div id="club-card-${t.id}" style="background:${sel?'var(--accent-dim)':'var(--card)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:12px;padding:14px;cursor:pointer;transition:all .15s"
         onclick="_dtClickClub(${t.id})" ondblclick="_dtDblClickClub(${t.id})"
@@ -7159,22 +7203,23 @@ function _clubesRender(q){
         onmouseout="if(_clubesSel!==${t.id})this.style.background='var(--card)'">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div class="shield" style="width:40px;height:40px;font-size:14px;background:${t.color};color:${t.text};border-radius:10px;flex-shrink:0">${t.short}</div>
-        <div style="min-width:0">
+        <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
           <div style="font-size:10px;color:var(--text3)">${liga?escHtml(liga.name):''}</div>
         </div>
+        ${visits>0?`<span style="font-size:9px;color:var(--accent);font-weight:700;background:var(--accent-dim);padding:2px 6px;border-radius:6px;flex-shrink:0">👁 ${visits}</span>`:''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${divNames.slice(0,2).map(d=>`<span style="font-size:9px;font-weight:700;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:4px">${escHtml(d.name)}</span>`).join('')}
         <span style="font-size:9px;color:var(--text3);margin-left:auto">⚽ ${goles}</span>
       </div>
-      <div style="margin-top:8px;font-size:9px;color:var(--text3);text-align:center;opacity:.6">doble clic → ver detalle</div>
     </div>`;
   }).join('');
 }
 function _clubesFilter(q){_clubesRender(q);}
 
 function _dtClickClub(id){
+  _clubVisit(id);
   // Update card selection styles without full re-render
   if(_clubesSel!=null){
     const prev=document.getElementById('club-card-'+_clubesSel);
@@ -7253,6 +7298,7 @@ function _dtClickClub(id){
 }
 
 function _dtDblClickClub(id){
+  _clubVisit(id);
   const t=teamsData.find(x=>x.id===id);if(!t)return;
   const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(id)).map(([d])=>parseInt(d));
   const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
@@ -7503,6 +7549,7 @@ document.addEventListener('click',e=>{
     p.style.display='none';
   }
 },{capture:true});
+let _mtSelMatch=null;
 function _mtMatchRow(m){
   const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return'';
   const isDone=m.status==='done',isLive=m.status==='live';
@@ -7511,7 +7558,7 @@ function _mtMatchRow(m){
   const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
   const scoreH=isDone||isLive?`<span class="mt-score-r${homeWon?' winner':''}">${m.homeScore??0}</span>`:'';
   const scoreA=isDone||isLive?`<span class="mt-score-r${awayWon?' winner':''}">${m.awayScore??0}</span>`:'';
-  return`<div class="mt-row" onclick="_mtOpenMatch(${m.id})">
+  return`<div class="mt-row${_mtSelMatch===m.id?' sel':''}" id="mt-row-${m.id}" onclick="_mtOpenMatch(${m.id})">
     <div class="mt-row-status" style="color:${statusColor}">${statusLabel}</div>
     <div class="mt-row-teams">
       <div class="mt-team-line${homeWon?' winner':''}">
@@ -7527,7 +7574,118 @@ function _mtMatchRow(m){
     </div>
   </div>`;
 }
+// ── Votes stored in localStorage: { [matchId]: {home:N,draw:N,away:N,mine:null|'home'|'draw'|'away'} }
+function _mtGetVotes(id){
+  try{const v=JSON.parse(localStorage.getItem('mt_votes')||'{}');return v[id]||{home:0,draw:0,away:0,mine:null};}catch{return{home:0,draw:0,away:0,mine:null};}
+}
+function _mtSaveVotes(id,v){
+  try{const all=JSON.parse(localStorage.getItem('mt_votes')||'{}');all[id]=v;localStorage.setItem('mt_votes',JSON.stringify(all));}catch{}
+}
+function _mtVote(id,choice){
+  const v=_mtGetVotes(id);
+  if(v.mine===choice)return; // ya votó igual
+  if(v.mine)v[v.mine]=Math.max(0,v[v.mine]-1); // quitar voto anterior
+  v[choice]++;v.mine=choice;
+  _mtSaveVotes(id,v);
+  _mtRenderPredict(id); // re-render panel
+}
+
+function _mtWinProb(teamId){
+  // compute from standings: weighted win rate
+  const rows=standings.filter(s=>s.teamId===teamId);
+  if(!rows.length)return null;
+  const pj=rows.reduce((a,r)=>a+r.pj,0);
+  const pg=rows.reduce((a,r)=>a+r.pg,0);
+  const pe=rows.reduce((a,r)=>a+r.pe,0);
+  if(!pj)return null;
+  return{win:pg/pj,draw:pe/pj,loss:(pj-pg-pe)/pj};
+}
+
+function _mtRenderPredict(id){
+  const el=document.getElementById('mt-predict');if(!el)return;
+  const m=matches.find(x=>x.id===id);if(!m){el.innerHTML='<div class="prd-empty"><span style="font-size:28px">🏆</span>Tocá un partido para ver predicciones</div>';return;}
+  const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return;
+  const isDone=m.status==='done',isLive=m.status==='live';
+  const homeWon=isDone&&(m.homeScore||0)>(m.awayScore||0),awayWon=isDone&&(m.awayScore||0)>(m.homeScore||0);
+  const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
+  const statusLabel=isDone?'FINALIZADO':isLive?'● EN VIVO':'PROGRAMADO';
+  const div=divisiones.find(d=>d.id===m.divId);
+  const torneo=div?torneos.find(t=>t.id===div.torneoId):null;
+
+  // Votes
+  const v=_mtGetVotes(id);
+  const total=v.home+v.draw+v.away;
+  const pct=(n)=>total?Math.round(n/total*100):0;
+  const hPct=pct(v.home),dPct=pct(v.draw),aPct=pct(v.away);
+
+  // Stats probability
+  const hP=_mtWinProb(m.home),aP=_mtWinProb(m.away);
+  let sHwin=33,sDraw=33,sAwin=34;
+  if(hP&&aP){
+    const raw={h:hP.win*0.6+aP.loss*0.4,d:(hP.draw+aP.draw)/2,a:aP.win*0.6+hP.loss*0.4};
+    const s=raw.h+raw.d+raw.a||1;
+    sHwin=Math.round(raw.h/s*100);sDraw=Math.round(raw.d/s*100);sAwin=100-sHwin-sDraw;
+  }
+
+  const bar=(label,pctV,color,choice,voted)=>`<div class="prd-bar-row">
+    <div class="prd-bar-label" style="font-size:10px">${label}</div>
+    <div class="prd-bar-track"><div class="prd-bar-fill" style="width:${pctV}%;background:${voted?'var(--accent)':color}"></div></div>
+    <div class="prd-bar-pct">${pctV}%</div>
+  </div>`;
+
+  const vBtn=(label,choice,color)=>`<button class="prd-vbtn${v.mine===choice?' voted':''}" onclick="_mtVote(${id},'${choice}')">
+    ${label}<br><span style="font-size:16px;font-weight:800;color:${v.mine===choice?'var(--accent)':color}">${pct({home:v.home,draw:v.draw,away:v.away}[choice])}%</span>
+  </button>`;
+
+  el.innerHTML=`
+    <div class="prd-match">
+      <div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:6px">${escHtml(torneo?.name||'')}</div>
+      <div style="font-size:10px;color:${statusColor};font-weight:800;letter-spacing:.5px;margin-bottom:10px">${statusLabel}</div>
+      <div class="prd-teams">
+        <div style="text-align:center;flex:1">
+          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${home.color};color:${home.text};margin:0 auto 6px;border-radius:12px${homeWon?';box-shadow:0 0 0 2px var(--green)':''}">${home.short}</div>
+          <div class="prd-team-name${homeWon?' ':''}${homeWon?'style="color:var(--green)"':''}">${escHtml(home.name)}</div>
+        </div>
+        <div class="prd-score">${isDone||isLive?`${m.homeScore??0}<span style="font-size:16px;color:var(--text3)"> – </span>${m.awayScore??0}`:'<span style="font-size:18px;color:var(--text3)">vs</span>'}</div>
+        <div style="text-align:center;flex:1">
+          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${away.color};color:${away.text};margin:0 auto 6px;border-radius:12px${awayWon?';box-shadow:0 0 0 2px var(--green)':''}">${away.short}</div>
+          <div class="prd-team-name">${escHtml(away.name)}</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3)">F${m.round} · ${escHtml(m.venue||'')}</div>
+    </div>
+
+    <div class="prd-vote-section">
+      <div class="prd-vote-title">¿Quién va a ganar? · ${total} voto${total!==1?'s':''}</div>
+      <div class="prd-vote-btns">
+        ${vBtn(escHtml(home.name),'home','var(--green)')}
+        ${vBtn('Empate','draw','var(--text3)')}
+        ${vBtn(escHtml(away.name),'away','var(--red)')}
+      </div>
+      ${bar(escHtml(home.short),hPct,'var(--accent-dim)','home',v.mine==='home')}
+      ${bar('EMP',dPct,'var(--border)','draw',v.mine==='draw')}
+      ${bar(escHtml(away.short),aPct,'var(--accent-dim)','away',v.mine==='away')}
+      ${v.mine?`<div style="font-size:10px;color:var(--accent);margin-top:8px;text-align:center">✓ Votaste por ${v.mine==='home'?escHtml(home.name):v.mine==='away'?escHtml(away.name):'Empate'}</div>`:''}
+    </div>
+
+    <div class="prd-stat-section">
+      <div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 10px">Predicción por estadísticas</div>
+      ${bar(escHtml(home.short),sHwin,'#22c55e44','home',false)}
+      ${bar('EMP',sDraw,'#6b728044','draw',false)}
+      ${bar(escHtml(away.short),sAwin,'#ef444444','away',false)}
+      <div style="font-size:9px;color:var(--text3);margin-top:8px">Basado en rendimiento histórico de los equipos</div>
+    </div>
+  `;
+}
+
 function _mtOpenMatch(id){
+  // Update selected row highlight
+  if(_mtSelMatch!=null){const prev=document.getElementById('mt-row-'+_mtSelMatch);if(prev)prev.classList.remove('sel');}
+  _mtSelMatch=id;
+  const cur=document.getElementById('mt-row-'+id);if(cur)cur.classList.add('sel');
+  // Render prediction panel
+  _mtRenderPredict(id);
+  // Also update right panel with events
   const m=matches.find(x=>x.id===id);if(!m)return;
   const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return;
   const el=document.getElementById('dt-rc');if(!el)return;
@@ -7564,6 +7722,7 @@ function _mtOpenMatch(id){
   </div>
   <div class="dt-rs">Eventos</div>
   ${evHtml}`;
+  document.getElementById('dt-right').style.display='flex';
 }
 function dtSearch(q){
   const inp=document.getElementById('leagueSearch');
