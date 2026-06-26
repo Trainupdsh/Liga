@@ -607,6 +607,14 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .dt-node-div.nogroup{margin-left:30px;}
   /* Partidos today view */
   #view-matches-today.active{display:flex!important;}
+  .mt-hoy-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--accent);font-size:10px;font-weight:800;padding:4px 9px;cursor:pointer;letter-spacing:.4px;}
+  .mt-hoy-btn:hover{background:var(--accent-dim);}
+  .mt-cal-day{padding:5px 2px;font-size:11px;border-radius:6px;cursor:pointer;color:var(--text2);}
+  .mt-cal-day:hover{background:var(--hover);color:var(--text);}
+  .mt-cal-day.today{color:var(--accent);font-weight:800;}
+  .mt-cal-day.active{background:var(--accent);color:#fff!important;font-weight:800;}
+  .mt-cal-day.other-month{color:var(--text3);}
+  .mt-cal-hdr{padding:4px 2px;font-size:9px;font-weight:800;color:var(--text3);text-transform:uppercase;}
   .mt-nav-btn{background:none;border:none;color:var(--text2);font-size:18px;padding:8px 10px;cursor:pointer;border-radius:6px;}
   .mt-nav-btn:hover{background:var(--hover);}
   .mt-day{background:none;border:none;cursor:pointer;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:8px;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
@@ -773,10 +781,23 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- PARTIDOS DEL DÍA (desktop center panel) -->
 <div id="view-matches-today" class="view" style="flex-direction:column;height:100%;overflow:hidden">
   <!-- Date bar -->
-  <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
+  <div style="position:relative;display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;flex-shrink:0">
     <button class="mt-nav-btn" onclick="_mtShiftDays(-1)">‹</button>
     <div id="mt-days-row" style="display:flex;flex:1"></div>
     <button class="mt-nav-btn" onclick="_mtShiftDays(1)">›</button>
+    <div style="display:flex;align-items:center;gap:4px;margin-left:6px;flex-shrink:0">
+      <button class="mt-nav-btn" onclick="_mtToggleCal()" title="Calendario" style="font-size:14px">📅</button>
+      <button class="mt-hoy-btn" onclick="_mtGoToday()">HOY</button>
+    </div>
+    <!-- Calendar popup -->
+    <div id="mt-cal-popup" style="display:none;position:absolute;top:100%;right:0;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:240px;box-shadow:0 8px 32px #0008;margin-top:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="mt-nav-btn" style="font-size:14px;padding:4px 8px" onclick="_mtCalShiftMonth(-1)">‹</button>
+        <span id="mt-cal-title" style="font-size:12px;font-weight:700;color:var(--text)"></span>
+        <button class="mt-nav-btn" style="font-size:14px;padding:4px 8px" onclick="_mtCalShiftMonth(1)">›</button>
+      </div>
+      <div id="mt-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center"></div>
+    </div>
   </div>
   <!-- Filter tabs -->
   <div id="mt-filter-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px"></div>
@@ -2721,15 +2742,15 @@ const standings=[
   const fn=['Juan','Carlos','Luis','Miguel','José','Pedro','Pablo','Andrés','Diego','Matías','Nicolás','Facundo','Tomás','Agustín','Franco','Sebastián','Rodrigo','Gonzalo','Ezequiel','Lautaro'];
   const ln=['García','López','Martínez','González','Rodríguez','Pérez','Sánchez','Ramírez','Torres','Flores','Rivera','Gómez','Díaz','Reyes','Morales','Cruz','Ortiz','Gutiérrez','Chávez','Ramos'];
   const ROUND_CFG=[
-    {round:1,pairs:[[0,1],[2,3],[4,5]],status:'done'},
-    {round:2,pairs:[[0,2],[1,3],[3,5]],status:'done'},
-    {round:3,pairs:[[0,4],[1,5],[2,4]],status:'done'},
-    {round:4,pairs:[[1,2],[0,5],[3,4]],status:'done'},
-    {round:5,pairs:[[0,1],[4,5]],status:'done'},
-    {round:5,pairs:[[2,3]],status:'live'},
-    {round:6,pairs:[[0,3],[1,4],[2,5]],status:'upcoming'},
-    {round:7,pairs:[[0,2],[1,5],[3,4]],status:'upcoming'},
-    {round:8,pairs:[[0,4],[1,3],[2,5]],status:'upcoming'},
+    {round:1,pairs:[[0,1],[2,3],[4,5]],status:'done',   dayOff:-6},
+    {round:2,pairs:[[0,2],[1,3],[3,5]],status:'done',   dayOff:-5},
+    {round:3,pairs:[[0,4],[1,5],[2,4]],status:'done',   dayOff:-4},
+    {round:4,pairs:[[1,2],[0,5],[3,4]],status:'done',   dayOff:-2},
+    {round:5,pairs:[[0,1],[4,5]],      status:'done',   dayOff:-1},
+    {round:5,pairs:[[2,3]],            status:'live',   dayOff:0},
+    {round:6,pairs:[[0,3],[1,4],[2,5]],status:'upcoming',dayOff:1},
+    {round:7,pairs:[[0,2],[1,5],[3,4]],status:'upcoming',dayOff:3},
+    {round:8,pairs:[[0,4],[1,3],[2,5]],status:'upcoming',dayOff:5},
   ];
   function rndName(fn,ln,ti,i){return fn[(ti*7+i)%fn.length]+' '+ln[(ti*3+i)%ln.length];}
   function genEvents(hPl,aPl,hs,as_,status){
@@ -2757,7 +2778,7 @@ const standings=[
       }
       teamPl[teamId]=pl;
     });
-    ROUND_CFG.forEach(({round,pairs,status})=>{
+    ROUND_CFG.forEach(({round,pairs,status,dayOff})=>{
       pairs.forEach(([hi,ai])=>{
         const done=status==='done',live=status==='live';
         const hs=done?1+Math.floor(Math.random()*5):(live?Math.floor(Math.random()*3):null);
@@ -2766,7 +2787,7 @@ const standings=[
         const evs=(done||live)?genEvents(hPl,aPl,hs||0,as_||0,status):[];
         matches.push({id:mid++,home:tms[hi],away:tms[ai],round,homeScore:hs,awayScore:as_,
           status,time:live?'VIVO':_TIMES[round%_TIMES.length],
-          venue:_VENUES[round%_VENUES.length],divId:dId,events:evs});
+          venue:_VENUES[round%_VENUES.length],divId:dId,events:evs,dayOff});
       });
     });
     tms.forEach((teamId,i)=>{
@@ -7094,9 +7115,10 @@ function _mtRenderDays(){
 function _mtSetFilter(f){_mtFilterCur=f;_mtRenderFilterBar();_mtRenderGroups();}
 function _mtRenderFilterBar(){
   const el=document.getElementById('mt-filter-bar');if(!el)return;
-  const live=matches.filter(m=>m.status==='live').length;
-  const done=matches.filter(m=>m.status==='done').length;
-  const up=matches.filter(m=>m.status==='upcoming').length;
+  const dayMs=matches.filter(m=>m.dayOff===_mtDayOffset);
+  const live=dayMs.filter(m=>m.status==='live').length;
+  const done=dayMs.filter(m=>m.status==='done').length;
+  const up=dayMs.filter(m=>m.status==='upcoming').length;
   const tabs=[
     {f:'todos',label:'TODOS'},
     {f:'live',label:live?`⚡ EN VIVO`:'EN VIVO'},
@@ -7109,11 +7131,11 @@ function _mtRenderFilterBar(){
 // ── Partidos: match groups ──
 function _mtRenderGroups(){
   const el=document.getElementById('mt-groups');if(!el)return;
-  let ms=matches;
+  let ms=matches.filter(m=>m.dayOff===_mtDayOffset);
   if(_mtFilterCur==='live')ms=ms.filter(m=>m.status==='live');
   else if(_mtFilterCur==='done')ms=ms.filter(m=>m.status==='done');
   else if(_mtFilterCur==='upcoming')ms=ms.filter(m=>m.status==='upcoming');
-  if(!ms.length){el.innerHTML='<div class="dt-empty">Sin partidos con este filtro</div>';return;}
+  if(!ms.length){el.innerHTML='<div class="dt-empty" style="padding-top:40px">Sin partidos para este día</div>';return;}
   const byDiv={};
   ms.forEach(m=>{(byDiv[m.divId]=byDiv[m.divId]||[]).push(m);});
   let h='';
@@ -7144,6 +7166,56 @@ function _mtRenderGroups(){
   });
   el.innerHTML=h;
 }
+// ── HOY y calendario ──
+function _mtGoToday(){
+  _mtDayOffset=0;
+  document.getElementById('mt-cal-popup').style.display='none';
+  _mtRenderDays();_mtRenderFilterBar();_mtRenderGroups();
+}
+let _calYear=new Date().getFullYear(),_calMonth=new Date().getMonth();
+function _mtToggleCal(){
+  const p=document.getElementById('mt-cal-popup');
+  const visible=p.style.display!=='none';
+  p.style.display=visible?'none':'block';
+  if(!visible){_calYear=new Date().getFullYear();_calMonth=new Date().getMonth();_mtRenderCal();}
+}
+function _mtCalShiftMonth(d){_calMonth+=d;if(_calMonth<0){_calMonth=11;_calYear--;}else if(_calMonth>11){_calMonth=0;_calYear++;}_mtRenderCal();}
+function _mtRenderCal(){
+  const titleEl=document.getElementById('mt-cal-title');
+  const gridEl=document.getElementById('mt-cal-grid');
+  if(!titleEl||!gridEl)return;
+  const mNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  titleEl.textContent=mNames[_calMonth]+' '+_calYear;
+  const today=new Date();
+  const firstDay=new Date(_calYear,_calMonth,1).getDay(); // 0=Dom
+  const startMon=((firstDay-1)+7)%7; // offset so Mon=0
+  const daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
+  const hdrs=['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+  let h=hdrs.map(d=>`<div class="mt-cal-hdr">${d}</div>`).join('');
+  for(let i=0;i<startMon;i++)h+=`<div></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const d=new Date(_calYear,_calMonth,day);
+    const off=Math.round((d-new Date(today.getFullYear(),today.getMonth(),today.getDate()))/(86400000));
+    const isToday=off===0,isSel=off===_mtDayOffset;
+    const hasMat=matches.some(m=>m.dayOff===off);
+    h+=`<div class="mt-cal-day${isToday?' today':''}${isSel?' active':''}${d.getMonth()!==_calMonth?' other-month':''}" onclick="_mtCalPickDay(${off})" title="${hasMat?'Con partidos':''}" style="${hasMat&&!isSel?'font-weight:700':''}">
+      ${day}${hasMat&&!isSel?'<div style="width:4px;height:4px;border-radius:50%;background:var(--accent);margin:1px auto 0"></div>':''}
+    </div>`;
+  }
+  gridEl.innerHTML=h;
+}
+function _mtCalPickDay(off){
+  _mtDayOffset=off;
+  document.getElementById('mt-cal-popup').style.display='none';
+  _mtRenderDays();_mtRenderFilterBar();_mtRenderGroups();
+}
+// Cerrar calendario al hacer click fuera
+document.addEventListener('click',e=>{
+  const p=document.getElementById('mt-cal-popup');
+  if(p&&p.style.display!=='none'&&!p.contains(e.target)&&!e.target.closest('.mt-nav-btn[onclick="_mtToggleCal()"]')){
+    p.style.display='none';
+  }
+},{capture:true});
 function _mtMatchRow(m){
   const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return'';
   const isDone=m.status==='done',isLive=m.status==='live';
