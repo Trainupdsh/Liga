@@ -7803,7 +7803,15 @@ function _renderDtLeft(){
   }).join('');
 }
 function _dtToggleLiga(id){
-  if(_dtExpLigas.has(id)){_dtExpLigas.delete(id);}else{_dtExpLigas.add(id);openLeague(id);}
+  if(_dtExpLigas.has(id)){
+    _dtExpLigas.delete(id);
+  }else{
+    _dtExpLigas.add(id);
+    // On desktop show standings of active torneo immediately (skip view-league)
+    const activeTorneo=torneos.find(t=>t.leagueId===id&&t.status==='active')||torneos.find(t=>t.leagueId===id);
+    if(activeTorneo){_dtExpTorneos.add(activeTorneo.id);_dtShowTorneoCenter(activeTorneo.id);}
+    else if(!isDesktop()){openLeague(id);}
+  }
   _renderDtLeft();
 }
 let _dtSelTorneo=null;
