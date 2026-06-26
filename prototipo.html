@@ -26,7 +26,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
 header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
-.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a6b5c,#0d3d34);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
+.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4a56e0,#1a2060);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
 header h1{font-size:17px;font-weight:700;flex:1;}
 header .subtitle{font-size:12px;color:var(--text2);}
 .theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
@@ -35,9 +35,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .view.active{display:block;}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
 .view.slide{animation:slideIn 0.25s ease;}
-.home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a2150,#0d3d34);padding:24px 20px;position:relative;overflow:hidden;}
-.home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(91,110,245,0.15);}
-.home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,0.1);}
+.home-banner{margin:16px;border-radius:20px;background:linear-gradient(135deg,#1a2060,#0c0e24);padding:24px 20px;position:relative;overflow:hidden;}
+.home-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(116,128,255,0.15);}
+.home-banner::after{content:'';position:absolute;right:20px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(116,128,255,0.08);}
 .home-banner h2{font-size:22px;font-weight:900;margin-bottom:4px;}
 .home-banner p{font-size:13px;color:rgba(255,255,255,0.7);}
 .home-banner .sport-icons{font-size:28px;margin-bottom:12px;}
@@ -424,7 +424,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .player-profile-modal.open{opacity:1;pointer-events:all;}
 .player-profile-sheet{width:100%;max-width:480px;background:var(--card);border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
 .player-profile-modal.open .player-profile-sheet{transform:translateY(0);}
-.pp-header{background:linear-gradient(135deg,#1a2150,#0d3d34);padding:24px 20px 20px;position:relative;}
+.pp-header{background:linear-gradient(135deg,#1a2060,#0c0e24);padding:24px 20px 20px;position:relative;}
 .pp-avatar{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;margin-bottom:12px;}
 .pp-avatar-img{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;margin-bottom:12px;}
 .pp-name{font-size:20px;font-weight:900;color:#fff;}
@@ -4266,7 +4266,7 @@ async function loadAdminEquipos(){
     const lim=currentLeagueLimits.maxEquipos;
     const usoBanner=lim?`<div style="padding:8px 14px;background:${adminDivEquipos.length>=lim?'rgba(239,68,68,0.1)':'rgba(91,110,245,0.08)'};border:1px solid ${adminDivEquipos.length>=lim?'rgba(239,68,68,0.3)':'var(--border)'};border-radius:10px;font-size:12px;color:${adminDivEquipos.length>=lim?'var(--red)':'var(--text2)'};margin-bottom:8px">Clubes en esta división: <b>${adminDivEquipos.length}</b>${lim?' · Límite total de la liga: <b>'+lim+'</b>':''}</div>`:'';
     const fixtureBanner=adminDivEquipos.length>=2?`
-      <div style="margin-top:4px;padding:14px;background:linear-gradient(135deg,rgba(91,110,245,0.1),rgba(34,197,94,0.06));border:1px solid var(--accent);border-radius:12px;text-align:center">
+      <div style="margin-top:4px;padding:14px;background:linear-gradient(135deg,rgba(116,128,255,0.1),rgba(116,128,255,0.05));border:1px solid var(--accent);border-radius:12px;text-align:center">
         <div style="font-size:13px;font-weight:800;margin-bottom:4px">¿Listo para empezar? ⚡</div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${adminDivEquipos.length} clubes inscriptos — podés generar el fixture ahora</div>
         <button class="btn btn-primary" style="width:100%" onclick="openFixtureScreen()">⚡ Generar fixture automático</button>
