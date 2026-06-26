@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <title>Atlonis</title>
 <style>
 :root[data-theme="dark"] {
-  --bg: #0c0d17; --bg2: #090a12; --card: #13151f; --card2: #1a1c29;
-  --accent: #4361ee; --accent-dim: #1a2260;
-  --text: #f0f2ff; --text2: #7d8599; --text3: #464e65;
-  --border: #1e2133; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  --bg: #08091a; --bg2: #060812; --card: #0f1222; --card2: #14182e;
+  --accent: #7480ff; --accent-dim: #1a2060;
+  --text: #ffffff; --text2: #8b98b0; --text3: #4d5870;
+  --border: #181e34; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
   --gold: #f59e0b; --silver: #94a3b8; --bronze: #b45309;
-  --shadow: rgba(0,0,0,0.6); --input-bg: #1a1c2c; --overlay: rgba(0,0,0,0.8);
+  --shadow: rgba(0,0,0,0.5); --input-bg: #181e30; --overlay: rgba(0,0,0,0.75);
 }
 :root[data-theme="light"] {
   --bg: #f0f2f7; --bg2: #e5e8ef; --card: #ffffff; --card2: #f8f9fc;
@@ -26,7 +23,7 @@
   --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f7; --overlay: rgba(0,0,0,0.5);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
 header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
 .logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4a56e0,#1a2060);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
@@ -553,80 +550,56 @@ header .subtitle{font-size:12px;color:var(--text2);}
   body{overflow:hidden;}
   #app{max-width:100vw;display:grid;
     grid-template-areas:"dnav dnav dnav" "dleft dmain dright";
-    grid-template-columns:230px 1fr 300px;
-    grid-template-rows:54px calc(100vh - 54px);
+    grid-template-columns:240px 1fr 290px;
+    grid-template-rows:58px calc(100vh - 58px);
     height:100vh;overflow:hidden;}
   .view,#view-admin{grid-area:dmain;overflow-y:auto;max-width:none;}
-
-  /* ── Desktop nav (estilo Weball) ── */
+  /* Desktop nav */
   #dt-nav{grid-area:dnav;display:flex!important;align-items:center;
-    background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;gap:0;height:54px;}
-  .dt-brand{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:24px;flex-shrink:0;}
-  .dt-brand-logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#4361ee,#1a2260);
-    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff;}
-  .dt-brand>span{font-size:15px;font-weight:800;letter-spacing:-.2px;color:var(--text);}
-  .dt-brand>em{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-style:normal;margin-top:1px;}
-  .dt-tabs{display:flex;gap:1px;}
-  .dt-tab{padding:5px 14px;border-radius:6px;border:none;background:transparent;
-    color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;
-    font-family:'Barlow',sans-serif;text-transform:uppercase;letter-spacing:.3px;}
+    background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;gap:0;}
+  .dt-brand{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:20px;}
+  .dt-brand>span{font-size:16px;font-weight:800;}
+  .dt-tabs{display:flex;gap:2px;}
+  .dt-tab{padding:6px 14px;border-radius:8px;border:none;background:transparent;
+    color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
   .dt-tab:hover{background:var(--card2);color:var(--text);}
-  .dt-tab.active{background:var(--accent);color:#fff;}
+  .dt-tab.active{background:var(--accent-dim);color:var(--accent);}
   .dt-spacer{flex:1;}
-  .dt-search{display:flex;align-items:center;gap:8px;background:var(--bg2);
-    border:1px solid var(--border);border-radius:8px;padding:5px 12px;margin-right:10px;}
-  .dt-search input{background:none;border:none;outline:none;color:var(--text);
-    font-size:13px;width:180px;font-family:'Barlow',sans-serif;}
+  .dt-search{display:flex;align-items:center;gap:8px;background:var(--input-bg);
+    border:1px solid var(--border);border-radius:10px;padding:6px 12px;margin-right:12px;}
+  .dt-search input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:160px;}
   .dt-search input::placeholder{color:var(--text3);}
-  .dt-ingresar{padding:5px 14px;border-radius:6px;border:1px solid var(--border);
-    background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;
-    font-family:'Barlow',sans-serif;transition:all .12s;}
-  .dt-ingresar:hover{border-color:var(--accent);color:var(--accent);}
-
-  /* ── Left sidebar (estilo Weball) ── */
+  /* Sidebars */
   #dt-left{grid-area:dleft;display:flex!important;flex-direction:column;overflow-y:auto;
-    background:var(--bg);border-right:1px solid var(--border);}
-  .dt-lhdr{padding:10px 12px 6px;font-size:10px;font-weight:800;color:var(--text3);
-    text-transform:uppercase;letter-spacing:.8px;}
-  .dt-li{padding:5px 8px;cursor:pointer;transition:background .1s;border-radius:6px;margin:0 4px;}
-  .dt-li:hover{background:var(--card2);}
-  .dt-li.sel{background:var(--card);}
-  .dt-li-hd{display:flex;align-items:center;gap:7px;min-height:32px;}
-  .dt-li-ico{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;
-    justify-content:center;font-size:13px;flex-shrink:0;}
-  .dt-li-nm{font-size:12px;font-weight:700;flex:1;line-height:1.3;}
-  .dt-li-sp{font-size:10px;color:var(--text3);font-weight:600;flex-shrink:0;}
-  .dt-li-divs{padding:2px 0 4px 33px;display:flex;flex-direction:column;}
-  .dt-li-div{font-size:12px;color:var(--text2);padding:4px 8px;border-radius:5px;cursor:pointer;
-    display:flex;align-items:center;gap:6px;font-weight:500;}
-  .dt-li-div:hover{background:var(--card2);color:var(--text);}
-  .dt-li-div.sel{color:var(--accent);font-weight:700;}
-  .dt-li-div::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--border);flex-shrink:0;}
-  .dt-li-div.sel::before{background:var(--accent);}
-
-  /* ── Right sidebar ── */
+    background:var(--card);border-right:1px solid var(--border);}
   #dt-right{grid-area:dright;display:flex!important;flex-direction:column;overflow-y:auto;
-    background:var(--bg);border-left:1px solid var(--border);}
-  .dt-rs{padding:12px 14px 8px;font-size:11px;font-weight:800;color:var(--text2);
-    text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border);}
-  .dt-empty{padding:40px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:2;}
-  .dt-rrow{display:flex;align-items:center;gap:6px;padding:7px 14px;
-    font-size:12px;border-bottom:1px solid var(--border);}
-  .dt-rpos{width:16px;text-align:right;color:var(--text3);font-weight:700;font-size:11px;flex-shrink:0;}
-  .dt-rnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
-  .dt-rst{width:20px;text-align:center;color:var(--text2);font-size:11px;}
-  .dt-rpt{width:30px;text-align:center;font-weight:800;color:var(--accent);font-size:13px;}
-
-  /* ── Hide mobile-only elements ── */
+    background:var(--card);border-left:1px solid var(--border);}
+  /* Left sidebar items */
+  .dt-lhdr{padding:12px 14px 8px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
+  .dt-li{padding:8px 10px;cursor:pointer;transition:background .12s;border-radius:8px;margin:1px 6px;}
+  .dt-li:hover{background:var(--card2);}
+  .dt-li.sel{background:var(--accent-dim);}
+  .dt-li-hd{display:flex;align-items:center;gap:8px;}
+  .dt-li-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .dt-li-nm{font-size:12px;font-weight:700;flex:1;}
+  .dt-li-sp{font-size:10px;color:var(--text3);}
+  .dt-li-divs{padding:4px 0 2px 36px;display:flex;flex-direction:column;gap:1px;}
+  .dt-li-div{font-size:12px;color:var(--text2);padding:4px 8px;border-radius:6px;cursor:pointer;}
+  .dt-li-div:hover{background:var(--card2);color:var(--text);}
+  .dt-li-div.sel{color:var(--accent);font-weight:700;background:rgba(116,128,255,0.09);}
+  /* Right sidebar */
+  .dt-rs{padding:12px 14px 6px;font-size:10px;font-weight:800;color:var(--text3);
+    text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
+  .dt-empty{padding:40px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.8;}
+  .dt-rrow{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:12px;border-bottom:1px solid var(--border);}
+  .dt-rpos{width:18px;text-align:right;color:var(--text3);font-weight:700;flex-shrink:0;}
+  .dt-rnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dt-rst{width:22px;text-align:center;color:var(--text2);}
+  .dt-rpt{width:32px;text-align:center;font-weight:800;color:var(--accent);}
+  /* Hide mobile-only elements */
   .view>header,.bottom-nav,#view-home .home-banner,#view-home .admin-entry,
   #view-home>div>div:last-child{display:none!important;}
   .toast{max-width:460px!important;}
-
-  /* ── Center content tweaks ── */
-  #view-home .search-home{margin:16px;border-radius:10px;}
-  #view-home .section-title{padding-left:20px;}
-  #view-home .leagues-list{padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .league-card{margin:0;}
 }
 </style>
 </head>
@@ -2368,24 +2341,19 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- DESKTOP NAV -->
 <nav id="dt-nav" style="display:none">
   <div class="dt-brand" onclick="dtGoHome()">
-    <div class="dt-brand-logo">AT</div>
-    <div style="display:flex;flex-direction:column;line-height:1.1">
-      <span>Atlonis</span>
-      <em>Scores</em>
-    </div>
+    <div class="logo-circle" style="width:32px;height:32px;font-size:12px">AT</div>
+    <span>Atlonis</span>
   </div>
   <div class="dt-tabs">
-    <button class="dt-tab active" id="dt-tab-p" onclick="dtGoHome();dtSetTab(this)">Partidos</button>
-    <button class="dt-tab" onclick="dtGoHome();dtSetTab(this)">Ligas</button>
-    <button class="dt-tab" onclick="dtGoHome();dtSetTab(this)">Buscar</button>
+    <button class="dt-tab active" onclick="dtGoHome()">⚡ Partidos</button>
+    <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
   </div>
   <div class="dt-spacer"></div>
   <div class="dt-search">
-    <span style="color:var(--text3);font-size:13px">🔍</span>
-    <input type="text" placeholder="Buscar..." oninput="dtSearch(this.value)" id="dt-srch">
+    <span style="color:var(--text3);font-size:14px">🔍</span>
+    <input type="text" placeholder="Buscar liga..." oninput="dtSearch(this.value)" id="dt-srch">
   </div>
-  <button class="dt-ingresar" onclick="showAdminLogin()">Ingresar</button>
-  <button class="theme-btn" onclick="toggleTheme()" style="margin-left:8px;border-color:var(--border)">🌙</button>
+  <button class="theme-btn" onclick="toggleTheme()" style="margin-left:4px">🌙</button>
 </nav>
 
 <!-- DESKTOP LEFT SIDEBAR -->
@@ -6724,11 +6692,6 @@ function dtGoHome(){
   showView('view-home');
   document.getElementById('view-admin').style.display='none';
   _renderDtRight(null);
-}
-
-function dtSetTab(btn){
-  document.querySelectorAll('.dt-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
 }
 
 function dtSearch(q){
