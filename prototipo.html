@@ -1074,35 +1074,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="modal-body">
       <div class="modal-pane active" id="pane-eventos">
-        <div class="events-separator"><hr><span>PRIMERA PARTE</span><hr></div>
-        <div class="events-grid">
-          <div class="event-col">
-            <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-transform:uppercase">Local</div>
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">3'</div></div></div>
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">López D.</div><div class="event-min">11'</div></div></div>
-            <div class="event-item"><span class="event-icon">🟡</span><div><div class="event-player">Torres R.</div><div class="event-min">18'</div></div></div>
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">25'</div></div></div>
-          </div>
-          <div class="event-col">
-            <div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-align:right;text-transform:uppercase">Visitante</div>
-            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">7'</div></div></div>
-            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">15'</div></div></div>
-            <div class="event-item away"><span class="event-icon">🔴</span><div style="text-align:right"><div class="event-player">Gómez L.</div><div class="event-min">28'</div></div></div>
-          </div>
-        </div>
-        <div class="events-separator" style="margin-top:12px"><hr><span>SEGUNDA PARTE</span><hr></div>
-        <div class="events-grid">
-          <div class="event-col">
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">Sánchez K.</div><div class="event-min">33'</div></div></div>
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">Fernández A.</div><div class="event-min">41'</div></div></div>
-            <div class="event-item"><span class="event-icon">⚽</span><div><div class="event-player">García M.</div><div class="event-min">55'</div></div></div>
-          </div>
-          <div class="event-col">
-            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Díaz C.</div><div class="event-min">36'</div></div></div>
-            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Martín S.</div><div class="event-min">44'</div></div></div>
-            <div class="event-item away"><span class="event-icon">⚽</span><div style="text-align:right"><div class="event-player">Ruiz P.</div><div class="event-min">58'</div></div></div>
-          </div>
-        </div>
+        <div id="match-events-content"><div style="text-align:center;color:var(--text3);padding:32px 16px;font-size:13px">Sin eventos</div></div>
       </div>
       <div class="modal-pane" id="pane-info">
         <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">Fecha 5</span></div>
@@ -2689,33 +2661,59 @@ const standings=[
 (function generateDemoData(){
   const fn=['Juan','Carlos','Luis','Miguel','José','Pedro','Pablo','Andrés','Diego','Matías','Nicolás','Facundo','Tomás','Agustín','Franco','Sebastián','Rodrigo','Gonzalo','Ezequiel','Lautaro'];
   const ln=['García','López','Martínez','González','Rodríguez','Pérez','Sánchez','Ramírez','Torres','Flores','Rivera','Gómez','Díaz','Reyes','Morales','Cruz','Ortiz','Gutiérrez','Chávez','Ramos'];
-  // Matches: pares round-robin simplificados
-  const PAIRS=[[0,1],[2,3],[4,5],[0,2],[1,4],[3,5],[0,3],[2,4],[1,5]];
-  const STATUSES=['done','done','done','done','live','upcoming','upcoming','upcoming','upcoming'];
-  let mid=100, pid=2000;
+  const ROUND_CFG=[
+    {round:1,pairs:[[0,1],[2,3],[4,5]],status:'done'},
+    {round:2,pairs:[[0,2],[1,3],[3,5]],status:'done'},
+    {round:3,pairs:[[0,4],[1,5],[2,4]],status:'done'},
+    {round:4,pairs:[[1,2],[0,5],[3,4]],status:'done'},
+    {round:5,pairs:[[0,1],[4,5]],status:'done'},
+    {round:5,pairs:[[2,3]],status:'live'},
+    {round:6,pairs:[[0,3],[1,4],[2,5]],status:'upcoming'},
+    {round:7,pairs:[[0,2],[1,5],[3,4]],status:'upcoming'},
+    {round:8,pairs:[[0,4],[1,3],[2,5]],status:'upcoming'},
+  ];
+  function rndName(fn,ln,ti,i){return fn[(ti*7+i)%fn.length]+' '+ln[(ti*3+i)%ln.length];}
+  function genEvents(hPl,aPl,hs,as_,status){
+    const evs=[],maxMin=status==='live'?38:60;
+    const eIcon=t=>t==='gol'?'⚽':t==='amarilla'?'🟡':'🔴';
+    for(let g=0;g<(hs||0);g++)evs.push({min:Math.floor(1+Math.random()*maxMin),type:'gol',player:hPl[Math.floor(Math.random()*Math.min(5,hPl.length))].name,team:'home'});
+    for(let g=0;g<(as_||0);g++)evs.push({min:Math.floor(1+Math.random()*maxMin),type:'gol',player:aPl[Math.floor(Math.random()*Math.min(5,aPl.length))].name,team:'away'});
+    const ny=1+Math.floor(Math.random()*3);
+    for(let y=0;y<ny;y++){const h=Math.random()>.5,pl=h?hPl:aPl;evs.push({min:Math.floor(1+Math.random()*maxMin),type:'amarilla',player:pl[Math.floor(Math.random()*pl.length)].name,team:h?'home':'away'});}
+    if(Math.random()<0.22){const h=Math.random()>.5,pl=h?hPl:aPl;evs.push({min:Math.floor(20+Math.random()*(maxMin-20)),type:'roja',player:pl[Math.floor(Math.random()*pl.length)].name,team:h?'home':'away'});}
+    return evs.sort((a,b)=>a.min-b.min);
+  }
+  let mid=100,pid=2000;
   Object.entries(_DIV_TEAMS).forEach(([divId,tms])=>{
     const dId=parseInt(divId);
-    // Matches
-    PAIRS.forEach(([hi,ai],i)=>{
-      const done=STATUSES[i]==='done', live=STATUSES[i]==='live';
-      const hs=done?Math.floor(18+Math.random()*12):null;
-      const as_=done?Math.floor(10+Math.random()*15):null;
-      matches.push({id:mid++,home:tms[hi],away:tms[ai],round:Math.floor(i/3)+5,
-        homeScore:hs,awayScore:as_,status:STATUSES[i],
-        time:live?'VIVO':_TIMES[i%6],venue:_VENUES[i%6],divId:dId});
-    });
-    // Standings
-    tms.forEach((teamId,i)=>{
-      const pj=7-Math.floor(i/2), pg=Math.max(0,5-i), pe=i<3?0:1, pp=pj-pg-pe;
-      const gf=85+(5-i)*4, gc=60+i*5, pts=pg*3+pe;
-      standings.push({teamId,pj,pg,pe,pp,gf,gc,pts,divId:dId});
-    });
-    // Players (12 por equipo, 6 equipos por división)
+    const teamPl={};
     tms.forEach((teamId,ti)=>{
+      const pl=[];
       for(let i=0;i<12;i++){
-        players.push({id:pid++,name:fn[(ti*7+i)%fn.length]+' '+ln[(ti*3+i)%ln.length],
-          jersey:i+1,team:teamId,goals:Math.max(0,Math.floor((13-i*1.2+ti%3)))});
+        const p={id:pid++,name:rndName(fn,ln,ti,i),jersey:i+1,team:teamId,
+          goals:Math.max(0,Math.floor(10-i*0.9+ti%4)),
+          yellows:Math.floor(Math.random()*3),
+          reds:Math.random()<0.1?1:0};
+        pl.push(p);players.push(p);
       }
+      teamPl[teamId]=pl;
+    });
+    ROUND_CFG.forEach(({round,pairs,status})=>{
+      pairs.forEach(([hi,ai])=>{
+        const done=status==='done',live=status==='live';
+        const hs=done?1+Math.floor(Math.random()*5):(live?Math.floor(Math.random()*3):null);
+        const as_=done?Math.floor(Math.random()*4):(live?Math.floor(Math.random()*2):null);
+        const hPl=teamPl[tms[hi]]||[],aPl=teamPl[tms[ai]]||[];
+        const evs=(done||live)?genEvents(hPl,aPl,hs||0,as_||0,status):[];
+        matches.push({id:mid++,home:tms[hi],away:tms[ai],round,homeScore:hs,awayScore:as_,
+          status,time:live?'VIVO':_TIMES[round%_TIMES.length],
+          venue:_VENUES[round%_VENUES.length],divId:dId,events:evs});
+      });
+    });
+    tms.forEach((teamId,i)=>{
+      const pj=7-Math.floor(i/2),pg=Math.max(0,5-i),pe=i<3?0:1,pp=pj-pg-pe;
+      const gf=85+(5-i)*4,gc=60+i*5,pts=pg*3+pe;
+      standings.push({teamId,pj,pg,pe,pp,gf,gc,pts,divId:dId});
     });
   });
 })();
@@ -3606,13 +3604,37 @@ function openMatch(id){
   document.getElementById('modal-away-shield').textContent=away.short;
   document.getElementById('modal-away-shield').style.cssText=`background:${away.color};color:${away.text}`;
   document.getElementById('modal-away-name').textContent=away.name;
-  document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?'— - —':'- - -';
+  document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?`${m.homeScore??0} - ${m.awayScore??0}`:'- - -';
   const st=document.getElementById('modal-status-tag');
   st.textContent=m.status==='done'?'FINALIZADO':m.status==='live'?'EN VIVO':'PROGRAMADO';
   st.className='modal-status-tag'+(m.status==='live'?' live':'');
   document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent||'División'} · Fecha ${m.round}`;
+  // Dynamic events
+  document.getElementById('match-events-content').innerHTML=_renderMatchEvents(m);
+  // Dynamic info tab
+  document.querySelector('#pane-info').innerHTML=`
+    <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">Fecha ${m.round}</span></div>
+    <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${m.venue||'Por confirmar'}</span></div>
+    <div class="info-row"><span class="info-label">Horario</span><span class="info-value">${m.time||'Por confirmar'}</span></div>
+    <div class="info-row"><span class="info-label">Estado</span><span class="info-value">${m.status==='done'?'✓ Finalizado':m.status==='live'?'🟢 En vivo':'⏳ Programado'}</span></div>`;
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
+}
+function _renderMatchEvents(m){
+  const eIcon=t=>t==='gol'?'⚽':t==='amarilla'?'🟡':'🔴';
+  if(!m||m.status==='upcoming')return`<div style="text-align:center;color:var(--text3);padding:32px 16px;font-size:14px">📅 Partido programado<br><span style="font-size:12px">Los eventos aparecerán cuando inicie el partido</span></div>`;
+  const evs=m.events||[];
+  if(!evs.length)return`<div style="text-align:center;color:var(--text3);padding:32px 16px;font-size:13px">Sin eventos registrados</div>`;
+  function renderHalf(halfEvs){
+    const h=halfEvs.filter(e=>e.team==='home'),a=halfEvs.filter(e=>e.team==='away');
+    const rowH=e=>`<div class="event-item"><span class="event-icon">${eIcon(e.type)}</span><div><div class="event-player">${e.player}</div><div class="event-min">${e.min}'</div></div></div>`;
+    const rowA=e=>`<div class="event-item away"><span class="event-icon">${eIcon(e.type)}</span><div style="text-align:right"><div class="event-player">${e.player}</div><div class="event-min">${e.min}'</div></div></div>`;
+    return`<div class="events-grid"><div class="event-col"><div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-transform:uppercase">Local</div>${h.length?h.map(rowH).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0">—</div>'}</div><div class="event-col"><div style="font-size:10px;font-weight:700;color:var(--text3);padding-bottom:4px;text-align:right;text-transform:uppercase">Visitante</div>${a.length?a.map(rowA).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0;text-align:right">—</div>'}</div></div>`;
+  }
+  const first=evs.filter(e=>e.min<=45),second=evs.filter(e=>e.min>45);
+  let html=`<div class="events-separator"><hr><span>PRIMERA PARTE</span><hr></div>`+renderHalf(first);
+  if(m.status==='done'||second.length){html+=`<div class="events-separator" style="margin-top:12px"><hr><span>${m.status==='live'?'EN CURSO':'SEGUNDA PARTE'}</span><hr></div>`+renderHalf(second);}
+  return html;
 }
 function closeMatch(e){if(e.target===document.getElementById('matchModal'))document.getElementById('matchModal').classList.remove('open');}
 function switchModalTab(tab,el){
