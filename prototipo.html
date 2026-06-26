@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<title>FIXTAR</title>
+<title>Atlonis</title>
 <style>
 :root[data-theme="dark"] {
   --bg: #08091a; --bg2: #060812; --card: #0f1222; --card2: #14182e;
@@ -552,8 +552,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- HOME -->
 <div id="view-home" class="view active">
   <header>
-    <div class="logo-circle">FX</div>
-    <div style="flex:1"><h1>FIXTAR</h1><span class="subtitle">Encontrá tu liga</span></div>
+    <div class="logo-circle">AT</div>
+    <div style="flex:1"><h1>Atlonis</h1><span class="subtitle">Encontrá tu liga</span></div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div style="padding-bottom:24px">
@@ -570,6 +570,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="section-title">LIGAS</div>
     <div class="leagues-list" id="leaguesList"></div>
     <div onclick="showAdminLogin()" class="admin-entry">Acceso administradores</div>
+    <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text3)">© 2025 Atlonis · Todos los derechos reservados</div>
   </div>
 </div>
 
@@ -969,8 +970,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </header>
   <div class="login-view">
-    <div style="font-size:52px;margin-bottom:4px">🔐</div>
-    <div style="font-size:20px;font-weight:900;text-align:center">Panel de Administración</div>
+    <div class="logo-circle" style="width:56px;height:56px;font-size:20px;margin:0 auto 8px">AT</div>
+    <div style="font-size:22px;font-weight:900;text-align:center">Atlonis</div>
     <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Ingresá con las credenciales que te asignaron</div>
     <div class="form-group"><label class="form-label">Usuario o Email</label><input type="text" class="form-input" id="login-email" placeholder="tu@email.com o usuario" autocomplete="off"></div>
     <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
@@ -2667,7 +2668,7 @@ async function loadVerPlanes(){
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:16px">Error al cargar planes</div>';}
 }
 function solicitarUpgrade(planNombre){
-  showToast('Solicitud enviada al administrador de FIXTAR 📧','success');
+  showToast('Solicitud enviada al administrador de Atlonis 📧','success');
   closeVerPlanes(null,true);
 }
 
@@ -5669,7 +5670,7 @@ function openCredFromProfile(){
 }
 function sharePlayerProfile(){
   const name=document.getElementById('pp-name')?.textContent||'Jugador';
-  const text=`Perfil de ${name} — FIXTAR`;
+  const text=`Perfil de ${name} — Atlonis`;
   if(navigator.share){navigator.share({title:text,text});}
   else{navigator.clipboard?.writeText(text);showToast('Copiado al portapapeles','success');}
 }
@@ -5683,7 +5684,7 @@ function openActaDigital(){
 
 // ═══ SHARE RESULT ═══
 function shareResultText(text){
-  if(navigator.share){navigator.share({title:'Resultado FIXTAR',text});}
+  if(navigator.share){navigator.share({title:'Resultado Atlonis',text});}
   else{navigator.clipboard?.writeText(text)||document.execCommand('copy');showToast('Copiado ✓','success');}
 }
 function shareResult(matchEl){
