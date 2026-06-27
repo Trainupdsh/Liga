@@ -1951,6 +1951,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div style="display:flex;border-bottom:2px solid var(--border);overflow-x:auto">
       <div id="dtab-plantel" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('plantel',this)">PLANTEL</div>
       <div id="dtab-partidos" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('partidos',this)">PARTIDOS</div>
+      <div id="dtab-stats" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('stats',this)">ESTADÍSTICAS</div>
       <div id="dtab-cuerpo" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="switchDelegTab('cuerpo',this)">CUERPO TÉC.</div>
       <div id="dtab-comunicados" style="flex:1;min-width:80px;padding:12px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap" onclick="openComunicados('delegado')">AVISOS</div>
     </div>
@@ -1961,6 +1962,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <button class="btn btn-primary btn-sm" onclick="openDelegAgregarJugador()">+ Agregar jugador</button>
       </div>
       <div id="deleg-plantel-list" style="padding:0 16px 24px;display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
+      </div>
+    </div>
+    <!-- Tab Estadísticas -->
+    <div id="deleg-tab-stats" style="display:none">
+      <div id="deleg-stats-list" style="padding:14px 16px 24px;display:flex;flex-direction:column;gap:14px">
         <div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>
       </div>
     </div>
@@ -4436,7 +4443,7 @@ function showDelegadoView(club){
 }
 
 function switchDelegTab(tab,el){
-  ['plantel','partidos','cuerpo'].forEach(t=>{
+  ['plantel','partidos','stats','cuerpo'].forEach(t=>{
     const pane=document.getElementById('deleg-tab-'+t);
     if(pane)pane.style.display=t===tab?'':'none';
     const tabEl=document.getElementById('dtab-'+t);
@@ -4444,6 +4451,7 @@ function switchDelegTab(tab,el){
   });
   if(tab==='plantel')loadDelegPlantel();
   if(tab==='partidos')loadDelegPartidos();
+  if(tab==='stats')loadDelegStats();
   if(tab==='cuerpo')loadCuerpoTecnico();
 }
 
@@ -4451,8 +4459,8 @@ async function loadDelegPlantel(){
   const el=document.getElementById('deleg-plantel-list');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
-    // Obtener equipos del club
-    const {data:equipos}=await supa.from('equipos').select('id,nombre,division_id').eq('club_id',delegadoClub.id);
+    // Obtener equipos del club (con su división para mostrarla por jugador)
+    const {data:equipos}=await supa.from('equipos').select('id,nombre,division_id, division:division_id(nombre,categoria,genero)').eq('club_id',delegadoClub.id);
     if(!equipos||!equipos.length){
       el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">El club no está inscripto en ninguna división aún.</div>';
       document.getElementById('deleg-plantel-count').textContent='0 jugadores';
@@ -4460,6 +4468,10 @@ async function loadDelegPlantel(){
       return;
     }
     delegadoClub._equipos=equipos;
+    // map equipo_id -> etiqueta de división
+    const eqDivMap={};
+    equipos.forEach(e=>{const d=e.division;eqDivMap[e.id]=d?[d.categoria,d.nombre].filter(Boolean).join(' ')+(d.genero?' ('+d.genero+')':''):(e.nombre||'');});
+    delegadoClub._eqDivMap=eqDivMap;
     const equipoIds=equipos.map(e=>e.id);
     const {data:jugadores}=await supa.from('jugadores')
       .select('*, equipo:equipos(nombre)')
@@ -4475,7 +4487,8 @@ async function loadDelegPlantel(){
         <div style="width:36px;height:36px;border-radius:50%;background:${delegadoClub.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer" onclick="openPlayerProfile(${j.id})">${j.foto_url?`<img src="${j.foto_url}" style="width:100%;height:100%;object-fit:cover" alt="">`:j.numero||'?'}</div>
         <div style="flex:1;cursor:pointer" onclick="openPlayerProfile(${j.id})">
           <div style="font-size:13px;font-weight:700">${escHtml(j.nombre)}${j.suspendido?` <span style="font-size:10px;background:rgba(239,68,68,.15);color:var(--red);border-radius:6px;padding:1px 5px">SUSP</span>`:''}</div>
-          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')} · #${j.numero||'—'}</div>
+          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · #${j.numero||'—'}</div>
+          <div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:1px">🏆 ${escHtml(eqDivMap[j.equipo_id]||j.equipo?.nombre||'Sin división')}</div>
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" style="font-size:11px;padding:3px 7px" onclick="openCredModal(${j.id})">🪪</button>
@@ -4508,7 +4521,7 @@ async function loadDelegPartidos(){
       alinMap[k]=(alinMap[k]||0)+1;
     });
     const estadoLabel={programado:'⏳ Programado',en_curso:'🟢 En vivo',finalizado:'✓ Finalizado'};
-    el.innerHTML=list.map(p=>{
+    const cardHtml=(p)=>{
       const esLocal=ids.includes(p.equipo_local_id);
       const esVisita=ids.includes(p.equipo_visita_id);
       const miEquipoId=esLocal?p.equipo_local_id:p.equipo_visita_id;
@@ -4548,8 +4561,62 @@ async function loadDelegPartidos(){
           👁️ Ver en vivo
         </button>`:''}
       </div>`;
-    }).join('');
+    };
+    // Separar próximos (no finalizados) de jugados
+    const proximos=list.filter(p=>p.estado!=='finalizado');
+    const jugados=list.filter(p=>p.estado==='finalizado');
+    let html='';
+    if(proximos.length)html+=`<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;padding:2px 2px">📅 Próximos (${proximos.length})</div>`+proximos.map(cardHtml).join('');
+    if(jugados.length)html+=`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:10px 2px 2px">✓ Jugados (${jugados.length})</div>`+jugados.slice().reverse().map(cardHtml).join('');
+    el.innerHTML=html||'<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos.</div>';
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
+}
+
+async function loadDelegStats(){
+  const el=document.getElementById('deleg-stats-list');
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    let equipos=delegadoClub._equipos;
+    if(!equipos||!equipos.length){
+      const {data}=await supa.from('equipos').select('id,nombre,division_id, division:division_id(nombre,categoria,genero)').eq('club_id',delegadoClub.id);
+      equipos=data||[];delegadoClub._equipos=equipos;
+      const m={};equipos.forEach(e=>{const d=e.division;m[e.id]=d?[d.categoria,d.nombre].filter(Boolean).join(' ')+(d.genero?' ('+d.genero+')':''):(e.nombre||'');});
+      delegadoClub._eqDivMap=m;
+    }
+    if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">El club no está inscripto en ninguna división aún.</div>';return;}
+    const ids=equipos.map(e=>e.id);
+    const {data:ps}=await supa.from('partidos')
+      .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,estado')
+      .or(ids.map(id=>`equipo_local_id.eq.${id},equipo_visita_id.eq.${id}`).join(','))
+      .eq('estado','finalizado');
+    const fin=ps||[];
+    const stat={};ids.forEach(id=>stat[id]={pj:0,pg:0,pe:0,pp:0,gf:0,gc:0});
+    fin.forEach(p=>{
+      const gl=p.goles_local||0,gv=p.goles_visita||0;
+      if(ids.includes(p.equipo_local_id)){const s=stat[p.equipo_local_id];s.pj++;s.gf+=gl;s.gc+=gv;if(gl>gv)s.pg++;else if(gl<gv)s.pp++;else s.pe++;}
+      if(ids.includes(p.equipo_visita_id)){const s=stat[p.equipo_visita_id];s.pj++;s.gf+=gv;s.gc+=gl;if(gv>gl)s.pg++;else if(gv<gl)s.pp++;else s.pe++;}
+    });
+    const tot={pj:0,pg:0,pe:0,pp:0,gf:0,gc:0};
+    Object.values(stat).forEach(s=>{tot.pj+=s.pj;tot.pg+=s.pg;tot.pe+=s.pe;tot.pp+=s.pp;tot.gf+=s.gf;tot.gc+=s.gc;});
+    const big=(l,v,c)=>`<div style="flex:1;min-width:58px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center"><div style="font-size:20px;font-weight:800;color:${c||'var(--accent)'}">${v}</div><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase">${l}</div></div>`;
+    let html=`<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Total del club</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${big('PJ',tot.pj)}${big('PG',tot.pg,'var(--green)')}${big('PE',tot.pe)}${big('PP',tot.pp,'var(--red)')}${big('GF',tot.gf)}${big('GC',tot.gc)}${big('Dif',(tot.gf-tot.gc>=0?'+':'')+(tot.gf-tot.gc))}${big('Pts',tot.pg*3+tot.pe)}
+      </div></div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Por división</div>`;
+    equipos.forEach(e=>{
+      const s=stat[e.id],dif=s.gf-s.gc,lbl=(delegadoClub._eqDivMap&&delegadoClub._eqDivMap[e.id])||e.nombre||'División';
+      html+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏆 ${escHtml(lbl)}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text2)">
+          <span>PJ <b style="color:var(--text)">${s.pj}</b></span><span>PG <b style="color:var(--green)">${s.pg}</b></span><span>PE <b style="color:var(--text)">${s.pe}</b></span><span>PP <b style="color:var(--red)">${s.pp}</b></span>
+          <span>GF <b style="color:var(--text)">${s.gf}</b></span><span>GC <b style="color:var(--text)">${s.gc}</b></span><span>Dif <b style="color:var(--text)">${dif>=0?'+':''}${dif}</b></span><span>Pts <b style="color:var(--accent)">${s.pg*3+s.pe}</b></span>
+        </div>
+        ${s.pj===0?'<div style="font-size:11px;color:var(--text3);margin-top:6px">Sin partidos jugados aún</div>':''}
+      </div>`;
+    });
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar estadísticas</div>';}
 }
 
 let _editJugadorId=null;
