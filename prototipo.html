@@ -2876,6 +2876,11 @@ function _ligaIcon(l,extraStyle){
   if(l.logoUrl)return`<img src="${l.logoUrl}" style="object-fit:cover;${extraStyle||''}" alt="${escHtml(l.name||'')}">`;
   return l.icon||'🏆';
 }
+// Inner HTML for a team shield: the club escudo image if present, else the short text.
+function _teamShieldInner(t,imgRadius){
+  if(t&&t.logoUrl)return`<img src="${t.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:${imgRadius||'inherit'}" alt="">`;
+  return escHtml(t&&t.short||'?');
+}
 function renderLeagues(list){
   document.getElementById('leaguesList').innerHTML=list.map((l,i)=>`
     <div class="league-card fade-in" style="animation-delay:${i*60}ms" onclick="openLeague(${l.id})">
@@ -7295,7 +7300,7 @@ function _clubesRender(q){
         onmouseover="if(_clubesSel!==${t.id})this.style.background='var(--hover)'"
         onmouseout="if(_clubesSel!==${t.id})this.style.background='var(--card)'">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div class="shield" style="width:40px;height:40px;font-size:14px;background:${t.color};color:${t.text};border-radius:10px;flex-shrink:0">${t.short}</div>
+        <div class="shield" style="width:40px;height:40px;font-size:14px;background:${t.logoUrl?'transparent':t.color};color:${t.text};border-radius:10px;flex-shrink:0;overflow:hidden">${_teamShieldInner(t,'10px')}</div>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
           <div style="font-size:10px;color:var(--text3)">${liga?escHtml(liga.name):''}</div>
@@ -7367,7 +7372,7 @@ function _dtClickClub(id){
 
   el.innerHTML=`
     <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border)">
-      <div class="shield" style="width:56px;height:56px;font-size:20px;background:${t.color};color:${t.text};border-radius:14px;margin:0 auto 10px">${t.short}</div>
+      <div class="shield" style="width:56px;height:56px;font-size:20px;background:${t.logoUrl?'transparent':t.color};color:${t.text};border-radius:14px;margin:0 auto 10px;overflow:hidden">${_teamShieldInner(t,'14px')}</div>
       <div style="font-size:15px;font-weight:800">${escHtml(t.name)}</div>
       <div style="font-size:11px;color:var(--text3);margin-top:2px">${myLiga?escHtml(myLiga.name):''}</div>
     </div>
@@ -7468,7 +7473,7 @@ function _dtDblClickClub(id){
   const html=`
     <div style="display:flex;align-items:center;gap:6px;padding:16px 0 8px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border);margin-bottom:16px">
       <button onclick="showView('view-clubes');dtGoClubes()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">‹</button>
-      <div class="shield" style="width:44px;height:44px;font-size:16px;background:${t.color};color:${t.text};border-radius:12px;flex-shrink:0">${t.short}</div>
+      <div class="shield" style="width:44px;height:44px;font-size:16px;background:${t.logoUrl?'transparent':t.color};color:${t.text};border-radius:12px;flex-shrink:0;overflow:hidden">${_teamShieldInner(t,'12px')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
         <div style="font-size:11px;color:var(--text3)">${myLiga?escHtml(myLiga.name):''} · ${myDivs.length} división${myDivs.length!==1?'es':''}</div>
@@ -8046,14 +8051,14 @@ async function _dtEnsureTorneos(ligaId){
     if(!divIds.length)return;
     // Participating teams + finished matches for every division at once
     const [{data:eqs},{data:ps}]=await Promise.all([
-      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id').in('division_id',divIds),
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id,club:club_id(logo_url)').in('division_id',divIds),
       supa.from('partidos').select('division_id,equipo_local_id,equipo_visita_id,goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado')
     ]);
     (eqs||[]).forEach(e=>{
       const eid=e.id+RID;
       if(teamsData.some(x=>x.id===eid))return;
       const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
-      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff'});
+      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null});
     });
     // Zero baseline for every team, then fold in finished results
     const acc={}; // divId(offset) -> teamId(offset) -> row
@@ -8178,7 +8183,7 @@ function _dtDivStandingsCard(div){
           onclick="_dtStandingsClickTeam(${s.teamId})"
           ondblclick="_dtDblClickClub(${s.teamId})">
         <div class="vtd-pos">${i+1}</div>
-        <div class="vtd-shield" style="background:${t.color};color:${t.text}">${t.short}</div>
+        <div class="vtd-shield" style="background:${t.logoUrl?'transparent':t.color};color:${t.text};overflow:hidden">${_teamShieldInner(t,'6px')}</div>
         <div class="vtd-nm">${escHtml(t.name)}</div>
         <div class="vtd-st">${s.pj}</div>
         <div class="vtd-st">${s.pg}</div>
