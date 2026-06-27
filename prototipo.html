@@ -1372,6 +1372,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="flex:1">
         <div style="font-size:11px;color:var(--text2)" id="admin-torneo-meta">—</div>
       </div>
+      <button class="btn btn-secondary btn-sm" onclick="openEditTorneo()" title="Editar datos del torneo">✏️ Editar</button>
       <div style="position:relative">
         <span id="admin-torneo-estado-badge" class="tag" style="cursor:pointer" onclick="toggleEstadoDropdown()" title="Cambiar estado">—  ▾</span>
         <div id="estado-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:10px;z-index:100;min-width:160px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
@@ -1512,7 +1513,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div class="modal-sheet" style="padding-bottom:28px">
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Nuevo Torneo</div>
+      <div id="nt-modal-title" style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Nuevo Torneo</div>
       <div style="font-size:15px;font-weight:900" id="nt-preview-nombre">Sin nombre</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:75vh">
@@ -2870,11 +2871,16 @@ function toggleTheme(){
   document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=isDark?'🌙':'☀️');
 }
 
+// Renders a liga's icon: its uploaded logo image if present, else the emoji.
+function _ligaIcon(l,extraStyle){
+  if(l.logoUrl)return`<img src="${l.logoUrl}" style="object-fit:cover;${extraStyle||''}" alt="${escHtml(l.name||'')}">`;
+  return l.icon||'🏆';
+}
 function renderLeagues(list){
   document.getElementById('leaguesList').innerHTML=list.map((l,i)=>`
     <div class="league-card fade-in" style="animation-delay:${i*60}ms" onclick="openLeague(${l.id})">
       <div class="league-card-main">
-        <div class="league-icon" style="background:${l.color}">${l.icon}</div>
+        <div class="league-icon" style="background:${l.logoUrl?'transparent':l.color};overflow:hidden">${_ligaIcon(l,'width:100%;height:100%;border-radius:14px')}</div>
         <div class="league-info">
           <div class="league-name">${l.name}</div>
           <div class="league-meta">${l.sport} · ${l.season||'—'}</div>
@@ -5405,7 +5411,10 @@ function ntGetDias(){
   const checks=[{id:'nt-lun',v:1},{id:'nt-mar',v:2},{id:'nt-mie',v:3},{id:'nt-jue',v:4},{id:'nt-vie',v:5},{id:'nt-sab',v:6},{id:'nt-dom',v:0}];
   return checks.filter(c=>document.getElementById(c.id)?.checked).map(c=>c.v);
 }
+let _editTorneoId=null;
 function openNuevoTorneo(){
+  _editTorneoId=null;
+  const tt=document.getElementById('nt-modal-title');if(tt)tt.textContent='Nuevo Torneo';
   document.getElementById('nt-nombre').value='';
   document.getElementById('nt-temporada').value=new Date().getFullYear();
   document.getElementById('nt-estado').value='planificacion';
@@ -5421,6 +5430,37 @@ function openNuevoTorneo(){
   document.getElementById('nt-error').style.display='none';
   document.getElementById('nt-save-btn').disabled=false;
   document.getElementById('nt-save-btn').textContent='Crear Torneo';
+  document.getElementById('nuevoTorneoModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nt-nombre').focus(),300);
+}
+// Opens the torneo modal pre-filled to EDIT the current torneo
+async function openEditTorneo(){
+  if(!currentAdminTorneoId){showToast('Seleccioná un torneo primero','error');return;}
+  let t=null;
+  try{
+    const {data,error}=await supa.from('torneos').select('*').eq('id',currentAdminTorneoId).single();
+    if(error)throw error;
+    t=data;
+  }catch(e){showToast('No se pudo cargar el torneo: '+e.message,'error');return;}
+  _editTorneoId=currentAdminTorneoId;
+  const tt=document.getElementById('nt-modal-title');if(tt)tt.textContent='Editar Torneo';
+  document.getElementById('nt-nombre').value=t.nombre||'';
+  document.getElementById('nt-temporada').value=t.temporada||'';
+  document.getElementById('nt-estado').value=t.estado||'planificacion';
+  document.getElementById('nt-formato').value=t.formato||'roundrobin';
+  document.getElementById('nt-hora').value=t.hora_default||'16:00';
+  document.getElementById('nt-fecha-inicio').value=t.fecha_inicio||'';
+  window._ntLogoBlob=null;
+  const prev=document.getElementById('nt-logo-preview'),ph=document.getElementById('nt-logo-placeholder');
+  if(t.logo_url){prev.src=t.logo_url;prev.classList.add('visible');ph.style.display='none';}
+  else{prev.classList.remove('visible');ph.style.display='';}
+  const dias=Array.isArray(t.dias_semana)?t.dias_semana:[];
+  const map=[{id:'nt-dom',v:0},{id:'nt-lun',v:1},{id:'nt-mar',v:2},{id:'nt-mie',v:3},{id:'nt-jue',v:4},{id:'nt-vie',v:5},{id:'nt-sab',v:6}];
+  map.forEach(c=>{const el=document.getElementById(c.id);if(el)el.checked=dias.includes(c.v);});
+  document.getElementById('nt-preview-nombre').textContent=t.nombre||'Sin nombre';
+  document.getElementById('nt-error').style.display='none';
+  const btn=document.getElementById('nt-save-btn');
+  btn.disabled=false;btn.textContent='Guardar cambios';
   document.getElementById('nuevoTorneoModal').classList.add('open');
   setTimeout(()=>document.getElementById('nt-nombre').focus(),300);
 }
@@ -5450,6 +5490,20 @@ async function saveNuevoTorneo(){
       try{logoUrl=await uploadImageToStorage(window._ntLogoBlob,'torneos',`torneo_${currentAdminLeagueId}_${Date.now()}.webp`);}
       catch(imgErr){console.warn('Logo torneo upload failed:',imgErr);}
     }
+    if(_editTorneoId){
+      // EDIT existing torneo
+      const updates={nombre,temporada,estado,formato,dias_semana,hora_default,fecha_inicio};
+      if(logoUrl)updates.logo_url=logoUrl;
+      const {error}=await supa.from('torneos').update(updates).eq('id',_editTorneoId);
+      if(error)throw error;
+      window._ntLogoBlob=null;
+      const edId=_editTorneoId;_editTorneoId=null;
+      closeNuevoTorneo(null,true);
+      showToast('Torneo actualizado ✓','success');
+      await loadAdminTorneos();
+      openTorneoDetail(edId,nombre,estado,temporada);
+      return;
+    }
     const {data:newTorneo,error}=await supa.from('torneos').insert({
       liga_id:currentAdminLeagueId,nombre,temporada,estado,formato,dias_semana,hora_default,fecha_inicio,
       logo_url:logoUrl||null
@@ -5463,7 +5517,7 @@ async function saveNuevoTorneo(){
     setTimeout(()=>openNuevaDivision(),350);
   }catch(e){
     errEl.textContent='Error: '+e.message;errEl.style.display='';
-    btn.disabled=false;btn.textContent='Crear Torneo';
+    btn.disabled=false;btn.textContent=_editTorneoId?'Guardar cambios':'Crear Torneo';
   }
 }
 
@@ -7919,7 +7973,7 @@ function _renderDtLeft(){
     const expL=_dtExpLigas.has(l.id);
     let h=`<div class="dt-node dt-node-liga${expL?' sel':''}" onclick="_dtToggleLiga(${l.id})">
       <span class="dt-chev${expL?' open':''}">›</span>
-      <div class="dt-li-ico" style="background:${l.color}">${l.icon}</div>
+      <div class="dt-li-ico" style="background:${l.logoUrl?'transparent':l.color};overflow:hidden">${_ligaIcon(l,'width:100%;height:100%;border-radius:inherit')}</div>
       <span class="dt-node-text">${escHtml(l.name)}</span>
       <span class="dt-node-badge">${escHtml(l.sport)}</span>
     </div>`;
@@ -7985,7 +8039,7 @@ function _dtShowTorneoCenter(torneoId){
 
   let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
     <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px">
-      <div class="league-icon" style="background:${liga?.color||'#333'};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${liga?.icon||'🏆'}</div>
+      <div class="league-icon" style="background:${liga?.logoUrl?'transparent':(liga?.color||'#333')};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">${liga?_ligaIcon(liga,'width:100%;height:100%;border-radius:12px'):'🏆'}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(torneo.name)}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px">${liga?escHtml(liga.name):''} · <span style="color:${statusColor};font-weight:700">${statusLabel}</span></div>
