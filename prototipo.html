@@ -8008,9 +8008,12 @@ function _renderDtLeft(){
     return h;
   }).join('');
 }
-// Lazy-load torneos + divisiones of a real (Supabase) liga into the
-// in-memory arrays the desktop tree reads from. Demo ligas are skipped.
+// Lazy-load torneos + divisiones + equipos of a real (Supabase) liga into
+// the in-memory arrays the desktop tree/standings read from. Demo ligas are
+// skipped. Real ids are namespaced with RID to avoid colliding with the
+// demo data ids; the original Supabase id is kept on `_rid` for queries.
 const _dtLoadedLigas=new Set();
+const RID=10000000;
 async function _dtEnsureTorneos(ligaId){
   const liga=leagues.find(l=>l.id===ligaId);
   if(!liga||!liga._real||_dtLoadedLigas.has(ligaId)||!supa)return;
@@ -8019,22 +8022,59 @@ async function _dtEnsureTorneos(ligaId){
     const {data:ts,error}=await supa.from('torneos').select('*').eq('liga_id',ligaId).order('id');
     if(error)throw error;
     (ts||[]).forEach(t=>{
-      if(torneos.some(x=>x.id===t.id&&x.leagueId===ligaId))return;
-      torneos.push({id:t.id,leagueId:t.liga_id,name:t.nombre,
+      const tid=t.id+RID;
+      if(torneos.some(x=>x.id===tid))return;
+      torneos.push({id:tid,_rid:t.id,leagueId:t.liga_id,name:t.nombre,
         status:t.estado==='finalizado'?'done':'active',
         start:t.temporada||'',divsCount:0});
     });
     const tIds=(ts||[]).map(t=>t.id);
-    if(tIds.length){
-      const {data:ds,error:de}=await supa.from('divisiones').select('*').in('torneo_id',tIds);
-      if(de)throw de;
-      (ds||[]).forEach(d=>{
-        if(divisiones.some(x=>x.id===d.id))return;
-        divisiones.push({id:d.id,torneoId:d.torneo_id,name:d.nombre,
-          grupo:d.categoria||null,teams:0,rounds:d.total_rondas||0,
-          currentRound:d.ronda_actual||0,icon:d.icon||'📋'});
+    if(!tIds.length)return;
+    const {data:ds,error:de}=await supa.from('divisiones').select('*').in('torneo_id',tIds);
+    if(de)throw de;
+    const realDivs=ds||[];
+    realDivs.forEach(d=>{
+      const did=d.id+RID;
+      if(divisiones.some(x=>x.id===did))return;
+      divisiones.push({id:did,_rid:d.id,torneoId:d.torneo_id+RID,name:d.nombre,
+        grupo:d.categoria||null,teams:0,rounds:d.total_rondas||0,
+        currentRound:d.ronda_actual||0,icon:d.icon||'📋'});
+    });
+    const divIds=realDivs.map(d=>d.id);
+    if(!divIds.length)return;
+    // Participating teams + finished matches for every division at once
+    const [{data:eqs},{data:ps}]=await Promise.all([
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id').in('division_id',divIds),
+      supa.from('partidos').select('division_id,equipo_local_id,equipo_visita_id,goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado')
+    ]);
+    (eqs||[]).forEach(e=>{
+      const eid=e.id+RID;
+      if(teamsData.some(x=>x.id===eid))return;
+      const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
+      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff'});
+    });
+    // Zero baseline for every team, then fold in finished results
+    const acc={}; // divId(offset) -> teamId(offset) -> row
+    (eqs||[]).forEach(e=>{
+      const dKey=e.division_id+RID;
+      acc[dKey]=acc[dKey]||{};
+      acc[dKey][e.id+RID]={teamId:e.id+RID,divId:dKey,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};
+    });
+    (ps||[]).forEach(p=>{
+      const d=acc[p.division_id+RID];if(!d)return;
+      const h=d[p.equipo_local_id+RID],a=d[p.equipo_visita_id+RID];if(!h||!a)return;
+      const gl=p.goles_local||0,gv=p.goles_visita||0;
+      h.pj++;a.pj++;h.gf+=gl;h.gc+=gv;a.gf+=gv;a.gc+=gl;
+      if(gl>gv){h.pg++;a.pp++;}else if(gl<gv){a.pg++;h.pp++;}else{h.pe++;a.pe++;}
+    });
+    Object.entries(acc).forEach(([dKey,rows])=>{
+      const dId=parseInt(dKey);
+      Object.values(rows).forEach(r=>{
+        r.pts=r.pg*3+r.pe;
+        if(!standings.some(s=>s.teamId===r.teamId&&s.divId===dId))standings.push(r);
       });
-    }
+      const dv=divisiones.find(x=>x.id===dId);if(dv)dv.teams=Object.keys(rows).length;
+    });
   }catch(e){
     _dtLoadedLigas.delete(ligaId); // allow retry on next expand
     console.warn('No se pudieron cargar torneos de la liga',ligaId,e);
@@ -8207,11 +8247,14 @@ async function _renderDtRight(divId){
   const el=document.getElementById('dt-rc');
   if(!el)return;
   if(!divId){el.innerHTML='<div class="dt-empty">Seleccioná una<br>división para ver<br>la tabla</div>';return;}
+  // Resolve the real Supabase division id (tree ids for real divs are offset by RID)
+  const _dvObj=divisiones.find(x=>x.id===divId);
+  const realDivId=_dvObj&&_dvObj._rid?_dvObj._rid:divId;
   el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">⏳ Cargando...</div>';
   try{
     const [{data:ps},{data:eqs}]=await Promise.all([
-      supa.from('partidos').select('equipo_local_id,equipo_visit_id,goles_local,goles_visit').eq('division_id',divId).eq('estado','finalizado'),
-      supa.from('equipos').select('id,nombre').eq('division_id',divId)
+      supa.from('partidos').select('equipo_local_id,equipo_visita_id,goles_local,goles_visita').eq('division_id',realDivId).eq('estado','finalizado'),
+      supa.from('equipos').select('id,nombre').eq('division_id',realDivId)
     ]);
     const eqIds=(eqs||[]).map(e=>e.id);
     const {data:jug}=eqIds.length?await supa.from('jugadores').select('id,nombre,equipo_id,goles').in('equipo_id',eqIds).order('goles',{ascending:false}).limit(8):{data:[]};
@@ -8220,12 +8263,12 @@ async function _renderDtRight(divId){
     const tbl={};
     (eqs||[]).forEach(e=>{tbl[e.id]={n:e.nombre,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0};});
     (ps||[]).forEach(p=>{
-      const h=tbl[p.equipo_local_id],a=tbl[p.equipo_visit_id];
+      const h=tbl[p.equipo_local_id],a=tbl[p.equipo_visita_id];
       if(!h||!a)return;
-      h.pj++;a.pj++;h.gf+=p.goles_local||0;h.gc+=p.goles_visit||0;
-      a.gf+=p.goles_visit||0;a.gc+=p.goles_local||0;
-      if((p.goles_local||0)>(p.goles_visit||0)){h.pg++;a.pp++;}
-      else if((p.goles_local||0)<(p.goles_visit||0)){a.pg++;h.pp++;}
+      h.pj++;a.pj++;h.gf+=p.goles_local||0;h.gc+=p.goles_visita||0;
+      a.gf+=p.goles_visita||0;a.gc+=p.goles_local||0;
+      if((p.goles_local||0)>(p.goles_visita||0)){h.pg++;a.pp++;}
+      else if((p.goles_local||0)<(p.goles_visita||0)){a.pg++;h.pp++;}
       else{h.pe++;a.pe++;}
     });
     const sorted=Object.values(tbl).map(r=>({...r,pts:r.pg*3+r.pe,dif:r.gf-r.gc})).sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
