@@ -3315,6 +3315,28 @@ function showAdminLogin(){
   document.getElementById('login-error').style.display='none';
   showView('view-login');
 }
+// ── Session persistence (sessionStorage: survives refresh/back, clears on tab close) ──
+function _saveSession(sess){try{sessionStorage.setItem('liga_session',JSON.stringify(sess));}catch(e){}}
+function _clearSession(){try{sessionStorage.removeItem('liga_session');}catch(e){}}
+function _getSession(){try{return JSON.parse(sessionStorage.getItem('liga_session')||'null');}catch(e){return null;}}
+async function _restoreSession(){
+  const s=_getSession();if(!s)return false;
+  try{
+    if(s.role==='superadmin'){await showSuperAdminDash();return true;}
+    if(s.role==='liga'){
+      const l=leagues.find(x=>x.id===s.leagueId);
+      if(l){showAdminForLeague(l);return true;}
+    }
+    if(s.role==='arbitro'&&s.user){showArbitroView(s.user);return true;}
+    if(s.role==='mesa'&&s.user){showMesaView(s.user);return true;}
+    if(s.role==='delegado'&&s.clubId&&supa){
+      const {data:club}=await supa.from('clubes').select('*, liga:ligas(nombre,deporte)').eq('id',s.clubId).single();
+      if(club){showDelegadoView(club);return true;}
+    }
+  }catch(e){console.warn('No se pudo restaurar la sesión',e);}
+  _clearSession();
+  return false;
+}
 async function doAdminLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
@@ -3354,6 +3376,7 @@ async function doAdminLogin(){
   document.getElementById('login-error').style.display='block';
 }
 function showAdminForLeague(l){
+  _saveSession({role:'liga',leagueId:l.id});
   currentAdminLeagueId=l.id;
   currentLigaPlan=null;
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
@@ -3401,9 +3424,10 @@ async function loadAdminDashStats(ligaId){
     document.getElementById('dash-stat-goles').textContent=totalGoles;
   }catch(e){console.warn('Error cargando stats del dashboard',e);}
 }
-function logoutAdmin(){showView('view-home');showToast('Sesión cerrada','');}
+function logoutAdmin(){_clearSession();showView('view-home');showToast('Sesión cerrada','');}
 
 async function showSuperAdminDash(){
+  _saveSession({role:'superadmin'});
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='none';
   document.getElementById('view-superadmin').classList.add('active');
@@ -4063,6 +4087,7 @@ function generateQR(seed){
 }
 // ═══ ÁRBITRO ═══
 function showArbitroView(user){
+  _saveSession({role:'arbitro',user});
   showView('view-arbitro');
   document.getElementById('arb-name').textContent=user.name;
   document.getElementById('arb-subtitle').textContent='Árbitro'+(user.league?' · '+user.league:'');
@@ -4130,6 +4155,7 @@ function renderPlanillaPlayers(homeId,awayId){
 let mesaScoreHome=0,mesaScoreAway=0,mesaSecs=0,mesaRunning=false,mesaTimerInterval=null,mesaPeriod=1;
 let mesaCurrentUser=null;
 function showMesaView(user){
+  _saveSession({role:'mesa',user});
   mesaCurrentUser=user;
   showView('view-mesa');
   document.getElementById('mesa-subtitle').textContent=user.league||'Liga';
@@ -4371,6 +4397,7 @@ function endPeriod(){
 let delegadoClub=null;
 
 function showDelegadoView(club){
+  _saveSession({role:'delegado',clubId:club.id});
   delegadoClub=club;
   const nombre=club.nombre||club.name||'Mi Club';
   const abrev=club.abreviacion||nombre.slice(0,2).toUpperCase();
@@ -6082,6 +6109,8 @@ function showToast(msg,type=''){
     leagues=[...DEMO_LEAGUES];
     renderLeagues(leagues);
   }
+  // Restore an active session (refresh / back) — only cleared on Salir or tab close
+  try{await _restoreSession();}catch(e){console.warn('restore session',e);}
 })();
 
 // ═══ IMAGE UPLOAD / RESIZE ═══
@@ -8325,10 +8354,12 @@ async function _renderDtRight(divId){
 
 function _dtApplyLayout(){
   const d=isDesktop();
-  document.getElementById('dt-nav').style.display=d?'flex':'none';
-  document.getElementById('dt-left').style.display=d?'flex':'none';
-  document.getElementById('dt-right').style.display=d?'flex':'none';
-  if(d&&leagues.length){_renderDtLeft();dtGoPartidos();}
+  // Don't take over the screen when a role session is active (admin/árbitro/etc.)
+  const hasSession=!!_getSession();
+  document.getElementById('dt-nav').style.display=d&&!hasSession?'flex':'none';
+  document.getElementById('dt-left').style.display=d&&!hasSession?'flex':'none';
+  document.getElementById('dt-right').style.display=d&&!hasSession?'flex':'none';
+  if(d&&leagues.length&&!hasSession){_renderDtLeft();dtGoPartidos();}
 }
 window.addEventListener('resize',_dtApplyLayout);
 document.addEventListener('DOMContentLoaded',_dtApplyLayout);
