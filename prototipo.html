@@ -7984,8 +7984,10 @@ function _renderDtLeft(){
     ts.forEach(t=>{
       const expT=_dtExpTorneos.has(t.id),isAct=t.status==='active';
       const selT=_dtSelTorneo===t.id;
+      const tLogo=t.logoUrl?`<img src="${t.logoUrl}" style="width:18px;height:18px;border-radius:5px;object-fit:cover;flex-shrink:0" alt="">`:'';
       h+=`<div class="dt-node dt-node-torneo${selT?' sel':''}" onclick="event.stopPropagation();_dtShowTorneoCenter(${t.id})">
         <span class="dt-chev${expT?' open':''}" onclick="event.stopPropagation();_dtToggleTorneo(${t.id})">›</span>
+        ${tLogo}
         <span class="dt-node-text">${escHtml(t.name)}</span>
         ${isAct?'<span class="dt-badge-act" title="Activo"></span>':'<span class="dt-badge-fin">FIN</span>'}
       </div>`;
@@ -8026,7 +8028,7 @@ async function _dtEnsureTorneos(ligaId){
       if(torneos.some(x=>x.id===tid))return;
       torneos.push({id:tid,_rid:t.id,leagueId:t.liga_id,name:t.nombre,
         status:t.estado==='finalizado'?'done':'active',
-        start:t.temporada||'',divsCount:0});
+        start:t.temporada||'',divsCount:0,logoUrl:t.logo_url||null});
     });
     const tIds=(ts||[]).map(t=>t.id);
     if(!tIds.length)return;
@@ -8111,9 +8113,14 @@ function _dtShowTorneoCenter(torneoId){
   const statusLabel=torneo.status==='active'?'● ACTIVO':'FINALIZADO';
   const statusColor=torneo.status==='active'?'var(--green)':'var(--text3)';
 
+  // Prefer the torneo's own logo in the center header; fall back to the liga logo/icon
+  const hdrIcon=torneo.logoUrl
+    ?`<img src="${torneo.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`
+    :(liga?_ligaIcon(liga,'width:100%;height:100%;border-radius:12px'):'🏆');
+  const hdrBg=(torneo.logoUrl||liga?.logoUrl)?'transparent':(liga?.color||'#333');
   let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
     <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px">
-      <div class="league-icon" style="background:${liga?.logoUrl?'transparent':(liga?.color||'#333')};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">${liga?_ligaIcon(liga,'width:100%;height:100%;border-radius:12px'):'🏆'}</div>
+      <div class="league-icon" style="background:${hdrBg};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">${hdrIcon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(torneo.name)}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px">${liga?escHtml(liga.name):''} · <span style="color:${statusColor};font-weight:700">${statusLabel}</span></div>
@@ -8198,9 +8205,14 @@ function _dtShowDivisionCenter(divId){
   const statusLabel=torneo&&torneo.status==='active'?'● ACTIVO':'FINALIZADO';
   const statusColor=torneo&&torneo.status==='active'?'var(--green)':'var(--text3)';
 
+  // Header icon: division's own logo/icon, else the torneo logo, else liga logo/icon
+  const dHdrIcon=torneo&&torneo.logoUrl
+    ?`<img src="${torneo.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`
+    :(div.icon||(liga?_ligaIcon(liga,'width:100%;height:100%;border-radius:12px'):'🏆'));
+  const dHdrBg=(torneo&&torneo.logoUrl)||liga?.logoUrl?'transparent':(liga?.color||'#333');
   let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
     <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px">
-      <div class="league-icon" style="background:${liga?.color||'#333'};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${div.icon||liga?.icon||'🏆'}</div>
+      <div class="league-icon" style="background:${dHdrBg};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">${dHdrIcon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px">${torneo?escHtml(torneo.name)+' · ':''}${liga?escHtml(liga.name):''} · <span style="color:${statusColor};font-weight:700">${statusLabel}</span></div>
