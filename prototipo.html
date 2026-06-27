@@ -6062,7 +6062,8 @@ function showToast(msg,type=''){
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,
         adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
-        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null
+        planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null,
+        _real:true
       }));
       leagues=[...supaLeagues,...DEMO_LEAGUES]; // ligas reales + demo
       renderLeagues(leagues);
@@ -8007,11 +8008,44 @@ function _renderDtLeft(){
     return h;
   }).join('');
 }
-function _dtToggleLiga(id){
+// Lazy-load torneos + divisiones of a real (Supabase) liga into the
+// in-memory arrays the desktop tree reads from. Demo ligas are skipped.
+const _dtLoadedLigas=new Set();
+async function _dtEnsureTorneos(ligaId){
+  const liga=leagues.find(l=>l.id===ligaId);
+  if(!liga||!liga._real||_dtLoadedLigas.has(ligaId)||!supa)return;
+  _dtLoadedLigas.add(ligaId);
+  try{
+    const {data:ts,error}=await supa.from('torneos').select('*').eq('liga_id',ligaId).order('id');
+    if(error)throw error;
+    (ts||[]).forEach(t=>{
+      if(torneos.some(x=>x.id===t.id&&x.leagueId===ligaId))return;
+      torneos.push({id:t.id,leagueId:t.liga_id,name:t.nombre,
+        status:t.estado==='finalizado'?'done':'active',
+        start:t.temporada||'',divsCount:0});
+    });
+    const tIds=(ts||[]).map(t=>t.id);
+    if(tIds.length){
+      const {data:ds,error:de}=await supa.from('divisiones').select('*').in('torneo_id',tIds);
+      if(de)throw de;
+      (ds||[]).forEach(d=>{
+        if(divisiones.some(x=>x.id===d.id))return;
+        divisiones.push({id:d.id,torneoId:d.torneo_id,name:d.nombre,
+          grupo:d.categoria||null,teams:0,rounds:d.total_rondas||0,
+          currentRound:d.ronda_actual||0,icon:d.icon||'📋'});
+      });
+    }
+  }catch(e){
+    _dtLoadedLigas.delete(ligaId); // allow retry on next expand
+    console.warn('No se pudieron cargar torneos de la liga',ligaId,e);
+  }
+}
+async function _dtToggleLiga(id){
   if(_dtExpLigas.has(id)){
     _dtExpLigas.delete(id);
   }else{
     _dtExpLigas.add(id);
+    await _dtEnsureTorneos(id); // pull real torneos from Supabase if needed
     // On desktop show standings of active torneo immediately (skip view-league)
     const activeTorneo=torneos.find(t=>t.leagueId===id&&t.status==='active')||torneos.find(t=>t.leagueId===id);
     if(activeTorneo){_dtExpTorneos.add(activeTorneo.id);_dtShowTorneoCenter(activeTorneo.id);}
