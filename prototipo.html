@@ -860,6 +860,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div id="vcd-content" style="padding:0 16px 40px"></div>
 </div>
 
+<div id="view-player-detail" class="view">
+  <div id="vpd-content" style="padding:0 16px 40px"></div>
+</div>
+
 <!-- TORNEO STANDINGS — shown on torneo click in left panel -->
 <div id="view-torneo-detail" class="view">
   <div id="vtd-content" style="overflow-y:auto;height:100%;padding-bottom:40px"></div>
@@ -7283,7 +7287,7 @@ function _dtClickClub(id){
     </div>`;
   };
 
-  const scorerRow=p=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+  const scorerRow=p=>`<div onclick="_dtClickPlayer(${p.id})" ondblclick="_dtDblClickPlayer(${p.id})" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer">
     <div style="width:20px;height:20px;background:${t.color};color:${t.text};border-radius:5px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${p.jersey}</div>
     <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</span>
     <span style="font-size:11px;font-weight:700;color:var(--accent)">⚽ ${p.goals}</span>
@@ -7364,7 +7368,7 @@ function _dtDblClickClub(id){
     </div>`;
   };
 
-  const playerRow=p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+  const playerRow=p=>`<div onclick="_dtClickPlayer(${p.id})" ondblclick="_dtDblClickPlayer(${p.id})" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
     <div style="width:28px;height:28px;background:${t.color};color:${t.text};border-radius:7px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">#${p.jersey}</div>
     <div style="flex:1;font-size:12px;font-weight:600">${escHtml(p.name)}</div>
     <div style="display:flex;gap:10px;font-size:11px">
@@ -7427,6 +7431,136 @@ function _dtDblClickClub(id){
   showView('view-club-detail');
   document.getElementById('dt-right').style.display='none';
 }
+
+// ═══ PLAYER CARDS (desktop) ═══
+function _dtPlayerPos(p){
+  // Derive a position label from jersey number (demo players have no explicit position)
+  if(p.jersey===1)return'Arquero';
+  const r=p.jersey%4;
+  return r===1?'Defensor':r===2?'Mediocampista':r===3?'Delantero':'Defensor';
+}
+function _dtPlayerCtx(id){
+  const p=players.find(x=>x.id===id);if(!p)return null;
+  const t=teamsData.find(x=>x.id===p.team)||{name:'?',short:'?',color:'#333',text:'#fff'};
+  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(p.team)).map(([d])=>parseInt(d));
+  const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
+  const liga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
+  // Goal events for this player across their matches (timeline)
+  const goalEvents=[];
+  matches.filter(m=>m.home===p.team||m.away===p.team).forEach(m=>{
+    (m.events||[]).filter(e=>e.type==='gol'&&e.player===p.name).forEach(e=>{
+      const opp=teamsData.find(x=>x.id===(m.home===p.team?m.away:m.home));
+      goalEvents.push({min:e.min,round:m.round,opp:opp?.name||'?'});
+    });
+  });
+  goalEvents.sort((a,b)=>a.round-b.round||a.min-b.min);
+  // Team games played (proxy for player appearances)
+  const teamPj=standings.filter(s=>s.teamId===p.team).reduce((a,s)=>a+s.pj,0);
+  return{p,t,myDivs,liga,goalEvents,teamPj,pos:_dtPlayerPos(p)};
+}
+
+// Single click → compact summary in the right panel
+function _dtClickPlayer(id){
+  const c=_dtPlayerCtx(id);if(!c)return;
+  const {p,t,myDivs,liga,pos}=c;
+  const el=document.getElementById('dt-rc');if(!el)return;
+  document.getElementById('dt-right').style.display='flex';
+  const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const susp=p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
+  const stat=(label,val,color)=>`<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:${color||'var(--text)'}">${val}</div><div style="font-size:9px;color:var(--text3);font-weight:700">${label}</div></div>`;
+  el.innerHTML=`
+    <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border)">
+      <div style="width:60px;height:60px;border-radius:16px;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;margin:0 auto 10px">${initials}</div>
+      <div style="font-size:15px;font-weight:800">${escHtml(p.name)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">#${p.jersey} · ${pos} · ${escHtml(t.name)}</div>
+      ${susp?'<div style="display:inline-block;margin-top:8px;font-size:9px;font-weight:800;color:var(--red);background:rgba(239,68,68,.12);padding:3px 8px;border-radius:6px">⛔ SUSPENDIDO</div>':''}
+    </div>
+    <div style="display:flex;justify-content:space-around;padding:14px 8px;border-bottom:1px solid var(--border)">
+      ${stat('Goles',p.goals,'var(--accent)')}${stat('🟡',p.yellows)}${stat('🔴',p.reds,p.reds?'var(--red)':'var(--text)')}
+    </div>
+    <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Club</div>
+    <div style="padding:0 12px 8px;font-size:12px;color:var(--text2)">${liga?escHtml(liga.name)+' · ':''}${escHtml(t.name)}</div>
+    <div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Divisiones</div>
+    <div style="padding:0 12px 8px">
+      ${myDivs.map(d=>{const tr=torneos.find(x=>x.id===d.torneoId);return`<div style="font-size:11px;padding:4px 0;color:var(--text2)">${d.icon||'📋'} ${escHtml(d.grupo?d.grupo+' · '+d.name:d.name)} <span style="color:var(--text3)">· ${escHtml(tr?.name||'')}</span></div>`;}).join('')||'<div style="font-size:11px;color:var(--text3)">Sin divisiones</div>'}
+    </div>
+    <div style="padding:16px 12px">
+      <button onclick="_dtDblClickPlayer(${id})" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer">Ver ficha completa</button>
+    </div>`;
+}
+
+// Double click → full player profile with complete stats in the center panel
+function _dtDblClickPlayer(id){
+  const c=_dtPlayerCtx(id);if(!c)return;
+  const {p,t,myDivs,liga,goalEvents,teamPj,pos}=c;
+  const tr=myDivs.length?torneos.find(x=>x.id===myDivs[0].torneoId):null;
+  const susp=p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
+  const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  const playerId='LB-2025-'+String(p.id).padStart(4,'0');
+  // Ranking among team scorers
+  const teamScorers=players.filter(x=>x.team===p.team).sort((a,b)=>b.goals-a.goals);
+  const scorerRank=teamScorers.findIndex(x=>x.id===p.id)+1;
+  const goalsPerGame=teamPj>0?(p.goals/teamPj).toFixed(2):'0.00';
+
+  const bigStat=(label,val,sub,color)=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;flex:1;min-width:64px">
+    <div style="font-size:22px;font-weight:800;color:${color||'var(--accent)'}">${val}</div>
+    <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase">${label}</div>
+    ${sub?`<div style="font-size:9px;color:var(--text3);margin-top:2px">${sub}</div>`:''}
+  </div>`;
+  const dataRow=(k,v)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text3)">${k}</span><span style="font-size:12px;font-weight:700">${v}</span></div>`;
+  const goalRow=g=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+    <div style="width:30px;height:30px;background:var(--accent-dim);color:var(--accent);border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">⚽</div>
+    <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">vs ${escHtml(g.opp)}</div><div style="font-size:10px;color:var(--text3)">Fecha ${g.round} · min ${g.min}'</div></div>
+  </div>`;
+
+  const html=`
+    <div style="display:flex;align-items:center;gap:6px;padding:16px 0 8px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <button onclick="_dtDblClickClub(${p.team})" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">‹</button>
+      <div style="width:48px;height:48px;border-radius:12px;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">#${p.jersey} · ${pos} · ${escHtml(t.name)}</div>
+      </div>
+      ${susp?'<div style="font-size:9px;font-weight:800;color:var(--red);background:rgba(239,68,68,.12);padding:4px 9px;border-radius:6px;flex-shrink:0">⛔ SUSP.</div>':''}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Estadísticas</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      ${bigStat('Goles',p.goals,goalsPerGame+' /partido')}
+      ${bigStat('Partidos',teamPj,'equipo')}
+      ${bigStat('Amarillas',p.yellows,'',p.yellows?'var(--yellow,#eab308)':'var(--accent)')}
+      ${bigStat('Rojas',p.reds,'',p.reds?'var(--red)':'var(--accent)')}
+      ${bigStat('Ranking',scorerRank?'#'+scorerRank:'–','goleador club')}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Datos del jugador</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px 14px;margin-bottom:20px">
+      ${dataRow('ID Jugador',playerId)}
+      ${dataRow('Nombre',escHtml(p.name))}
+      ${dataRow('Dorsal','#'+p.jersey)}
+      ${dataRow('Posición',pos)}
+      ${dataRow('Club',escHtml(t.name))}
+      ${dataRow('Liga',liga?escHtml(liga.name):'—')}
+      ${dataRow('Torneo',tr?escHtml(tr.name):'—')}
+      ${dataRow('Estado',susp?'<span style="color:var(--red)">Suspendido</span>':'<span style="color:var(--green)">Habilitado</span>')}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Divisiones (${myDivs.length})</div>
+    <div style="margin-bottom:20px">
+      ${myDivs.map(d=>{const t2=torneos.find(x=>x.id===d.torneoId);return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:14px">${d.icon||'📋'}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${escHtml(d.grupo?d.grupo+' · '+d.name:d.name)} <span style="font-size:10px;color:var(--text3)">· ${escHtml(t2?.name||'')}</span></div></div></div>`;}).join('')||'<div style="color:var(--text3);font-size:12px">Sin divisiones</div>'}
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Goles (${goalEvents.length})</div>
+    <div style="margin-bottom:20px">
+      ${goalEvents.length?goalEvents.map(goalRow).join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 0">Sin goles registrados en partidos jugados</div>'}
+    </div>
+  `;
+
+  document.getElementById('vpd-content').innerHTML=html;
+  showView('view-player-detail');
+  document.getElementById('dt-right').style.display='none';
+}
+
 function dtGoPartidos(){
   _dtSetActiveTab(document.querySelector('.dt-tab'));
   _dtSelDiv=null;
