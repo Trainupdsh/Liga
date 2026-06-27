@@ -568,6 +568,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
   /* Desktop nav */
   #dt-nav{grid-area:dnav;display:flex!important;align-items:center;
     background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;gap:0;}
+  /* When inside a role session (admin/árbitro/mesa/delegado), hide the public
+     desktop chrome and give the role view the whole screen. */
+  body.role-session #dt-nav,
+  body.role-session #dt-left,
+  body.role-session #dt-right{display:none!important;}
+  body.role-session #app{grid-template-areas:"dmain";grid-template-columns:1fr;grid-template-rows:100vh;}
   .dt-brand{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:20px;}
   .dt-brand>span{font-size:16px;font-weight:800;}
   .dt-tabs{display:flex;gap:2px;}
@@ -1993,7 +1999,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <div class="modal-sheet" style="padding-bottom:28px">
     <div class="modal-handle"></div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Agregar Jugador</div>
+      <div id="dj-modal-title" style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase">Agregar Jugador</div>
       <div id="dj-preview-nombre" style="font-size:15px;font-weight:900">Sin nombre</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
@@ -3316,6 +3322,10 @@ function showAdminLogin(){
   showView('view-login');
 }
 // ── Session persistence (sessionStorage: survives refresh/back, clears on tab close) ──
+// Hide the public desktop chrome (top nav + side panels) while in a role session,
+// so navigating can't drop the user out of their dashboard.
+function _hidePublicChrome(){document.body.classList.add('role-session');}
+function _showPublicChrome(){document.body.classList.remove('role-session');}
 function _saveSession(sess){try{sessionStorage.setItem('liga_session',JSON.stringify(sess));}catch(e){}}
 function _clearSession(){try{sessionStorage.removeItem('liga_session');}catch(e){}}
 function _getSession(){try{return JSON.parse(sessionStorage.getItem('liga_session')||'null');}catch(e){return null;}}
@@ -3376,7 +3386,7 @@ async function doAdminLogin(){
   document.getElementById('login-error').style.display='block';
 }
 function showAdminForLeague(l){
-  _saveSession({role:'liga',leagueId:l.id});
+  _saveSession({role:'liga',leagueId:l.id});_hidePublicChrome();
   currentAdminLeagueId=l.id;
   currentLigaPlan=null;
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
@@ -3424,10 +3434,10 @@ async function loadAdminDashStats(ligaId){
     document.getElementById('dash-stat-goles').textContent=totalGoles;
   }catch(e){console.warn('Error cargando stats del dashboard',e);}
 }
-function logoutAdmin(){_clearSession();showView('view-home');showToast('Sesión cerrada','');}
+function logoutAdmin(){_clearSession();_showPublicChrome();document.getElementById('view-admin').style.display='none';showView('view-home');if(typeof _dtApplyLayout==='function')_dtApplyLayout();showToast('Sesión cerrada','');}
 
 async function showSuperAdminDash(){
-  _saveSession({role:'superadmin'});
+  _saveSession({role:'superadmin'});_hidePublicChrome();
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-admin').style.display='none';
   document.getElementById('view-superadmin').classList.add('active');
@@ -4087,7 +4097,7 @@ function generateQR(seed){
 }
 // ═══ ÁRBITRO ═══
 function showArbitroView(user){
-  _saveSession({role:'arbitro',user});
+  _saveSession({role:'arbitro',user});_hidePublicChrome();
   showView('view-arbitro');
   document.getElementById('arb-name').textContent=user.name;
   document.getElementById('arb-subtitle').textContent='Árbitro'+(user.league?' · '+user.league:'');
@@ -4155,7 +4165,7 @@ function renderPlanillaPlayers(homeId,awayId){
 let mesaScoreHome=0,mesaScoreAway=0,mesaSecs=0,mesaRunning=false,mesaTimerInterval=null,mesaPeriod=1;
 let mesaCurrentUser=null;
 function showMesaView(user){
-  _saveSession({role:'mesa',user});
+  _saveSession({role:'mesa',user});_hidePublicChrome();
   mesaCurrentUser=user;
   showView('view-mesa');
   document.getElementById('mesa-subtitle').textContent=user.league||'Liga';
@@ -4397,7 +4407,7 @@ function endPeriod(){
 let delegadoClub=null;
 
 function showDelegadoView(club){
-  _saveSession({role:'delegado',clubId:club.id});
+  _saveSession({role:'delegado',clubId:club.id});_hidePublicChrome();
   delegadoClub=club;
   const nombre=club.nombre||club.name||'Mi Club';
   const abrev=club.abreviacion||nombre.slice(0,2).toUpperCase();
@@ -4462,6 +4472,7 @@ async function loadDelegPlantel(){
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" style="font-size:11px;padding:3px 7px" onclick="openCredModal(${j.id})">🪪</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:3px 7px" onclick="openEditDelegJugador(${j.id})">✏️</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarJugadorDeleg(${j.id},'${escHtml(j.nombre)}')">✕</button>
         </div>
       </div>`).join('');
@@ -4534,16 +4545,47 @@ async function loadDelegPartidos(){
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
+let _editJugadorId=null;
+function _djResetFoto(){
+  window._djFotoBlob=null;
+  const prev=document.getElementById('dj-foto-preview'),ph=document.getElementById('dj-foto-placeholder');
+  if(prev){prev.src='';prev.classList.remove('visible');}
+  if(ph)ph.style.display='';
+  const clr=document.getElementById('dj-foto-clear');if(clr)clr.style.display='none';
+}
 function openDelegAgregarJugador(){
   if(!delegadoClub?._equipos?.length){showToast('El club no está inscripto en ninguna división aún','error');return;}
+  _editJugadorId=null;
+  const tt=document.getElementById('dj-modal-title');if(tt)tt.textContent='Nuevo Jugador';
   document.getElementById('dj-nombre').value='';
   document.getElementById('dj-numero').value='';
   document.getElementById('dj-posicion').value='Mediocampista';
   document.getElementById('dj-error').style.display='none';
   document.getElementById('dj-preview-nombre').textContent='Sin nombre';
   document.getElementById('dj-equipo').innerHTML=delegadoClub._equipos.map(e=>`<option value="${e.id}">${escHtml(e.nombre)}</option>`).join('');
+  _djResetFoto();
   document.getElementById('dj-save-btn').disabled=false;
   document.getElementById('dj-save-btn').textContent='Agregar';
+  document.getElementById('delegJugadorModal').classList.add('open');
+  setTimeout(()=>document.getElementById('dj-nombre').focus(),300);
+}
+async function openEditDelegJugador(id){
+  if(!delegadoClub?._equipos?.length){showToast('Club sin divisiones','error');return;}
+  let j=null;
+  try{const {data,error}=await supa.from('jugadores').select('*').eq('id',id).single();if(error)throw error;j=data;}
+  catch(e){showToast('No se pudo cargar el jugador: '+e.message,'error');return;}
+  _editJugadorId=id;
+  const tt=document.getElementById('dj-modal-title');if(tt)tt.textContent='Editar Jugador';
+  document.getElementById('dj-nombre').value=j.nombre||'';
+  document.getElementById('dj-numero').value=j.numero||'';
+  document.getElementById('dj-posicion').value=j.posicion||'Mediocampista';
+  document.getElementById('dj-equipo').innerHTML=delegadoClub._equipos.map(e=>`<option value="${e.id}"${e.id===j.equipo_id?' selected':''}>${escHtml(e.nombre)}</option>`).join('');
+  document.getElementById('dj-preview-nombre').textContent=j.nombre||'Sin nombre';
+  document.getElementById('dj-error').style.display='none';
+  _djResetFoto();
+  if(j.foto_url){const prev=document.getElementById('dj-foto-preview'),ph=document.getElementById('dj-foto-placeholder');prev.src=j.foto_url;prev.classList.add('visible');if(ph)ph.style.display='none';}
+  document.getElementById('dj-save-btn').disabled=false;
+  document.getElementById('dj-save-btn').textContent='Guardar cambios';
   document.getElementById('delegJugadorModal').classList.add('open');
   setTimeout(()=>document.getElementById('dj-nombre').focus(),300);
 }
@@ -4568,13 +4610,24 @@ async function saveDelegJugador(){
       try{fotoUrl=await uploadImageToStorage(djBlob,'jugadores',`jug_${equipoId}_${Date.now()}.webp`);}
       catch(imgErr){console.warn('Foto upload failed:',imgErr);}
     }
+    if(_editJugadorId){
+      const updates={equipo_id:equipoId,nombre,numero,posicion};
+      if(fotoUrl)updates.foto_url=fotoUrl; // only overwrite photo if a new one was chosen
+      const {error}=await supa.from('jugadores').update(updates).eq('id',_editJugadorId);
+      if(error)throw error;
+      window._djFotoBlob=null;_editJugadorId=null;
+      closeDelegJugador(null,true);
+      showToast('"'+nombre+'" actualizado ✓','success');
+      await loadDelegPlantel();
+      return;
+    }
     const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl});
     if(error)throw error;
     window._djFotoBlob=null;
     closeDelegJugador(null,true);
     showToast('"'+nombre+'" agregado ✓','success');
     await loadDelegPlantel();
-  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Agregar';}
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent=_editJugadorId?'Guardar cambios':'Agregar';}
 }
 async function confirmarEliminarJugadorDeleg(id,nombre){
   if(!confirm('¿Eliminar al jugador "'+nombre+'"?'))return;
@@ -6022,6 +6075,13 @@ function openEditClub(){
   document.getElementById('ec-abrev').value=delegadoClub.abreviacion||'';
   document.getElementById('ec-dir').value=delegadoClub.direccion||'';
   document.getElementById('ec-error').style.display='none';
+  // Pre-fill the current escudo into the upload zone
+  window._ecLogoBlob=null;
+  const ecPrev=document.getElementById('ec-logo-preview'),ecPh=document.getElementById('ec-logo-placeholder');
+  if(ecPrev){
+    if(delegadoClub.logo_url){ecPrev.src=delegadoClub.logo_url;ecPrev.classList.add('visible');if(ecPh)ecPh.style.display='none';}
+    else{ecPrev.src='';ecPrev.classList.remove('visible');if(ecPh)ecPh.style.display='';}
+  }
   document.querySelectorAll('#ec-colores .nl-color-btn').forEach(b=>{
     const bc=b.style.backgroundColor||b.style.background||'';
     b.classList.toggle('selected',bc===ecColor||b.getAttribute('onclick')?.includes("'"+ecColor+"'"));
@@ -7576,7 +7636,7 @@ function _dtClickPlayer(id){
   const stat=(label,val,color)=>`<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:${color||'var(--text)'}">${val}</div><div style="font-size:9px;color:var(--text3);font-weight:700">${label}</div></div>`;
   el.innerHTML=`
     <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border)">
-      <div style="width:60px;height:60px;border-radius:16px;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;margin:0 auto 10px">${initials}</div>
+      <div style="width:60px;height:60px;border-radius:16px;background:${p.fotoUrl?'transparent':t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;margin:0 auto 10px;overflow:hidden">${p.fotoUrl?`<img src="${p.fotoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:16px" alt="">`:initials}</div>
       <div style="font-size:15px;font-weight:800">${escHtml(p.name)}</div>
       <div style="font-size:11px;color:var(--text3);margin-top:2px">#${p.jersey} · ${pos} · ${escHtml(t.name)}</div>
       ${susp?'<div style="display:inline-block;margin-top:8px;font-size:9px;font-weight:800;color:var(--red);background:rgba(239,68,68,.12);padding:3px 8px;border-radius:6px">⛔ SUSPENDIDO</div>':''}
@@ -7622,7 +7682,7 @@ function _dtDblClickPlayer(id){
   const html=`
     <div style="display:flex;align-items:center;gap:6px;padding:16px 0 8px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border);margin-bottom:16px">
       <button onclick="_dtDblClickClub(${p.team})" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">‹</button>
-      <div style="width:48px;height:48px;border-radius:12px;background:${t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0">${initials}</div>
+      <div style="width:48px;height:48px;border-radius:12px;background:${p.fotoUrl?'transparent':t.color};color:${t.text};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;overflow:hidden">${p.fotoUrl?`<img src="${p.fotoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`:initials}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div>
         <div style="font-size:11px;color:var(--text3)">#${p.jersey} · ${pos} · ${escHtml(t.name)}</div>
@@ -8089,6 +8149,18 @@ async function _dtEnsureTorneos(ligaId){
       const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
       teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null});
     });
+    // Players of every team (so club/player cards show the real plantel)
+    const realEqIds=(eqs||[]).map(e=>e.id);
+    if(realEqIds.length){
+      const {data:jug}=await supa.from('jugadores').select('id,nombre,numero,posicion,goles,foto_url,amarillas_acumuladas,rojas_acumuladas,suspendido,equipo_id').in('equipo_id',realEqIds);
+      (jug||[]).forEach(j=>{
+        const pid=j.id+RID;
+        if(players.some(x=>x.id===pid))return;
+        players.push({id:pid,name:j.nombre,jersey:j.numero||0,team:j.equipo_id+RID,
+          goals:j.goles||0,yellows:j.amarillas_acumuladas||0,reds:j.rojas_acumuladas||0,
+          fotoUrl:j.foto_url||null,pos:j.posicion||null,suspended:!!j.suspendido});
+      });
+    }
     // Zero baseline for every team, then fold in finished results
     const acc={}; // divId(offset) -> teamId(offset) -> row
     (eqs||[]).forEach(e=>{
@@ -8356,9 +8428,7 @@ function _dtApplyLayout(){
   const d=isDesktop();
   // Don't take over the screen when a role session is active (admin/árbitro/etc.)
   const hasSession=!!_getSession();
-  document.getElementById('dt-nav').style.display=d&&!hasSession?'flex':'none';
-  document.getElementById('dt-left').style.display=d&&!hasSession?'flex':'none';
-  document.getElementById('dt-right').style.display=d&&!hasSession?'flex':'none';
+  document.body.classList.toggle('role-session',hasSession);
   if(d&&leagues.length&&!hasSession){_renderDtLeft();dtGoPartidos();}
 }
 window.addEventListener('resize',_dtApplyLayout);
