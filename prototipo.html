@@ -4507,7 +4507,7 @@ async function loadDelegPartidos(){
     if(!equipos.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin inscripciones en ninguna división aún.</div>';return;}
     const ids=equipos.map(e=>e.id);
     const {data}=await supa.from('partidos')
-      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal), visita:equipo_visita_id(id,nombre,abreviacion,color_principal)')
+      .select('*, local:equipo_local_id(id,nombre,abreviacion,color_principal,club:club_id(logo_url)), visita:equipo_visita_id(id,nombre,abreviacion,color_principal,club:club_id(logo_url))')
       .or(ids.map(id=>`equipo_local_id.eq.${id},equipo_visita_id.eq.${id}`).join(','))
       .order('fecha').order('hora');
     const list=data||[];
@@ -4521,6 +4521,10 @@ async function loadDelegPartidos(){
       alinMap[k]=(alinMap[k]||0)+1;
     });
     const estadoLabel={programado:'⏳ Programado',en_curso:'🟢 En vivo',finalizado:'✓ Finalizado'};
+    const shieldHtml=(team)=>{
+      const logo=team?.club?.logo_url,ab=(team?.abreviacion||'?').slice(0,3);
+      return `<div style="width:24px;height:24px;border-radius:6px;background:${logo?'transparent':(team?.color_principal||'#1a2150')};color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:cover" alt="">`:escHtml(ab)}</div>`;
+    };
     const cardHtml=(p)=>{
       const esLocal=ids.includes(p.equipo_local_id);
       const esVisita=ids.includes(p.equipo_visita_id);
@@ -4539,9 +4543,9 @@ async function loadDelegPartidos(){
           <span style="font-size:11px;font-weight:700;color:${enCurso?'var(--green)':finalizado?'var(--text3)':'var(--accent)'}">${estadoLabel[p.estado]||p.estado||''}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div style="flex:1;text-align:right;font-size:13px;font-weight:${esLocal?'900':'700'};color:${esLocal?'var(--accent)':'inherit'}">${escHtml(p.local?.nombre||'Local')}${esLocal?' 🏠':''}</div>
-          <div style="font-size:16px;font-weight:900;padding:0 8px">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
-          <div style="flex:1;font-size:13px;font-weight:${esVisita?'900':'700'};color:${esVisita?'var(--accent)':'inherit'}">${esVisita?' 🏠':''}${escHtml(p.visita?.nombre||'Visitante')}</div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:13px;font-weight:${esLocal?'900':'700'};color:${esLocal?'var(--accent)':'inherit'}"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">${escHtml(p.local?.nombre||'Local')}${esLocal?' 🏠':''}</span>${shieldHtml(p.local)}</div>
+          <div style="font-size:16px;font-weight:900;padding:0 8px;flex-shrink:0">${p.goles_local??'—'} - ${p.goles_visita??'—'}</div>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:${esVisita?'900':'700'};color:${esVisita?'var(--accent)':'inherit'}">${shieldHtml(p.visita)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esVisita?'🏠 ':''}${escHtml(p.visita?.nombre||'Visitante')}</span></div>
         </div>
         ${(p.cancha||delegadoClub?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px">📍 ${escHtml(p.cancha||(esLocal?delegadoClub.direccion:''))}</div>`:''}
         ${!finalizado?`
@@ -7682,7 +7686,9 @@ function _dtPlayerPos(p){
 function _dtPlayerCtx(id){
   const p=players.find(x=>x.id===id);if(!p)return null;
   const t=teamsData.find(x=>x.id===p.team)||{name:'?',short:'?',color:'#333',text:'#fff'};
-  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(p.team)).map(([d])=>parseInt(d));
+  // Divisions from standings (works for both demo and real teams); fall back to _DIV_TEAMS
+  let divIds=[...new Set(standings.filter(s=>s.teamId===p.team).map(s=>s.divId))];
+  if(!divIds.length)divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(p.team)).map(([d])=>parseInt(d));
   const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
   const liga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
   // Goal events for this player across their matches (timeline)
@@ -7696,7 +7702,7 @@ function _dtPlayerCtx(id){
   goalEvents.sort((a,b)=>a.round-b.round||a.min-b.min);
   // Team games played (proxy for player appearances)
   const teamPj=standings.filter(s=>s.teamId===p.team).reduce((a,s)=>a+s.pj,0);
-  return{p,t,myDivs,liga,goalEvents,teamPj,pos:_dtPlayerPos(p)};
+  return{p,t,myDivs,liga,goalEvents,teamPj,pos:p.pos||_dtPlayerPos(p)};
 }
 
 // Single click → compact summary in the right panel
@@ -7706,7 +7712,7 @@ function _dtClickPlayer(id){
   const el=document.getElementById('dt-rc');if(!el)return;
   document.getElementById('dt-right').style.display='flex';
   const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-  const susp=p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
+  const susp=p.suspended||p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
   const stat=(label,val,color)=>`<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:${color||'var(--text)'}">${val}</div><div style="font-size:9px;color:var(--text3);font-weight:700">${label}</div></div>`;
   el.innerHTML=`
     <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border)">
@@ -7734,7 +7740,7 @@ function _dtDblClickPlayer(id){
   const c=_dtPlayerCtx(id);if(!c)return;
   const {p,t,myDivs,liga,goalEvents,teamPj,pos}=c;
   const tr=myDivs.length?torneos.find(x=>x.id===myDivs[0].torneoId):null;
-  const susp=p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
+  const susp=p.suspended||p.reds>0||(playerCards.find(x=>x.id===id)?.suspended);
   const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   const playerId='LB-2025-'+String(p.id).padStart(4,'0');
   // Ranking among team scorers
@@ -8332,7 +8338,7 @@ function _dtDivStandingsCard(div){
       <span style="font-size:16px">${div.icon||'📋'}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
-        <div style="font-size:10px;color:var(--text3)">Fecha ${div.currentRound||'?'} de ${div.rounds||'?'} · ${div.teams||0} equipos</div>
+        <div style="font-size:10px;color:var(--text3)">${div.currentRound?'Fecha '+div.currentRound+(div.rounds?' de '+div.rounds:'')+' · ':''}${div.teams||0} equipos</div>
       </div>
       <span style="font-size:11px;color:var(--accent);font-weight:700">PARTIDOS →</span>
     </div>
