@@ -6048,14 +6048,31 @@ async function resizeAndConvertToWebP(file,maxW,maxH){
     img.src=url;
   });
 }
+function _blobToDataUrl(blob){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=()=>reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
 async function uploadImageToStorage(blob,bucket,path){
   const ct=blob.type||'image/jpeg';
   const ext=ct.includes('webp')?'webp':'jpg';
   const finalPath=path.replace(/\.(webp|jpg|jpeg)$/,'.'+ext);
-  const {data,error}=await supa.storage.from(bucket).upload(finalPath,blob,{upsert:true,contentType:ct});
-  if(error)throw error;
-  const {data:{publicUrl}}=supa.storage.from(bucket).getPublicUrl(finalPath);
-  return publicUrl;
+  try{
+    const {error}=await supa.storage.from(bucket).upload(finalPath,blob,{upsert:true,contentType:ct});
+    if(error)throw error;
+    const {data:{publicUrl}}=supa.storage.from(bucket).getPublicUrl(finalPath);
+    return publicUrl;
+  }catch(e){
+    // Storage may be unconfigured or blocked by RLS on the anon key.
+    // The images are already resized to a small webp, so we embed them as a
+    // data URL — the logo still saves and renders everywhere. To use real
+    // bucket storage instead, run database/migrations/002_storage_buckets.sql.
+    console.warn('Storage upload failed ('+(e.message||e)+'); using inline data URL fallback.');
+    return await _blobToDataUrl(blob);
+  }
 }
 function _showClearBtn(id, onClear){
   let btn=document.getElementById(id);
