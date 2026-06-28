@@ -581,6 +581,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
   body.role-session #view-arbitro,
   body.role-session #view-mesa,
   body.role-session #view-delegado{max-width:1040px;margin:0 auto;width:100%;}
+  /* Role panels (club/árbitro/mesa) use their own <header> for the Salir
+     button — keep it visible on desktop (the generic rule hides .view>header). */
+  body.role-session .view.active>header{display:flex!important;}
   .dt-brand{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:20px;}
   .dt-brand>span{font-size:16px;font-weight:800;}
   .dt-tabs{display:flex;gap:2px;}
