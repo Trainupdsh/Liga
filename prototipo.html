@@ -828,7 +828,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </header>
   <div style="padding-bottom:24px">
     <div class="home-banner hero-gradient">
-      <div class="sport-icons">🤾 ⚽ 🏀 🏐</div>
+      <div class="sport-icons" style="display:flex;gap:16px;color:var(--accent)">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.6V3.6M14.1 14.1l2.7 2.1M9.9 14.1l-2.7 2.1"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c2.6 2.2 10.2 2.2 12.8 0M5.6 18.4c2.6-2.2 10.2-2.2 12.8 0"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3c-3.2 3-4 9.5-1.2 17.8M20.6 9.5c-3.8-1.3-9.8-.2-15 4.6M3.6 15c2-4.3 7.4-8.4 13.4-9.1"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3.2v17.6M3.4 9.2h17.2M3.4 14.8h17.2"/></svg>
+      </div>
       <h2 class="gradient-text">Tu liga, online</h2>
       <p>Resultados, tabla y goleadores en tiempo real</p>
     </div>
@@ -2914,10 +2919,27 @@ function toggleTheme(){
   document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=isDark?'🌙':'☀️');
 }
 
-// Renders a liga's icon: its uploaded logo image if present, else the emoji.
+// Minimalist line (outline) SVG icon per sport — monochrome, takes `color`.
+function _sportSvg(sport,color){
+  const c=color||'currentColor';
+  const s=(sport||'').toLowerCase();
+  const w=(inner)=>`<svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="${c}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block">${inner}</svg>`;
+  if(s.includes('basket'))return w('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c2.6 2.2 10.2 2.2 12.8 0M5.6 18.4c2.6-2.2 10.2-2.2 12.8 0"/>');
+  if(s.includes('voley')||s.includes('volley'))return w('<circle cx="12" cy="12" r="9"/><path d="M12 3c-3.2 3-4 9.5-1.2 17.8M20.6 9.5c-3.8-1.3-9.8-.2-15 4.6M3.6 15c2-4.3 7.4-8.4 13.4-9.1"/>');
+  if(s.includes('tenis')||s.includes('tennis'))return w('<circle cx="12" cy="12" r="9"/><path d="M5 5.5c4.5 3 4.5 10 0 13M19 5.5c-4.5 3-4.5 10 0 13"/>');
+  if(s.includes('rugby'))return w('<ellipse cx="12" cy="12" rx="6.5" ry="9" transform="rotate(45 12 12)"/><path d="M9.5 12h5M11 10.2l2.6 2.6M13 10.2l-2.6 2.6"/>');
+  if(s.includes('hand'))return w('<circle cx="12" cy="12" r="9"/><path d="M12 3.2v17.6M3.4 9.2h17.2M3.4 14.8h17.2"/>');
+  if(s.includes('fút')||s.includes('fut')||s.includes('soccer'))return w('<circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.6V3.6M14.1 14.1l2.7 2.1M9.9 14.1l-2.7 2.1"/>');
+  return w('<path d="M8 21h8M12 17v4M6 4h12v3.5a6 6 0 0 1-12 0z"/><path d="M6 6.5H3.5v1.5a3 3 0 0 0 3 3M18 6.5h2.5v1.5a3 3 0 0 1-3 3"/>'); // trophy default
+}
+function _trophySvg(color){
+  const c=color||'currentColor';
+  return `<svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="${c}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M8 21h8M12 17v4M6 4h12v3.5a6 6 0 0 1-12 0z"/><path d="M6 6.5H3.5v1.5a3 3 0 0 0 3 3M18 6.5h2.5v1.5a3 3 0 0 1-3 3"/></svg>`;
+}
+// Renders a liga's icon: its uploaded logo image if present, else a line SVG.
 function _ligaIcon(l,extraStyle){
   if(l.logoUrl)return`<img src="${l.logoUrl}" style="object-fit:cover;${extraStyle||''}" alt="${escHtml(l.name||'')}">`;
-  return l.icon||'🏆';
+  return _sportSvg(l.sport,l.text||'#fff');
 }
 // Inner HTML for a team shield: the club escudo image if present, else the short text.
 function _teamShieldInner(t,imgRadius){
@@ -2936,7 +2958,7 @@ function renderLeagues(list){
   list.forEach(l=>{
     const expL=_dtExpLigas.has(l.id);
     const ts=torneos.filter(t=>t.leagueId===l.id);
-    const ico=l.logoUrl?`<img src="${l.logoUrl}" alt="">`:(l.icon||'🏆');
+    const ico=l.logoUrl?`<img src="${l.logoUrl}" alt="">`:_sportSvg(l.sport,l.text||'#fff');
     h+=`<div class="mc-liga" onclick="_mcToggleLiga(${l.id})">
       <div class="mc-liga-ico" style="background:${l.logoUrl?'transparent':l.color}">${ico}</div>
       <div class="mc-liga-info"><div class="mc-liga-name">${escHtml(l.name)}</div><div class="mc-liga-sub">${escHtml(l.sport||'')}${ts.length?' · '+ts.length+' comp.':''}</div></div>
@@ -2947,7 +2969,7 @@ function renderLeagues(list){
     ts.forEach(t=>{
       const expT=_dtExpTorneos.has(t.id);
       const ds=divisiones.filter(d=>d.torneoId===t.id);
-      const tIco=t.logoUrl?`<img src="${t.logoUrl}" alt="">`:'🏆';
+      const tIco=t.logoUrl?`<img src="${t.logoUrl}" alt="">`:_trophySvg('var(--accent)');
       h+=`<div class="mc-torneo" onclick="_mcToggleTorneo(${t.id})">
         <div class="mc-torneo-ico" style="background:${t.logoUrl?'transparent':'var(--card2)'}">${tIco}</div>
         <span class="mc-torneo-name">${escHtml(t.name)}</span>
@@ -2958,7 +2980,7 @@ function renderLeagues(list){
       if(!ds.length){h+='<div class="mc-empty" style="padding-left:30px">Sin divisiones</div>';return;}
       ds.forEach(d=>{
         h+=`<div class="mc-div" onclick="event.stopPropagation();_mcOpenDiv(${d.id})">
-          <span style="font-size:14px;flex-shrink:0">${d.icon||'📋'}</span>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg>
           <span class="mc-div-name">${escHtml(d.grupo?d.grupo+' · '+d.name:d.name)}</span>
           <span class="mc-arrow">›</span>
         </div>`;
@@ -8197,7 +8219,7 @@ function _dtDivNode(d,noGroup){
   const cls='dt-node dt-node-div'+(sel?' sel':'')+(noGroup?' nogroup':'');
   return`<div class="${cls}" onclick="event.stopPropagation();_dtClickDiv(${d.id})">
     <span style="width:3px;height:14px;background:${sel?'var(--accent)':'transparent'};border-radius:2px;flex-shrink:0;display:inline-block;margin-right:2px"></span>
-    <span style="font-size:13px;flex-shrink:0">${d.icon||'📋'}</span>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;opacity:.65"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg>
     <span class="dt-node-text">${escHtml(d.name||d.nombre||'División')}</span>
     <span class="dt-node-badge">F${d.currentRound||'?'}</span>
   </div>`;
