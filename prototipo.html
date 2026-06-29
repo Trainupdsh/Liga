@@ -101,10 +101,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;gap:3px;transition:all 0.2s;}
-.nav-item .nav-icon{font-size:20px;}
+.nav-item .nav-icon{font-size:20px;color:var(--text3);display:flex;align-items:center;justify-content:center;}
+.nav-item .nav-icon svg{width:22px;height:22px;display:block;}
 .nav-item .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text3);}
 .nav-item.active .nav-label{color:var(--accent);}
-.nav-item.active .nav-icon{transform:translateY(-1px);}
+.nav-item.active .nav-icon{transform:translateY(-1px);color:var(--accent);}
 .date-pill{background:none;border:none;display:flex;flex-direction:column;align-items:center;padding:8px 4px;cursor:pointer;flex:1;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;gap:1px;border-radius:8px;}
 .date-pill:hover{background:var(--hover);}
 .date-pill.active{color:var(--accent);border-bottom-color:var(--accent);}
@@ -824,7 +825,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <header>
     <div class="logo-circle">AT</div>
     <div style="flex:1"><h1>Atlonis</h1><span class="subtitle">Encontrá tu liga</span></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div style="padding-bottom:24px">
     <div class="home-banner hero-gradient">
@@ -839,7 +840,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <div class="section-title">BUSCAR LIGA</div>
     <div class="search-home">
-      <span class="si">🔍</span>
+      <span class="si"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:middle"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
       <input type="text" placeholder="Buscar liga..." oninput="filterLeagues(this.value)" id="leagueSearch">
     </div>
     <div class="section-title">LIGAS</div>
@@ -887,7 +888,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h2 style="font-size:18px;font-weight:700;margin:0;flex:1">Clubes</h2>
       <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px">
-        <span style="color:var(--text3);font-size:13px">🔍</span>
+        <span style="color:var(--text3);font-size:13px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:middle"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
         <input type="text" id="clubes-search" placeholder="Buscar club..." oninput="_clubesFilter(this.value)"
           style="background:none;border:none;outline:none;color:var(--text);font-size:13px;width:160px">
       </div>
@@ -918,7 +919,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <h1 id="league-header-name">Liga Baires</h1>
       <span class="subtitle" id="league-header-sub">Handball · 2025</span>
     </div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div style="padding-bottom:32px">
     <div id="league-torneo-banner"></div>
@@ -940,7 +941,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <h1 id="division-header-name">Mayores Masculino</h1>
       <span class="subtitle" id="division-header-sub">Apertura 2025 · Liga Baires</span>
     </div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div class="content">
     <div class="screen active" id="screen-partidos">
@@ -970,7 +971,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="screen" id="screen-buscar">
       <div class="search-wrap">
         <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:middle"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
           <input type="text" class="search-input" placeholder="Buscar jugador..." oninput="searchPlayers(this.value)">
         </div>
       </div>
@@ -980,10 +981,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
   </div>
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon">⚡</span><span class="nav-label">PARTIDOS</span></div>
-    <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon">📊</span><span class="nav-label">TABLA</span></div>
-    <div class="nav-item" onclick="switchTab('goles',this)"><span class="nav-icon">⚽</span><span class="nav-label">GOLES</span></div>
-    <div class="nav-item" onclick="switchTab('buscar',this)"><span class="nav-icon">🔍</span><span class="nav-label">BUSCAR</span></div>
+    <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span class="nav-label">PARTIDOS</span></div>
+    <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span><span class="nav-label">TABLA</span></div>
+    <div class="nav-item" onclick="switchTab('goles',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.6V3.6M14.1 14.1l2.7 2.1M9.9 14.1l-2.7 2.1"/></svg></span><span class="nav-label">GOLES</span></div>
+    <div class="nav-item" onclick="switchTab('buscar',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><span class="nav-label">BUSCAR</span></div>
   </nav>
 </div>
 
@@ -992,7 +993,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <header>
     <span class="back-link" onclick="goHome()">‹</span>
     <div style="flex:1"><h1>Super Admin</h1><span class="subtitle">Panel maestro</span></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div id="superadmin-login" style="display:none"></div>
   <div id="superadmin-dashboard" style="display:none">
@@ -1275,7 +1276,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   <header>
     <span class="back-link" onclick="goHome()">‹</span>
     <div style="flex:1"><h1>Acceso Admin</h1></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div class="login-view">
     <div class="logo-circle" style="width:56px;height:56px;font-size:20px;margin:0 auto 8px">AT</div>
@@ -1854,7 +1855,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-arbitro" class="view">
   <header>
     <div style="flex:1"><h1 id="arb-name">Carlos Medina</h1><span class="subtitle" id="arb-subtitle">Árbitro</span></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
     <button class="btn btn-secondary btn-sm" onclick="logoutAdmin()" style="font-size:12px;padding:6px 14px;font-weight:700">Salir</button>
   </header>
   <div style="padding-bottom:24px">
@@ -1904,7 +1905,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-mesa" class="view">
   <header>
     <div style="flex:1"><h1>Mesa de Control</h1><span class="subtitle" id="mesa-subtitle">Liga Baires · Fecha 5</span></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
     <button class="btn btn-secondary btn-sm" onclick="logoutAdmin()" style="font-size:12px;padding:6px 14px;font-weight:700">Salir</button>
   </header>
   <div style="padding-bottom:32px">
@@ -1958,7 +1959,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <div id="view-delegado" class="view">
   <header>
     <div style="flex:1"><h1 id="deleg-club-name">Mi Club</h1><span id="deleg-subtitle" class="subtitle">Delegado</span></div>
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
     <button class="btn btn-secondary btn-sm" onclick="logoutAdmin()" style="font-size:12px;padding:6px 14px;font-weight:700">Salir</button>
   </header>
   <div style="padding-bottom:24px">
@@ -2604,17 +2605,17 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <span>Atlonis</span>
   </div>
   <div class="dt-tabs">
-    <button class="dt-tab active" onclick="dtGoPartidos()">⚡ Partidos</button>
-    <button class="dt-tab" onclick="dtGoClubes()">🛡️ Clubes</button>
-    <button class="dt-tab" onclick="dtGoLigas()">🏆 Ligas</button>
-    <button class="dt-tab" onclick="showAdminLogin()">🔑 Administradores</button>
+    <button class="dt-tab active" onclick="dtGoPartidos()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Partidos</button>
+    <button class="dt-tab" onclick="dtGoClubes()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg>Clubes</button>
+    <button class="dt-tab" onclick="dtGoLigas()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M6 4h12v3.5a6 6 0 0 1-12 0z"/><path d="M6 6.5H3.5v1.5a3 3 0 0 0 3 3M18 6.5h2.5v1.5a3 3 0 0 1-3 3M8 21h8M12 17v4"/></svg>Ligas</button>
+    <button class="dt-tab" onclick="showAdminLogin()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.15-8.15M16 7l2 2M14 9l1.5 1.5"/></svg>Administradores</button>
   </div>
   <div class="dt-spacer"></div>
   <div class="dt-search">
-    <span style="color:var(--text3);font-size:14px">🔍</span>
+    <span style="color:var(--text3);font-size:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:middle"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
     <input type="text" placeholder="Buscar liga..." oninput="dtSearch(this.value)" id="dt-srch">
   </div>
-  <button class="theme-btn" onclick="toggleTheme()" style="margin-left:4px">🌙</button>
+  <button class="theme-btn" onclick="toggleTheme()" style="margin-left:4px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
 </nav>
 
 <!-- DESKTOP LEFT SIDEBAR -->
