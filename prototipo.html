@@ -2344,6 +2344,34 @@ header .subtitle{font-size:12px;color:var(--text2);}
   </div>
 </div>
 
+<!-- CLUB PROFILE MODAL (mobile) -->
+<div class="player-profile-modal" id="clubProfileModal" onclick="closeClubProfile(event)">
+  <div class="player-profile-sheet">
+    <div class="pp-header">
+      <button class="modal-close-btn" onclick="closeClubProfile(null,true)">✕</button>
+      <div class="pp-avatar" id="cp-avatar">CL</div>
+      <div class="pp-name" id="cp-name">Club</div>
+      <div class="pp-sub" id="cp-sub">Liga · División</div>
+    </div>
+    <div class="pp-stats" id="cp-stats">
+      <div class="pp-stat"><div class="pp-stat-val" id="cp-pj">0</div><div class="pp-stat-lbl">PJ</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="cp-pg">0</div><div class="pp-stat-lbl">PG</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="cp-pe">0</div><div class="pp-stat-lbl">PE</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="cp-pp">0</div><div class="pp-stat-lbl">PP</div></div>
+      <div class="pp-stat"><div class="pp-stat-val" id="cp-pts">0</div><div class="pp-stat-lbl">Pts</div></div>
+    </div>
+    <div style="padding:16px 20px 24px">
+      <div style="display:flex;gap:16px;margin-bottom:16px;font-size:12px;color:var(--text2);justify-content:center">
+        <span>GF <b id="cp-gf" style="color:var(--text)">0</b></span>
+        <span>GC <b id="cp-gc" style="color:var(--text)">0</b></span>
+        <span>Dif <b id="cp-dif" style="color:var(--text)">0</b></span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Plantel (<span id="cp-roster-count">0</span>)</div>
+      <div id="cp-roster" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+</div>
+
 <!-- COMUNICADOS MODAL -->
 <div class="modal-overlay" id="comunicadosModal" onclick="closeComunicados(event)">
   <div class="modal-sheet" style="max-height:90vh;overflow:hidden;display:flex;flex-direction:column">
@@ -3996,7 +4024,7 @@ async function renderStandings(){
     document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
       const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
       const dif=row.gf-row.gc;
-      return `<div class="standing-row"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div>
+      return `<div class="standing-row" style="cursor:pointer" onclick="openClubProfile(${row.id},{pj:${row.pj},pg:${row.pg},pe:${row.pe},pp:${row.pp},gf:${row.gf},gc:${row.gc},pts:${row.pts}})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div>
         <div class="col-team-cell"><div class="shield" style="background:${t.color_principal||'#1a2150'};color:${t.color_texto||'#fff'};width:22px;height:22px;font-size:9px">${escHtml(t.abreviacion||'?')}</div><span class="col-team-name">${escHtml(t.nombre||'?')}</span></div>
         <span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span>
         <span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
@@ -4009,7 +4037,7 @@ function renderStandingsLocal(){
   const sorted=[...divSt].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
   document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
     const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff'},dif=row.gf-row.gc;
-    return `<div class="standing-row"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
+    return `<div class="standing-row" style="cursor:pointer" onclick="_dtDblClickClub(${row.teamId})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
   }).join('');
 }
 
@@ -4029,7 +4057,7 @@ async function renderScorers(){
     document.getElementById('scorersList').innerHTML=list.map((j,i)=>{
       const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
       const initials=(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-      return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div>
+      return `<div class="scorer-card" style="cursor:pointer" onclick="openPlayerProfile(${j.id})"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div>
         <div class="scorer-avatar" style="background:${t.color_principal||'#1a2150'};color:#fff;border-color:${t.color_principal||'#1a2150'}">${initials}</div>
         <div class="scorer-info"><div class="scorer-name">${escHtml(j.nombre)}</div><div class="scorer-team">${escHtml(t.nombre)} · #${j.numero||'—'}</div></div>
         <div class="scorer-goals"><div class="goals-num">${j.goles||0}</div><div class="goals-label">goles</div></div></div>`;
@@ -4040,7 +4068,7 @@ function renderScorersLocal(){
   const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team)||{emoji:'?',name:'?',jersey:0},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
-    return `<div class="scorer-card"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
+    return `<div class="scorer-card" style="cursor:pointer" onclick="_dtDblClickPlayer(${p.id})"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
   }).join('');
 }
 
@@ -6553,6 +6581,44 @@ async function openPlayerProfile(jugadorId){
 function closePlayerProfile(e,force){
   if(force||e?.target===document.getElementById('playerProfileModal'))
     document.getElementById('playerProfileModal').classList.remove('open');
+}
+// Club ficha (mobile): data + division stats + roster. presetStats optional (from the standings row).
+async function openClubProfile(equipoId,presetStats){
+  document.getElementById('clubProfileModal').classList.add('open');
+  try{
+    const {data:eq}=await supa.from('equipos')
+      .select('*, club:club_id(nombre,logo_url,color_principal), division:division_id(nombre,categoria,genero, torneo:torneo_id(nombre, liga:ligas(nombre)))')
+      .eq('id',equipoId).single();
+    if(!eq){showToast('Equipo no encontrado','error');return;}
+    const name=eq.club?.nombre||eq.nombre||'Club';
+    const color=eq.color_principal||eq.club?.color_principal||'#1a2150';
+    const av=document.getElementById('cp-avatar');
+    if(eq.club?.logo_url){av.innerHTML=`<img src="${eq.club.logo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;av.style.background='transparent';}
+    else{av.innerHTML='';av.textContent=(eq.abreviacion||name.slice(0,2)).toUpperCase();av.style.background=color;}
+    document.getElementById('cp-name').textContent=name;
+    const divLbl=eq.division?[eq.division.categoria,eq.division.nombre].filter(Boolean).join(' '):'';
+    const ligaLbl=eq.division?.torneo?.liga?.nombre||'';
+    document.getElementById('cp-sub').textContent=[ligaLbl,divLbl].filter(Boolean).join(' · ');
+    let s=presetStats;
+    if(!s){
+      const {data:ps}=await supa.from('partidos').select('equipo_local_id,equipo_visita_id,goles_local,goles_visita').eq('division_id',eq.division_id).eq('estado','finalizado');
+      s={pj:0,pg:0,pe:0,pp:0,gf:0,gc:0};
+      (ps||[]).forEach(p=>{const isL=p.equipo_local_id===equipoId,isV=p.equipo_visita_id===equipoId;if(!isL&&!isV)return;const gf=isL?(p.goles_local||0):(p.goles_visita||0),gc=isL?(p.goles_visita||0):(p.goles_local||0);s.pj++;s.gf+=gf;s.gc+=gc;if(gf>gc)s.pg++;else if(gf<gc)s.pp++;else s.pe++;});
+    }
+    document.getElementById('cp-pj').textContent=s.pj;document.getElementById('cp-pg').textContent=s.pg;
+    document.getElementById('cp-pe').textContent=s.pe;document.getElementById('cp-pp').textContent=s.pp;
+    document.getElementById('cp-pts').textContent=(s.pts!=null?s.pts:s.pg*3+s.pe);
+    document.getElementById('cp-gf').textContent=s.gf;document.getElementById('cp-gc').textContent=s.gc;
+    const dif=s.gf-s.gc;document.getElementById('cp-dif').textContent=(dif>=0?'+':'')+dif;
+    const {data:jug}=await supa.from('jugadores').select('id,nombre,numero,posicion,goles').eq('equipo_id',equipoId).order('numero');
+    const roster=jug||[];
+    document.getElementById('cp-roster-count').textContent=roster.length;
+    document.getElementById('cp-roster').innerHTML=roster.length?roster.map(j=>`<div onclick="closeClubProfile(null,true);openPlayerProfile(${j.id})" style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer"><span style="width:26px;text-align:center;font-weight:800;color:var(--accent);font-size:12px">#${j.numero||'—'}</span><span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(j.nombre)}</span><span style="font-size:11px;color:var(--text3)">${escHtml(j.posicion||'')}</span><span style="font-size:11px;color:var(--accent);flex-shrink:0">⚽ ${j.goles||0}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3)">Sin jugadores cargados</div>';
+  }catch(e){showToast('Error cargando club: '+e.message,'error');}
+}
+function closeClubProfile(e,force){
+  if(force||e?.target===document.getElementById('clubProfileModal'))
+    document.getElementById('clubProfileModal').classList.remove('open');
 }
 function openCredFromProfile(){
   closePlayerProfile(null,true);
