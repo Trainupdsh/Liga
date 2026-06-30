@@ -9173,6 +9173,77 @@ function _dtDivStandingsCard(div){
   return html;
 }
 
+// Tab switcher for the division center panel
+function _dtDivSwitchTab(tab){
+  ['posiciones','partidos','goleadores'].forEach(t=>{
+    const panel=document.getElementById('dt-divtab-'+t);
+    const btn=document.getElementById('dt-divtab-btn-'+t);
+    if(panel)panel.style.display=t===tab?'block':'none';
+    if(btn){
+      btn.style.color=t===tab?'var(--accent)':'var(--text3)';
+      btn.style.borderBottom='2px solid '+(t===tab?'var(--accent)':'transparent');
+      btn.style.fontWeight=t===tab?'800':'600';
+    }
+  });
+}
+
+// Renders matches list for a division (for the PARTIDOS tab)
+function _dtDivMatchesHtml(divId){
+  const divMs=matches.filter(m=>!m.divId||m.divId===divId);
+  if(!divMs.length)return'<div style="padding:32px;text-align:center;font-size:12px;color:var(--text3)">Sin partidos</div>';
+  const byRound={};
+  divMs.forEach(m=>{const r=m.round||0;if(!byRound[r])byRound[r]=[];byRound[r].push(m);});
+  let html='<div style="padding:16px 16px 0">';
+  Object.keys(byRound).sort((a,b)=>Number(b)-Number(a)).forEach(r=>{
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:2px">Fecha ${r}</div>`;
+    byRound[r].forEach(m=>{
+      const ht=teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff'};
+      const at=teamsData.find(t=>t.id===m.away)||{name:'?',color:'#333',text:'#fff'};
+      const isDone=m.status==='done',isLive=m.status==='live';
+      const score=isDone||isLive?`${m.homeScore??0} - ${m.awayScore??0}`:'vs';
+      const scoreBg=isLive?'var(--green)':isDone?'var(--card2)':'transparent';
+      const scoreColor=isLive?'#fff':'var(--text)';
+      html+=`<div style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="flex:1;text-align:right;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ht.name)}</div>
+        <div style="font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px;background:${scoreBg};color:${scoreColor};min-width:52px;text-align:center;flex-shrink:0">${score}</div>
+        <div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(at.name)}</div>
+      </div>`;
+    });
+    html+='<div style="height:4px"></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+// Renders top scorers list for a division (for the GOLEADORES tab)
+function _dtDivScorersHtml(divId){
+  const divTeamIds=new Set();
+  standings.filter(s=>s.divId===divId).forEach(s=>divTeamIds.add(s.teamId));
+  matches.filter(m=>m.divId===divId).forEach(m=>{divTeamIds.add(m.home);divTeamIds.add(m.away);});
+  const sorted=players.filter(p=>divTeamIds.has(p.team)&&p.goals>0).sort((a,b)=>b.goals-a.goals).slice(0,20);
+  if(!sorted.length)return'<div style="padding:32px;text-align:center;font-size:12px;color:var(--text3)">Sin goleadores</div>';
+  const medals=['🥇','🥈','🥉'];
+  let html='<div style="padding:0 16px">';
+  sorted.forEach((p,i)=>{
+    const t=getTeam(p.team)||{name:'?',color:'#333',text:'#fff'};
+    const initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="width:22px;text-align:center;font-size:${i<3?'15px':'11px'};color:var(--text3);font-weight:700;flex-shrink:0">${i<3?medals[i]:i+1}</div>
+      <div style="width:32px;height:32px;border-radius:50%;background:${t.color};color:${t.text||'#fff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;overflow:hidden">${t.logoUrl?`<img src="${escHtml(t.logoUrl)}" style="width:100%;height:100%;object-fit:cover">`:initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div>
+        <div style="font-size:10px;color:var(--text3)">${escHtml(t.name)}</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:3px;flex-shrink:0">
+        <span style="font-size:18px;font-weight:800;color:var(--accent)">${p.goals}</span>
+        <span style="font-size:10px;color:var(--text3)">goles</span>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
 // Shows a single division's standings table in the center panel
 function _dtShowDivisionCenter(divId){
   const div=divisiones.find(d=>d.id===divId);if(!div)return;
@@ -9190,17 +9261,39 @@ function _dtShowDivisionCenter(divId){
     ?`<img src="${torneo.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`
     :(div.icon||(liga?_ligaIcon(liga,'width:100%;height:100%;border-radius:12px'):'🏆'));
   const dHdrBg=(torneo&&torneo.logoUrl)||liga?.logoUrl?'transparent':(liga?.color||'#333');
+
+  const _tabBtn=(id,label,active)=>`<button id="dt-divtab-btn-${id}" onclick="_dtDivSwitchTab('${id}')"
+    style="flex:1;border:none;background:none;cursor:pointer;padding:10px 4px 8px;font-size:11px;font-weight:${active?800:600};color:${active?'var(--accent)':'var(--text3)'};border-bottom:2px solid ${active?'var(--accent)':'transparent'};letter-spacing:.3px;transition:color .15s,border-color .15s">${label}</button>`;
+
   let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
-    <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px">
       <div class="league-icon" style="background:${dHdrBg};width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden">${dHdrIcon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px">${torneo?escHtml(torneo.name)+' · ':''}${liga?escHtml(liga.name):''} · <span style="color:${statusColor};font-weight:700">${statusLabel}</span></div>
       </div>
     </div>
+    <div style="display:flex;margin:0 -16px">
+      ${_tabBtn('posiciones','POSICIONES',true)}
+      ${_tabBtn('partidos','PARTIDOS',false)}
+      ${_tabBtn('goleadores','GOLEADORES',false)}
+    </div>
   </div>`;
+
+  html+=`<div id="dt-divtab-posiciones">`;
   html+=_dtDivStandingsCard(div);
   html+='<div style="height:32px"></div>';
+  html+=`</div>`;
+
+  html+=`<div id="dt-divtab-partidos" style="display:none">`;
+  html+=_dtDivMatchesHtml(divId);
+  html+='<div style="height:32px"></div>';
+  html+=`</div>`;
+
+  html+=`<div id="dt-divtab-goleadores" style="display:none">`;
+  html+=_dtDivScorersHtml(divId);
+  html+='<div style="height:32px"></div>';
+  html+=`</div>`;
 
   document.getElementById('vtd-content').innerHTML=html;
   showView('view-torneo-detail');
