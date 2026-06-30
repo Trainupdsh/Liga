@@ -4259,20 +4259,30 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   }
 
   const tX=iX+iR+Math.round(CW*0.028);
-  const sS=Math.min(42,Math.round(HDR_H*0.22));
-  const lS=Math.min(24,Math.round(HDR_H*0.145));
-  const dS=Math.min(16,Math.round(HDR_H*0.096));
+  const sS=Math.min(40,Math.round(HDR_H*0.21));
+  const lS=Math.min(22,Math.round(HDR_H*0.133));
+  const tS=Math.min(18,Math.round(HDR_H*0.112));
+  const dS=Math.min(15,Math.round(HDR_H*0.09));
+  const torNombre=torneo?.name||'';
+  const hasTor=!!torNombre;
+  const y1=Math.round(HDR_H*(hasTor?0.29:0.37));
+  const y2=Math.round(HDR_H*(hasTor?0.48:0.61));
+  const y3=hasTor?Math.round(HDR_H*0.64):0;
+  const y4=Math.round(HDR_H*(hasTor?0.82:0.81));
   ctx.font=`900 ${sS}px system-ui,sans-serif`; ctx.fillStyle='#fff'; ctx.textAlign='left';
-  ctx.fillText('SPORVIX',tX,Math.round(HDR_H*0.37));
+  ctx.fillText('SPORVIX',tX,y1);
   ctx.font=`bold ${lS}px system-ui,sans-serif`; ctx.fillStyle='#60a5fa';
-  ctx.fillText(_tTxt(ctx,liga.name||'',CW-tX-PAD),tX,Math.round(HDR_H*0.61));
+  ctx.fillText(_tTxt(ctx,liga.name||'',CW-tX-PAD),tX,y2);
+  if(hasTor){
+    ctx.font=`${tS}px system-ui,sans-serif`; ctx.fillStyle='#e2e8f0';
+    ctx.fillText(_tTxt(ctx,torNombre,CW-tX-PAD),tX,y3);
+  }
   const lblTxt=(esGoles?'Tabla de Goleadores':'Tabla de Posiciones')+(divNombre?' · '+divNombre:'');
   ctx.font=`${dS}px system-ui,sans-serif`; ctx.fillStyle='#3d5a80';
-  ctx.fillText(_tTxt(ctx,lblTxt,CW-tX-PAD*2.5),tX,Math.round(HDR_H*0.81));
-  // fecha top-right
+  ctx.fillText(_tTxt(ctx,lblTxt,CW-tX-PAD*2.5),tX,y4);
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
   ctx.font=`${dS}px system-ui,sans-serif`; ctx.fillStyle='#1e3050'; ctx.textAlign='right';
-  ctx.fillText(fecha,CW-PAD,Math.round(HDR_H*0.81));
+  ctx.fillText(fecha,CW-PAD,y4);
   // separador header
   ctx.fillStyle='rgba(26,110,245,0.22)'; ctx.fillRect(0,HDR_H-1,CW,1);
 
