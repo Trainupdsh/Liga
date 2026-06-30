@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<title>Arenametric</title>
+<title>Sporvix</title>
 <style>
 :root[data-theme="dark"] {
   --bg: #0c1017; --bg2: #060a10; --card: #131820; --card2: #1b2130;
@@ -826,8 +826,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- HOME -->
 <div id="view-home" class="view active">
   <header>
-    <div class="logo-circle">AM</div>
-    <div style="flex:1"><h1>Arenametric</h1><span class="subtitle">Encontrá tu liga</span></div>
+    <div class="logo-circle">SP</div>
+    <div style="flex:1"><h1>Sporvix</h1><span class="subtitle">Encontrá tu liga</span></div>
     <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div style="padding-bottom:24px">
@@ -849,7 +849,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="section-title">LIGAS</div>
     <div class="leagues-list" id="leaguesList"></div>
     <div onclick="showAdminLogin()" class="admin-entry">Acceso administradores</div>
-    <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text3)">© 2025 Arenametric · Todos los derechos reservados</div>
+    <div style="text-align:center;padding:20px 0 8px;font-size:11px;color:var(--text3)">© 2025 Sporvix · Todos los derechos reservados</div>
   </div>
 </div>
 
@@ -1282,8 +1282,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <button class="theme-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </header>
   <div class="login-view">
-    <div class="logo-circle" style="width:56px;height:56px;font-size:20px;margin:0 auto 8px">AM</div>
-    <div style="font-size:22px;font-weight:900;text-align:center">Arenametric</div>
+    <div class="logo-circle" style="width:56px;height:56px;font-size:20px;margin:0 auto 8px">SP</div>
+    <div style="font-size:22px;font-weight:900;text-align:center">Sporvix</div>
     <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Ingresá con las credenciales que te asignaron</div>
     <div class="form-group"><label class="form-label">Usuario o Email</label><input type="text" class="form-input" id="login-email" placeholder="tu@email.com o usuario" autocomplete="off"></div>
     <div class="form-group"><label class="form-label">Contraseña</label><input type="password" class="form-input" id="login-pass" placeholder="Tu contraseña"></div>
@@ -2632,8 +2632,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 <!-- DESKTOP NAV -->
 <nav id="dt-nav" style="display:none">
   <div class="dt-brand" onclick="dtGoHome()">
-    <div class="logo-circle" style="width:32px;height:32px;font-size:12px">AM</div>
-    <span>Arenametric</span>
+    <div class="logo-circle" style="width:32px;height:32px;font-size:12px">SP</div>
+    <span>Sporvix</span>
   </div>
   <div class="dt-tabs">
     <button class="dt-tab active" onclick="dtGoPartidos()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Partidos</button>
@@ -3314,7 +3314,7 @@ async function loadVerPlanes(){
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:16px">Error al cargar planes</div>';}
 }
 function solicitarUpgrade(planNombre){
-  showToast('Solicitud enviada al administrador de Arenametric 📧','success');
+  showToast('Solicitud enviada al administrador de Sporvix 📧','success');
   closeVerPlanes(null,true);
 }
 
@@ -6626,7 +6626,7 @@ function openCredFromProfile(){
 }
 function sharePlayerProfile(){
   const name=document.getElementById('pp-name')?.textContent||'Jugador';
-  const text=`Perfil de ${name} — Arenametric`;
+  const text=`Perfil de ${name} — Sporvix`;
   if(navigator.share){navigator.share({title:text,text});}
   else{navigator.clipboard?.writeText(text);showToast('Copiado al portapapeles','success');}
 }
@@ -6640,7 +6640,7 @@ function openActaDigital(){
 
 // ═══ SHARE RESULT ═══
 function shareResultText(text){
-  if(navigator.share){navigator.share({title:'Resultado Arenametric',text});}
+  if(navigator.share){navigator.share({title:'Resultado Sporvix',text});}
   else{navigator.clipboard?.writeText(text)||document.execCommand('copy');showToast('Copiado ✓','success');}
 }
 function shareResult(matchEl){
