@@ -4106,7 +4106,7 @@ function _compartirTablaDiv(divId,tipo){ _generarImagenTabla(divId,tipo); }
 // ── Picker de formato ──────────────────────────────────────────────────────
 const _SHARE_FMTS=[
   {id:'mensaje',  CW:800,  CH:null, label:'Mensaje / Web',     sub:'WhatsApp · chats · web',        dims:'Auto',      wPv:58,hPv:34},
-  {id:'historia', CW:1080, CH:1920, safeTop:240,safeBot:280,   label:'Historia / Estado', sub:'IG Stories · WhatsApp Status',  dims:'1080×1920', wPv:27,hPv:48},
+  {id:'historia', CW:1080, CH:1920, safeTop:250,safeBot:250,   label:'Historia / Estado', sub:'IG Stories · WhatsApp Status',  dims:'1080×1920', wPv:27,hPv:48},
   {id:'cuadrado', CW:1080, CH:1080, label:'Post cuadrado',     sub:'Instagram · Facebook',          dims:'1080×1080', wPv:44,hPv:44},
   {id:'retrato',  CW:1080, CH:1350, label:'Post retrato 4:5',  sub:'Instagram (mayor alcance)',     dims:'1080×1350', wPv:38,hPv:48},
 ];
@@ -4234,19 +4234,6 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
   }
 
-  // decoración zonas inseguras (historia)
-  if(sT>0){
-    ctx.save(); ctx.globalAlpha=0.06;
-    ctx.font=`bold ${Math.round(sT*0.28)}px system-ui,sans-serif`;
-    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.textAlign='center';
-    ctx.fillText('SPORVIX',CW/2,sT*0.52); ctx.restore();
-  }
-  if(sB>0){
-    ctx.save(); ctx.globalAlpha=0.22;
-    ctx.font=`700 ${Math.round(sB*0.22)}px system-ui,sans-serif`;
-    ctx.fillStyle=C.accent; ctx.textBaseline='middle'; ctx.textAlign='center';
-    ctx.fillText('www.sporvix.com.ar',CW/2,CH-sB+sB*0.52); ctx.restore();
-  }
 
   // ── OFFSET ZONA SEGURA ───────────────────────────────────────────
   ctx.save(); ctx.translate(0,sT);
