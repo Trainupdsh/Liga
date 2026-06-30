@@ -4041,6 +4041,7 @@ async function renderStandings(){
       else{table[lId].pe++;table[lId].pts++;table[vId].pe++;table[vId].pts++;}
     });
     const sorted=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
+    _cachedStandings=sorted.map((row,i)=>{const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:t.nombre,short:t.abreviacion,color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',logoUrl:t.logo_url||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
     const badges=['gold','silver','bronze'];
     document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
       const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
@@ -4056,6 +4057,7 @@ function renderStandingsLocal(){
   const divSt=standings.filter(s=>!s.divId||s.divId===currentDivisionId);
   if(!divSt.length){document.getElementById('standingsList').innerHTML='<div class="empty-state" style="padding:16px">Sin datos</div>';return;}
   const sorted=[...divSt].sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)),badges=['gold','silver','bronze'];
+  _cachedStandings=sorted.map((row,i)=>{const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:t.name,short:t.short,color:t.color,text:t.text,logoUrl:t.logoUrl||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
   document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
     const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff'},dif=row.gf-row.gc;
     return `<div class="standing-row" style="cursor:pointer" onclick="_dtDblClickClub(${row.teamId})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
@@ -4074,6 +4076,7 @@ async function renderScorers(){
       .order('goles',{ascending:false}).limit(30);
     const list=(jugadores||[]).filter(j=>(j.goles||0)>0);
     if(!list.length){renderScorersLocal();return;}
+    _cachedScorers=list.map((j,i)=>{const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:j.nombre,short:(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',teamName:t.nombre,logoUrl:null,goals:j.goles||0};});
     const medals=['🥇','🥈','🥉'];
     document.getElementById('scorersList').innerHTML=list.map((j,i)=>{
       const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
@@ -4087,103 +4090,243 @@ async function renderScorers(){
 }
 function renderScorersLocal(){
   const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
+  _cachedScorers=sorted.map((p,i)=>{const t=getTeam(p.team)||{name:'?',short:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:p.name||'?',short:(p.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color,text:t.text,teamName:t.name,logoUrl:t.logoUrl||null,goals:p.goals||0};});
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team)||{emoji:'?',name:'?',jersey:0},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
     return `<div class="scorer-card" style="cursor:pointer" onclick="_dtDblClickPlayer(${p.id})"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
   }).join('');
 }
 
-// ─── COMPARTIR TABLAS ───
-// Desktop: share standings for a specific division by id (uses in-memory data)
-function _compartirTablaDiv(divId, tipo){
+// ─── COMPARTIR TABLAS — imagen PNG con diseño Sporvix ───
+let _cachedStandings=[], _cachedScorers=[];
+
+async function compartirTabla(tipo){
+  await _generarImagenTabla(currentDivisionId, tipo);
+}
+
+async function _compartirTablaDiv(divId, tipo){
+  await _generarImagenTabla(divId, tipo);
+}
+
+async function _generarImagenTabla(divId, tipo){
+  // ── contexto de liga/torneo/división ──
   const div=divisiones.find(d=>d.id===divId);
   const torneo=torneos.find(t=>t.id===div?.torneoId);
   const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||{name:'Liga'};
-  const divNombre=div?.grupo?div.grupo+' · '+div.name:div?.name||'';
-  let titulo='', lines=[];
-  if(tipo==='posiciones'){
-    titulo=`📊 Tabla — ${escHtml(liga.name)}`;
-    const rows=standings.filter(s=>s.divId===divId)
-      .map(s=>({...s,pts:s.pg*3+s.pe,dif:s.gf-s.gc}))
-      .sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
-    if(!rows.length){showToast('Sin datos para compartir','');return;}
-    rows.forEach((s,i)=>{
-      const t=teamsData.find(x=>x.id===s.teamId)||{name:'?'};
-      lines.push(`${i+1}. ${t.name} — ${s.pts} pts (${s.pj} PJ)`);
-    });
+  const divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
+  const esGoles=tipo==='goleadores';
+
+  // ── filas de datos ──
+  const filas=esGoles?_cachedScorers:_cachedStandings;
+  if(!filas.length){showToast('Sin datos para compartir','');return;}
+
+  // ── constantes de layout ──
+  const W=800, SCALE=2, PAD=20;
+  const HDR=100, COL_H=34, ROW_H=esGoles?58:52, FTR=44;
+  const H=HDR+COL_H+filas.length*ROW_H+FTR;
+
+  const canvas=document.createElement('canvas');
+  canvas.width=W*SCALE; canvas.height=H*SCALE;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(SCALE,SCALE);
+
+  // ── fondo ──
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0b1120'); bg.addColorStop(1,'#192050');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // ── precargar logos (timeout 3s, fallback silencioso) ──
+  const imgCache={};
+  await Promise.all(filas.map(async r=>{
+    if(!r.logoUrl)return;
+    try{
+      const img=new Image(); img.crossOrigin='anonymous';
+      await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=r.logoUrl;});
+      imgCache[r.logoUrl]=img;
+    }catch{}
+  }));
+
+  // ── header ──
+  // barra acento izquierda
+  ctx.fillStyle='#1a6ef5';
+  ctx.roundRect?ctx.roundRect(PAD,20,4,62,2):null;
+  ctx.fillRect(PAD,20,4,62);
+
+  // SPORVIX wordmark
+  ctx.fillStyle='#ffffff';
+  ctx.font='bold 28px system-ui,sans-serif';
+  ctx.textAlign='left';
+  ctx.fillText('⚡ SPORVIX',PAD+14,50);
+
+  // Liga
+  ctx.fillStyle='#60a5fa';
+  ctx.font='bold 13px system-ui,sans-serif';
+  const ligaTxt=(liga.name||'').length>40?(liga.name||'').slice(0,38)+'…':liga.name||'';
+  ctx.fillText(ligaTxt,PAD+14,70);
+
+  // división + tipo
+  ctx.fillStyle='#94a3b8';
+  ctx.font='12px system-ui,sans-serif';
+  const subTxt=(esGoles?'⚽ Tabla de Goleadores':'📊 Tabla de Posiciones')+(divNombre?' · '+divNombre:'');
+  ctx.fillText(subTxt,PAD+14,88);
+
+  // separador header
+  ctx.fillStyle='#1e3266'; ctx.fillRect(0,HDR-2,W,2);
+
+  // ── columnas ──
+  const cols=esGoles?[
+    {l:'#',    x:PAD,  w:28, a:'center'},
+    {l:'JUGADOR',x:PAD+36,w:258,a:'left'},
+    {l:'EQUIPO',x:370, w:230,a:'left'},
+    {l:'GOLES', x:628, w:80, a:'center'},
+  ]:[
+    {l:'#',    x:PAD,  w:28, a:'center'},
+    {l:'EQUIPO',x:PAD+36,w:250,a:'left'},
+    {l:'PJ',   x:330,  w:52, a:'center'},
+    {l:'G',    x:382,  w:52, a:'center'},
+    {l:'E',    x:434,  w:52, a:'center'},
+    {l:'P',    x:486,  w:52, a:'center'},
+    {l:'DIF',  x:542,  w:56, a:'center'},
+    {l:'PTS',  x:606,  w:70, a:'center'},
+  ];
+
+  ctx.fillStyle='#0e1a33'; ctx.fillRect(0,HDR,W,COL_H);
+  ctx.fillStyle='#4a6080';
+  ctx.font='bold 10px system-ui,sans-serif';
+  cols.forEach(c=>{
+    ctx.textAlign=c.a;
+    ctx.fillText(c.l,c.a==='center'?c.x+c.w/2:c.x,HDR+23);
+  });
+
+  // ── filas ──
+  const CR=18; // radio círculo escudo
+  const posColors=['#f59e0b','#94a3b8','#cd7f32'];
+
+  filas.forEach((r,i)=>{
+    const y=HDR+COL_H+i*ROW_H;
+    const midY=y+ROW_H/2;
+
+    // fondo alternado + highlight top3
+    ctx.fillStyle=i%2===0?'rgba(255,255,255,.03)':'rgba(0,0,0,.12)';
+    ctx.fillRect(0,y,W,ROW_H);
+    if(!esGoles&&r.pos<=3){
+      ctx.fillStyle=['rgba(245,158,11,.10)','rgba(148,163,184,.07)','rgba(205,127,50,.07)'][r.pos-1];
+      ctx.fillRect(0,y,W,ROW_H);
+    }
+    ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fillRect(0,y+ROW_H-1,W,1);
+
+    // posición
+    ctx.textAlign='center';
+    ctx.fillStyle=r.pos<=3?posColors[r.pos-1]:'#4a5568';
+    ctx.font=r.pos<=3?'bold 15px system-ui,sans-serif':'13px system-ui,sans-serif';
+    ctx.fillText(String(r.pos),PAD+14,midY+5);
+
+    // escudo/círculo
+    const cx=PAD+36+CR, cy=midY;
+    const logo=imgCache[r.logoUrl];
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,cy,CR,0,Math.PI*2);
+    if(logo){
+      ctx.clip();
+      ctx.drawImage(logo,cx-CR,cy-CR,CR*2,CR*2);
+    }else{
+      ctx.fillStyle=r.color||'#1a2150'; ctx.fill();
+      ctx.clip();
+      ctx.fillStyle='#fff';
+      ctx.font='bold 11px system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText((r.short||'?').toUpperCase().slice(0,3),cx,cy+4);
+    }
+    ctx.restore();
+
+    // nombre del jugador/equipo
+    const nameX=PAD+36+CR*2+8;
+    ctx.textAlign='left';
+    ctx.fillStyle='#f1f5f9';
+    ctx.font='14px system-ui,sans-serif';
+    const nameStr=(r.name||'').length>24?(r.name||'').slice(0,22)+'…':r.name||'?';
+    ctx.fillText(nameStr,nameX,midY+5);
+
+    if(esGoles){
+      // equipo
+      ctx.fillStyle='#94a3b8'; ctx.font='12px system-ui,sans-serif';
+      const tStr=(r.teamName||'').length>20?(r.teamName||'').slice(0,18)+'…':r.teamName||'';
+      ctx.fillText(tStr,370,midY+5);
+      // badge goles
+      const gx=cols[3].x+cols[3].w/2;
+      ctx.fillStyle='#1a6ef5';
+      ctx.beginPath(); ctx.arc(gx,midY,16,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 14px system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(String(r.goals),gx,midY+5);
+    }else{
+      // estadísticas: PJ G E P DIF PTS
+      const stats=[r.pj,r.pg,r.pe,r.pp,
+                   (r.dif>=0?'+':'')+r.dif,
+                   r.pts];
+      const sCols=cols.slice(2);
+      stats.forEach((v,si)=>{
+        const c=sCols[si]; if(!c)return;
+        ctx.textAlign='center';
+        if(si===5){ // PTS
+          ctx.fillStyle='#f59e0b';
+          ctx.font='bold 16px system-ui,sans-serif';
+        }else if(si===4){ // DIF
+          const n=parseInt(String(v));
+          ctx.fillStyle=n>0?'#4ade80':n<0?'#f87171':'#64748b';
+          ctx.font='12px system-ui,sans-serif';
+        }else{
+          ctx.fillStyle='#cbd5e1'; ctx.font='13px system-ui,sans-serif';
+        }
+        ctx.fillText(String(v),c.x+c.w/2,midY+5);
+      });
+    }
+  });
+
+  // ── footer ──
+  const fy=HDR+COL_H+filas.length*ROW_H;
+  ctx.fillStyle='#0b1120'; ctx.fillRect(0,fy,W,FTR);
+  ctx.fillStyle='#1a6ef5'; ctx.fillRect(0,fy,W,1);
+  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+  ctx.fillStyle='#334155'; ctx.font='11px system-ui,sans-serif';
+  ctx.textAlign='left'; ctx.fillText(fecha,PAD,fy+FTR/2+4);
+  ctx.fillStyle='#1a6ef5'; ctx.font='bold 12px system-ui,sans-serif';
+  ctx.textAlign='right'; ctx.fillText('sporvix.com',W-PAD,fy+FTR/2+4);
+
+  // ── compartir ──
+  showToast('Generando imagen…','');
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+  const fname=(esGoles?'goleadores':'tabla-posiciones')+'-sporvix.png';
+  const file=new File([blob],fname,{type:'image/png'});
+  const titulo=(esGoles?'⚽ Goleadores':'📊 Posiciones')+' — '+(liga.name||'Liga');
+
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:titulo});return;}
+    catch(e){if(e.name==='AbortError')return;}
   }
-  const texto=`${titulo}\n${divNombre}\n\n${lines.join('\n')}\n\n🏆 Sporvix`;
-  _doShare(titulo, texto);
+  _showImageShareModal(canvas.toDataURL('image/png'),fname,titulo,liga);
 }
 
-// Mobile: share from current rendered DOM (standings or scorers screen)
-function compartirTabla(tipo){
-  const liga=leagues.find(l=>l.id===currentLeagueId)||leagues.find(l=>l.id===currentAdminLeagueId)||{name:'Liga'};
-  const divNombre=document.getElementById('dt-division-title')?.textContent||'';
-  let titulo='', texto='';
-  if(tipo==='posiciones'){
-    titulo=`📊 Tabla de Posiciones — ${liga.name}`;
-    const rows=document.querySelectorAll('#standingsList .standing-row, #standingsList>div[onclick]');
-    if(!rows.length){showToast('La tabla está vacía','');return;}
-    const lines=[];
-    rows.forEach((r,i)=>{
-      const nombre=r.querySelector('.col-team-name')?.textContent||'?';
-      const vals=[...r.querySelectorAll('.col-stat-val,.col-pts-val')].map(x=>x.textContent.trim());
-      const pts=vals[vals.length-1]||'0', pj=vals[0]||'0';
-      lines.push(`${i+1}. ${nombre.trim()} — ${pts} pts (${pj} PJ)`);
-    });
-    texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
-  } else {
-    titulo=`⚽ Goleadores — ${liga.name}`;
-    const cards=document.querySelectorAll('#scorersList .scorer-card');
-    if(!cards.length){showToast('La tabla está vacía','');return;}
-    const lines=[];
-    cards.forEach((c,i)=>{
-      const nombre=c.querySelector('.scorer-name')?.textContent||'?';
-      const equipo=c.querySelector('.scorer-team')?.textContent||'';
-      const goles=c.querySelector('.goals-num')?.textContent||'0';
-      lines.push(`${i+1}. ${nombre.trim()} (${equipo.trim()}) — ${goles} goles`);
-    });
-    texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
-  }
-  _doShare(titulo, texto);
-}
-
-function _doShare(titulo, texto){
-  const url=window.location.href;
-  if(navigator.share){
-    navigator.share({title:titulo,text:texto,url}).catch(()=>{});
-    return;
-  }
-  const waText=encodeURIComponent(texto+'\n'+url);
-  const waUrl='https://wa.me/?text='+waText;
-  navigator.clipboard?.writeText(texto+'\n'+url).catch(()=>{});
-  _showShareModal(titulo, texto, url, waUrl);
-}
-
-function _showShareModal(titulo, texto, url, waUrl){
-  // Remove old if exists
-  const old=document.getElementById('_shareModal');if(old)old.remove();
+function _showImageShareModal(dataUrl,fname,titulo,liga){
+  const old=document.getElementById('_imgShareModal');if(old)old.remove();
+  const waText=encodeURIComponent(titulo+'\n'+window.location.href);
   const m=document.createElement('div');
-  m.id='_shareModal';
-  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
-  m.innerHTML=`<div style="background:var(--card);border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:500px;animation:slideUp .25s ease">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
-    <div style="font-size:14px;font-weight:800;margin-bottom:4px">${escHtml(titulo)}</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Texto copiado al portapapeles</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <a href="${escHtml(waUrl)}" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25d366;color:#fff;border-radius:12px;font-weight:700;font-size:13px;text-decoration:none">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.95-1.418A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
-        WhatsApp
-      </a>
-      <button onclick="navigator.clipboard?.writeText(${JSON.stringify(texto+'\n'+url)});showToast('Copiado ✓','success')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-weight:700;font-size:13px;color:var(--text);cursor:pointer">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar
-      </button>
+  m.id='_imgShareModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px';
+  m.innerHTML=`<div style="background:#1a2150;border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.7)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <span style="color:#f1f5f9;font-weight:800;font-size:14px">${titulo}</span>
+      <button onclick="document.getElementById('_imgShareModal').remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:24px;line-height:1;padding:0 2px">×</button>
     </div>
-    <button onclick="document.getElementById('_shareModal').remove()" style="width:100%;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer">Cerrar</button>
+    <div style="padding:12px 12px 0;background:#0b1120">
+      <img src="${dataUrl}" style="width:100%;border-radius:8px;display:block" alt="Tabla">
+    </div>
+    <div style="display:flex;gap:10px;padding:14px 16px">
+      <a href="${dataUrl}" download="${fname}" style="flex:1;background:#1a6ef5;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">⬇ Descargar PNG</a>
+      <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="flex:1;background:#25d366;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">💬 WhatsApp</a>
+    </div>
   </div>`;
-  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  m.onclick=e=>{if(e.target===m)m.remove();};
   document.body.appendChild(m);
 }
 
