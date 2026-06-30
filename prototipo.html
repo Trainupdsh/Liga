@@ -4267,7 +4267,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
 
   const brandLines=[
-    {t:'SPORVIX',s:s1,c:C.accent,w:900},
+    {t:'SPORVIX',s:s1,c:C.text,w:900},
     {t:liga.name||'',s:s2,c:C.accent,w:700},
     ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
     {t:lblTxt,s:s4,c:C.text3,w:400},
