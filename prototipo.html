@@ -4094,10 +4094,32 @@ function renderScorersLocal(){
 }
 
 // ─── COMPARTIR TABLAS ───
+// Desktop: share standings for a specific division by id (uses in-memory data)
+function _compartirTablaDiv(divId, tipo){
+  const div=divisiones.find(d=>d.id===divId);
+  const torneo=torneos.find(t=>t.id===div?.torneoId);
+  const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||{name:'Liga'};
+  const divNombre=div?.grupo?div.grupo+' · '+div.name:div?.name||'';
+  let titulo='', lines=[];
+  if(tipo==='posiciones'){
+    titulo=`📊 Tabla — ${escHtml(liga.name)}`;
+    const rows=standings.filter(s=>s.divId===divId)
+      .map(s=>({...s,pts:s.pg*3+s.pe,dif:s.gf-s.gc}))
+      .sort((a,b)=>b.pts-a.pts||b.dif-a.dif);
+    if(!rows.length){showToast('Sin datos para compartir','');return;}
+    rows.forEach((s,i)=>{
+      const t=teamsData.find(x=>x.id===s.teamId)||{name:'?'};
+      lines.push(`${i+1}. ${t.name} — ${s.pts} pts (${s.pj} PJ)`);
+    });
+  }
+  const texto=`${titulo}\n${divNombre}\n\n${lines.join('\n')}\n\n🏆 Sporvix`;
+  _doShare(titulo, texto);
+}
+
+// Mobile: share from current rendered DOM (standings or scorers screen)
 function compartirTabla(tipo){
-  // Build share text from current DOM
   const liga=leagues.find(l=>l.id===currentLeagueId)||leagues.find(l=>l.id===currentAdminLeagueId)||{name:'Liga'};
-  const divNombre=document.getElementById('dt-division-title')?.textContent||document.querySelector('.section-title-sm')?.textContent||'';
+  const divNombre=document.getElementById('dt-division-title')?.textContent||'';
   let titulo='', texto='';
   if(tipo==='posiciones'){
     titulo=`📊 Tabla de Posiciones — ${liga.name}`;
@@ -4105,16 +4127,14 @@ function compartirTabla(tipo){
     if(!rows.length){showToast('La tabla está vacía','');return;}
     const lines=[];
     rows.forEach((r,i)=>{
-      const nombre=r.querySelector('.col-team-name')?.textContent||r.querySelector('span')?.textContent||'?';
+      const nombre=r.querySelector('.col-team-name')?.textContent||'?';
       const vals=[...r.querySelectorAll('.col-stat-val,.col-pts-val')].map(x=>x.textContent.trim());
-      // PJ PG PE PP DIF PTS
-      const pts=vals[vals.length-1]||'0';
-      const pj=vals[0]||'0';
+      const pts=vals[vals.length-1]||'0', pj=vals[0]||'0';
       lines.push(`${i+1}. ${nombre.trim()} — ${pts} pts (${pj} PJ)`);
     });
     texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
   } else {
-    titulo=`⚽ Tabla de Goleadores — ${liga.name}`;
+    titulo=`⚽ Goleadores — ${liga.name}`;
     const cards=document.querySelectorAll('#scorersList .scorer-card');
     if(!cards.length){showToast('La tabla está vacía','');return;}
     const lines=[];
@@ -4126,13 +4146,15 @@ function compartirTabla(tipo){
     });
     texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
   }
-  // Try native Web Share API (mobile: opens WhatsApp, Instagram, etc.)
+  _doShare(titulo, texto);
+}
+
+function _doShare(titulo, texto){
   const url=window.location.href;
   if(navigator.share){
     navigator.share({title:titulo,text:texto,url}).catch(()=>{});
     return;
   }
-  // Fallback: copy to clipboard + show share options
   const waText=encodeURIComponent(texto+'\n'+url);
   const waUrl='https://wa.me/?text='+waText;
   navigator.clipboard?.writeText(texto+'\n'+url).catch(()=>{});
@@ -8616,6 +8638,7 @@ function _dtDivStandingsCard(div){
         <div style="font-size:13px;font-weight:700">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
         <div style="font-size:10px;color:var(--text3)">${div.currentRound?'Fecha '+div.currentRound+(div.rounds?' de '+div.rounds:'')+' · ':''}${div.teams||0} equipos</div>
       </div>
+      <button onclick="event.stopPropagation();_compartirTablaDiv(${div.id},'posiciones')" style="background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--text2);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700" title="Compartir tabla"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
       <span style="font-size:11px;color:var(--accent);font-weight:700">PARTIDOS →</span>
     </div>
     <div style="display:flex;padding:5px 16px;border-bottom:1px solid var(--border);background:var(--card2)">
