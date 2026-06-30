@@ -18,6 +18,10 @@
   --gold: gold; --silver: silver; --bronze: #cd7f32;
   --shadow: rgba(0,0,0,0.6); --input-bg: #131820; --overlay: rgba(0,0,0,0.8);
   --hover: #1e2536; --gradient-start: #4f8cff; --gradient-end: #a855f7;
+  --header-bg: rgba(10,14,22,0.84); --nav-bg: rgba(10,14,22,0.92);
+  --card-shadow: 0 2px 18px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --card-shadow-hover: 0 6px 28px rgba(79,140,255,0.14), 0 2px 8px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --page-bg: linear-gradient(160deg,#080d18 0%,#0c1017 55%,#07090e 100%);
 }
 :root[data-theme="light"] {
   --bg: #f5f7fa; --bg2: #e4e7ec; --card: #ffffff; --card2: #f0f2f5;
@@ -28,6 +32,10 @@
   --gold: #d97706; --silver: #64748b; --bronze: #92400e;
   --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f5; --overlay: rgba(0,0,0,0.5);
   --hover: #e8ebf0; --gradient-start: #2563eb; --gradient-end: #9333ea;
+  --header-bg: rgba(255,255,255,0.88); --nav-bg: rgba(255,255,255,0.92);
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+  --card-shadow-hover: 0 4px 20px rgba(37,99,235,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  --page-bg: var(--bg);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 ::-webkit-scrollbar{width:5px;}
@@ -35,8 +43,8 @@
 ::-webkit-scrollbar-thumb:hover{background:var(--border-hover);}
 ::-webkit-scrollbar-track{background:transparent;}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
-#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);}
-header{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:var(--page-bg,var(--bg));}
+header{position:sticky;top:0;z-index:100;background:var(--header-bg,var(--card));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.07);box-shadow:0 1px 0 rgba(79,140,255,0.1),0 4px 24px rgba(0,0,0,0.45);padding:0 16px;display:flex;align-items:center;gap:12px;height:58px;}
 .logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4f8cff,#a855f7);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;}
 header h1{font-size:17px;font-weight:700;flex:1;}
 header .subtitle{font-size:12px;color:var(--text2);}
@@ -99,7 +107,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .screen{display:none;animation:fadeIn 0.2s ease;}
 .screen.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--nav-bg,var(--card));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.07);box-shadow:0 -4px 28px rgba(0,0,0,0.5);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;gap:3px;transition:all 0.2s;}
 .nav-item .nav-icon{font-size:20px;color:var(--text3);display:flex;align-items:center;justify-content:center;}
 .nav-item .nav-icon svg{width:22px;height:22px;display:block;}
@@ -762,22 +770,43 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .form-strip{display:flex;gap:3px;align-items:center;}
 
 /* ═══ VISUAL OVERRIDES ═══ */
-/* Todas las tarjetas con gradiente de profundidad */
-.league-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.league-card:hover{border-color:var(--accent) !important;box-shadow:0 4px 24px rgba(79,140,255,0.13);}
-.match-group{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.standings-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.scorer-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.div-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.div-card:hover{border-color:var(--accent) !important;box-shadow:0 4px 24px rgba(79,140,255,0.13);}
-.stat-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.menu-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.menu-item:hover{border-color:var(--accent) !important;box-shadow:0 4px 24px rgba(79,140,255,0.1);}
-.list-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.past-torneo-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.notif-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.player-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
-.arbitro-match{background:linear-gradient(145deg,var(--card),var(--card2)) !important;}
+/* Todas las tarjetas con gradiente de profundidad + sombra */
+.league-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.league-card:hover{border-color:var(--accent) !important;box-shadow:var(--card-shadow-hover);}
+.match-group{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.standings-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.scorer-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.div-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.div-card:hover{border-color:var(--accent) !important;box-shadow:var(--card-shadow-hover);}
+.stat-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.menu-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.menu-item:hover{border-color:var(--accent) !important;box-shadow:var(--card-shadow-hover);}
+.list-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.past-torneo-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.notif-item{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.player-card{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+.arbitro-match{background:linear-gradient(145deg,var(--card),var(--card2)) !important;box-shadow:var(--card-shadow);}
+
+/* Active nav: radial glow under icon */
+.nav-item.active{background:radial-gradient(ellipse 55% 55% at 50% 0%,rgba(79,140,255,0.14),transparent);}
+
+/* Standing rows: podium tint en top-3 */
+.standing-row:nth-child(1){background:rgba(255,200,50,0.055);}
+.standing-row:nth-child(2){background:rgba(185,200,225,0.045);}
+.standing-row:nth-child(3){background:rgba(180,110,50,0.05);}
+
+/* Standings header gradiente */
+.standings-header{background:linear-gradient(to right,var(--card2),var(--card)) !important;border-bottom:1px solid rgba(79,140,255,0.18) !important;}
+
+/* Group header gradiente */
+.group-header{background:linear-gradient(to right,var(--card2),var(--card)) !important;border-bottom:1px solid rgba(79,140,255,0.15) !important;}
+
+/* Home banner: borde glow + gradiente más fuerte */
+.home-banner{box-shadow:0 4px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(79,140,255,0.12) !important;border-color:rgba(79,140,255,0.15) !important;}
+.home-banner::before{background:linear-gradient(135deg,rgba(79,140,255,0.22) 0%,rgba(79,140,255,0.06) 40%,rgba(168,85,247,0.08) 70%,transparent 100%) !important;}
+
+/* Modal sheet sombra más profunda */
+.modal-sheet{box-shadow:0 -8px 48px rgba(0,0,0,0.65) !important;}
 
 /* Section titles con accent bar */
 .section-title{border-left:3px solid var(--accent);padding-left:12px !important;}
@@ -4256,7 +4285,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
   if(esGoles&&!_cachedScorers.length)await renderScorers();
   if(!esGoles&&!_cachedStandings.length)await renderStandings();
-  const filas=esGoles?_cachedScorers:_cachedStandings;
+  const filas=(esGoles?_cachedScorers:_cachedStandings).slice(0,10);
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
   // paleta app
