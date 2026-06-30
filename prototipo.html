@@ -958,7 +958,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div id="matchesList"></div>
     </div>
     <div class="screen" id="screen-tabla">
-      <div class="section-title-sm">TABLA DE POSICIONES</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
+        <div class="section-title-sm" style="margin:0">TABLA DE POSICIONES</div>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="compartirTabla('posiciones')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+      </div>
       <div class="standings-card">
         <div class="standings-header">
           <span class="col-pos">#</span><span class="col-team">CLUB</span>
@@ -968,7 +971,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
     </div>
     <div class="screen" id="screen-goles">
-      <div class="section-title-sm">TABLA DE GOLEADORES</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
+        <div class="section-title-sm" style="margin:0">TABLA DE GOLEADORES</div>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="compartirTabla('goleadores')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+      </div>
       <div class="scorer-list" id="scorersList"></div>
     </div>
     <div class="screen" id="screen-buscar">
@@ -1330,12 +1336,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="menu-item" onclick="goAdmin('clubes')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg></div><div class="menu-text"><h3>Clubes</h3><p>Clubes y delegados</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="goAdmin('torneos');showToast('Seleccioná un torneo → División → tab Partidos','')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></div><div class="menu-text"><h3>Partidos</h3><p>Ver por Torneos → División</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openFixtureScreen()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M21 4v4h-4M3 20v-4h4"/></svg></div><div class="menu-text"><h3>Generar Fixture</h3><p>Round-robin automático</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item" onclick="openComunicados('admin')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg></div><div class="menu-text"><h3>Comunicados</h3><p>Mensajes y avisos</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item" onclick="openMultas()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.3C14 8.5 13 8 12 8c-1.4 0-2.5.8-2.5 1.9S10.6 11.8 12 12s2.5.9 2.5 2-1.1 1.9-2.5 1.9c-1 0-2-.5-2.5-1.3"/></svg></div><div class="menu-text"><h3>Multas y Sanciones</h3><p>Control de infracciones</p></div><span class="menu-chevron">›</span></div>
+      <div id="menu-comunicados" class="menu-item" onclick="openComunicados('admin')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg></div><div class="menu-text"><h3>Comunicados</h3><p>Mensajes y avisos</p></div><span class="menu-chevron">›</span></div>
+      <div id="menu-multas" class="menu-item" onclick="openMultas()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.3C14 8.5 13 8 12 8c-1.4 0-2.5.8-2.5 1.9S10.6 11.8 12 12s2.5.9 2.5 2-1.1 1.9-2.5 1.9c-1 0-2-.5-2.5-1.3"/></svg></div><div class="menu-text"><h3>Multas y Sanciones</h3><p>Control de infracciones</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openCanchas()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14M3 9.5h3v5H3M21 9.5h-3v5h3"/><circle cx="12" cy="12" r="2"/></svg></div><div class="menu-text"><h3>Canchas</h3><p>Disponibilidad de instalaciones</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item" onclick="goAdmin('arbitros')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="9" height="13" rx="1.5"/><rect x="10" y="7" width="9" height="13" rx="1.5"/></svg></div><div class="menu-text"><h3>Árbitros</h3><p>Perfiles y asignaciones</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item" onclick="openHistorial()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M8.5 3.5 12 9l3.5-5.5"/><circle cx="12" cy="14" r="2.2"/></svg></div><div class="menu-text"><h3>Historial</h3><p>Temporadas y campeones</p></div><span class="menu-chevron">›</span></div>
-      <div class="menu-item" onclick="openPlayoffsModal()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></div><div class="menu-text"><h3>Playoffs / Eliminatoria</h3><p>Fase final del torneo</p></div><span class="menu-chevron">›</span></div>
+      <div id="menu-arbitros" class="menu-item" onclick="goAdmin('arbitros')"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="9" height="13" rx="1.5"/><rect x="10" y="7" width="9" height="13" rx="1.5"/></svg></div><div class="menu-text"><h3>Árbitros</h3><p>Perfiles y asignaciones</p></div><span class="menu-chevron">›</span></div>
+      <div id="menu-historial" class="menu-item" onclick="openHistorial()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M8.5 3.5 12 9l3.5-5.5"/><circle cx="12" cy="14" r="2.2"/></svg></div><div class="menu-text"><h3>Historial</h3><p>Temporadas y campeones</p></div><span class="menu-chevron">›</span></div>
+      <div id="menu-playoffs" class="menu-item" onclick="openPlayoffsModal()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></div><div class="menu-text"><h3>Playoffs / Eliminatoria</h3><p>Fase final del torneo</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="exportPDF()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 16h6"/></svg></div><div class="menu-text"><h3>Exportar PDF</h3><p>Imprimir posiciones y datos</p></div><span class="menu-chevron">›</span></div>
       <div class="menu-item" onclick="openConfigLiga()"><div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></div><div class="menu-text"><h3>Configuración</h3><p>Nombre, deporte, logo de la liga</p></div><span class="menu-chevron">›</span></div>
     </div>
@@ -1524,7 +1530,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
           <div class="nl-color-btn" onclick="ncSelectColor(this,'#3d2d1a')" style="background:#3d2d1a"></div>
         </div>
       </div>
-      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div id="nc-delegado-section" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
         <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Acceso del delegado</div>
         <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Email</label>
           <input class="form-input" id="nc-email" type="email" placeholder="delegado@miclub.com" style="width:100%"></div>
@@ -2687,9 +2693,10 @@ CREATE TABLE IF NOT EXISTS planes (
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
 INSERT INTO planes (nombre,descripcion,precio_mensual,max_divisiones,max_equipos,max_jugadores,features,color,orden) VALUES
-('Starter','Para ligas pequeñas que arrancan',0,1,10,20,'{"playoffs":false,"tv_mode":false,"comunicados":true,"multas":false,"historial":false,"inscripcion_online":false,"arbitros":false}','#4b5563',1),
-('Pro','Para ligas con varias divisiones',4990,3,20,30,'{"playoffs":true,"tv_mode":true,"comunicados":true,"multas":true,"historial":true,"inscripcion_online":true,"arbitros":true}','#1a2150',2),
-('Premium','Sin límites, todo habilitado',9990,-1,-1,-1,'{"playoffs":true,"tv_mode":true,"comunicados":true,"multas":true,"historial":true,"inscripcion_online":true,"arbitros":true}','#d4af37',3);
+('Gratis','Liga chica — el admin carga todo',0,4,16,20,'{"delegados":false,"arbitros":false,"comunicados":false,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#4b5563',1),
+('Starter','Con delegados y comunicados',2990,6,20,25,'{"delegados":true,"arbitros":false,"comunicados":true,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#1a6ef5',2),
+('Pro','Árbitros, playoffs y sanciones',5990,12,28,30,'{"delegados":true,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":false,"inscripcion_online":false}','#1a2150',3),
+('Premium','Sin límites, todo habilitado',12990,-1,-1,-1,'{"delegados":true,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":true,"inscripcion_online":true}','#d4af37',4);
 */
 let mesaMatchId=3; // partido en_vivo activo
 let mesaRealtimeSub=null;
@@ -3057,7 +3064,7 @@ function formatFecha(str){
 }
 
 // ─── PLANES / FEATURE GATES ───
-const FEATURE_LABELS={playoffs:'Playoffs / Eliminatoria',tv_mode:'Modo TV',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',historial:'Historial de temporadas',inscripcion_online:'Inscripción online',arbitros:'Gestión de árbitros'};
+const FEATURE_LABELS={delegados:'Usuarios por club (delegados)',arbitros:'Gestión de árbitros',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',playoffs:'Playoffs / Eliminatoria',historial:'Historial de temporadas',tv_mode:'Modo TV',inscripcion_online:'Inscripción online'};
 
 function canUseFeature(feature){
   if(!currentLigaPlan)return true;
@@ -3103,7 +3110,21 @@ async function loadCurrentLigaPlan(ligaId,planId){
     }
   }catch(e){currentLigaPlan=null;}
 }
-function updateAdminMenuForPlan(){}
+function updateAdminMenuForPlan(){
+  // Show/hide menu items based on plan features
+  const gates={
+    'menu-arbitros':canUseFeature('arbitros'),
+    'menu-comunicados':canUseFeature('comunicados'),
+    'menu-multas':canUseFeature('multas'),
+    'menu-playoffs':canUseFeature('playoffs'),
+    'menu-historial':canUseFeature('historial'),
+    'menu-tv':canUseFeature('tv_mode'),
+  };
+  Object.entries(gates).forEach(([id,allowed])=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display=allowed?'':'none';
+  });
+}
 
 function toggleSAPlanes(){
   const panel=document.getElementById('saPlanesPanelSA');
@@ -4072,6 +4093,78 @@ function renderScorersLocal(){
   }).join('');
 }
 
+// ─── COMPARTIR TABLAS ───
+function compartirTabla(tipo){
+  // Build share text from current DOM
+  const liga=leagues.find(l=>l.id===currentLeagueId)||leagues.find(l=>l.id===currentAdminLeagueId)||{name:'Liga'};
+  const divNombre=document.getElementById('dt-division-title')?.textContent||document.querySelector('.section-title-sm')?.textContent||'';
+  let titulo='', texto='';
+  if(tipo==='posiciones'){
+    titulo=`📊 Tabla de Posiciones — ${liga.name}`;
+    const rows=document.querySelectorAll('#standingsList .standing-row, #standingsList>div[onclick]');
+    if(!rows.length){showToast('La tabla está vacía','');return;}
+    const lines=[];
+    rows.forEach((r,i)=>{
+      const nombre=r.querySelector('.col-team-name')?.textContent||r.querySelector('span')?.textContent||'?';
+      const vals=[...r.querySelectorAll('.col-stat-val,.col-pts-val')].map(x=>x.textContent.trim());
+      // PJ PG PE PP DIF PTS
+      const pts=vals[vals.length-1]||'0';
+      const pj=vals[0]||'0';
+      lines.push(`${i+1}. ${nombre.trim()} — ${pts} pts (${pj} PJ)`);
+    });
+    texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
+  } else {
+    titulo=`⚽ Tabla de Goleadores — ${liga.name}`;
+    const cards=document.querySelectorAll('#scorersList .scorer-card');
+    if(!cards.length){showToast('La tabla está vacía','');return;}
+    const lines=[];
+    cards.forEach((c,i)=>{
+      const nombre=c.querySelector('.scorer-name')?.textContent||'?';
+      const equipo=c.querySelector('.scorer-team')?.textContent||'';
+      const goles=c.querySelector('.goals-num')?.textContent||'0';
+      lines.push(`${i+1}. ${nombre.trim()} (${equipo.trim()}) — ${goles} goles`);
+    });
+    texto=`${titulo}\n${divNombre?divNombre+'\n':''}\n${lines.join('\n')}\n\n🏆 Sporvix`;
+  }
+  // Try native Web Share API (mobile: opens WhatsApp, Instagram, etc.)
+  const url=window.location.href;
+  if(navigator.share){
+    navigator.share({title:titulo,text:texto,url}).catch(()=>{});
+    return;
+  }
+  // Fallback: copy to clipboard + show share options
+  const waText=encodeURIComponent(texto+'\n'+url);
+  const waUrl='https://wa.me/?text='+waText;
+  navigator.clipboard?.writeText(texto+'\n'+url).catch(()=>{});
+  _showShareModal(titulo, texto, url, waUrl);
+}
+
+function _showShareModal(titulo, texto, url, waUrl){
+  // Remove old if exists
+  const old=document.getElementById('_shareModal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='_shareModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  m.innerHTML=`<div style="background:var(--card);border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:500px;animation:slideUp .25s ease">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-size:14px;font-weight:800;margin-bottom:4px">${escHtml(titulo)}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Texto copiado al portapapeles</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <a href="${escHtml(waUrl)}" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25d366;color:#fff;border-radius:12px;font-weight:700;font-size:13px;text-decoration:none">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.95-1.418A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+        WhatsApp
+      </a>
+      <button onclick="navigator.clipboard?.writeText(${JSON.stringify(texto+'\n'+url)});showToast('Copiado ✓','success')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-weight:700;font-size:13px;color:var(--text);cursor:pointer">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+    <button onclick="document.getElementById('_shareModal').remove()" style="width:100%;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer">Cerrar</button>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.body.appendChild(m);
+}
+
 let st2;
 async function searchPlayers(q){
   clearTimeout(st2);
@@ -4974,6 +5067,7 @@ function openNuevoClub(){
   if(prev){prev.src='';prev.classList.remove('visible');}
   if(ph)ph.style.display='';
   window._ncLogoBlob=null;
+  _ncToggleDelegadoSection();
   document.getElementById('nuevoClubModal').classList.add('open');
   setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
 }
@@ -5018,6 +5112,16 @@ function ncSelectColor(el,color){
   document.querySelectorAll('#nc-colores .nl-color-btn').forEach(b=>b.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('nc-preview-icon').style.background=color;
+}
+function _ncToggleDelegadoSection(){
+  const sec=document.getElementById('nc-delegado-section');
+  if(!sec)return;
+  const allowed=canUseFeature('delegados');
+  sec.style.display=allowed?'':'none';
+  if(!allowed){
+    document.getElementById('nc-email').value='';
+    document.getElementById('nc-pass').value='';
+  }
 }
 async function saveNuevoClub(){
   const nombre=document.getElementById('nc-nombre').value.trim();
