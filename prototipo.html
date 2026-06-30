@@ -7352,7 +7352,13 @@ async function loadSAUsuarios(){
     (data||[]).forEach(c=>{
       saAllRows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:c.delegado_pass||'—',tipo:'club',clubId:c.id});
     });
-  }catch(e){console.warn('loadSAUsuarios error',e);}
+  }catch(e){console.warn('loadSAUsuarios clubes error',e);}
+  try{
+    const {data}=await supa.from('arbitros').select('id,nombre,email,password').not('email','is',null).order('nombre');
+    (data||[]).forEach(a=>{
+      saAllRows.push({key:'arb_'+a.id,role:'Árbitro',name:a.nombre,email:a.email||'—',pass:a.password||'—',tipo:'arbitro',arbitroId:a.id});
+    });
+  }catch(e){console.warn('loadSAUsuarios arbitros error',e);}
   document.getElementById('saUsuariosBuscar').value='';
   renderSARows(saAllRows,'');
 }
@@ -7442,6 +7448,11 @@ async function applyAccessChange(r,newEmail,newPass){
     if(newEmail)updates.delegado_email=newEmail;
     const {error}=await supa.from('clubes').update(updates).eq('id',r.clubId);
     if(error)throw error;
+  } else if(r.tipo==='arbitro'){
+    const updates={password:passStr};
+    if(newEmail)updates.email=newEmail;
+    const {error}=await supa.from('arbitros').update(updates).eq('id',r.arbitroId);
+    if(error)throw error;
   }
 }
 async function deleteUser(r){
@@ -7458,6 +7469,10 @@ async function deleteUser(r){
       if(idx!==-1)extraUsers.splice(idx,1);
     } else if(r.tipo==='club'){
       const {error}=await supa.from('clubes').update({delegado_email:null,delegado_pass:null}).eq('id',r.clubId);
+      if(error)throw error;
+    } else if(r.tipo==='arbitro'){
+      await supa.from('partidos').update({arbitro_id:null,arbitro_email:null}).eq('arbitro_id',r.arbitroId);
+      const {error}=await supa.from('arbitros').delete().eq('id',r.arbitroId);
       if(error)throw error;
     }
     showToast('"'+r.name+'" eliminado ✓','success');
