@@ -1325,6 +1325,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
       <span style="font-size:12px;color:var(--accent)">Ver planes ›</span>
     </div>
+    <div id="demo-banner" style="display:none;padding:10px 16px;background:rgba(139,92,246,.18);border-bottom:2px solid #8b5cf6;align-items:center;gap:10px">
+      <span style="font-size:18px">👁️</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:800;color:#c4b5fd;text-transform:uppercase;letter-spacing:.5px">Modo Demo — Solo lectura</div>
+        <div style="font-size:10px;color:var(--text2)">Podés explorar todo el contenido pero las operaciones de escritura están desactivadas</div>
+      </div>
+    </div>
     <div class="dashboard-grid">
       <div class="stat-card accent"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg></span><div class="stat-num" id="dash-stat-equipos">—</div><div class="stat-label">CLUBES</div></div>
       <div class="stat-card"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 6a3 3 0 0 1 0 6M17 19a5.5 5.5 0 0 0-3-4.9"/></svg></span><div class="stat-num" id="dash-stat-jugadores">—</div><div class="stat-label">JUGADORES</div></div>
@@ -1735,6 +1742,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
           </div>
           <div style="flex:1"></div>
         </div>
+        <div id="ne-delegado-section">
         <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Acceso del delegado</div>
         <div style="display:flex;gap:8px">
           <div style="flex:1">
@@ -1745,6 +1753,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
             <label style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:4px">Contraseña *</label>
             <input class="form-input" id="ne-nc-pass" type="text" placeholder="Ej: losandes25" style="padding:8px 10px;font-size:13px">
           </div>
+        </div>
         </div>
         <button class="btn btn-primary" style="width:100%" onclick="neCrearClubInline()">Crear club →</button>
         <div id="ne-nc-error" style="color:var(--red);font-size:12px;display:none"></div>
@@ -2693,6 +2702,7 @@ CREATE TABLE IF NOT EXISTS planes (
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
 INSERT INTO planes (nombre,descripcion,precio_mensual,max_divisiones,max_equipos,max_jugadores,features,color,orden) VALUES
+('Demo','Explorá la plataforma completa — solo lectura',0,2,5,15,'{"delegados":false,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":true,"inscripcion_online":true,"modo_demo":true}','#8b5cf6',0),
 ('Gratis','Liga chica — el admin carga todo',0,4,16,20,'{"delegados":false,"arbitros":false,"comunicados":false,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#4b5563',1),
 ('Starter','Con delegados y comunicados',2990,6,20,25,'{"delegados":true,"arbitros":false,"comunicados":true,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#1a6ef5',2),
 ('Pro','Árbitros, playoffs y sanciones',5990,12,28,30,'{"delegados":true,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":false,"inscripcion_online":false}','#1a2150',3),
@@ -3064,12 +3074,13 @@ function formatFecha(str){
 }
 
 // ─── PLANES / FEATURE GATES ───
-const FEATURE_LABELS={delegados:'Usuarios por club (delegados)',arbitros:'Gestión de árbitros',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',playoffs:'Playoffs / Eliminatoria',historial:'Historial de temporadas',tv_mode:'Modo TV',inscripcion_online:'Inscripción online'};
+const FEATURE_LABELS={delegados:'Usuarios por club (delegados)',arbitros:'Gestión de árbitros',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',playoffs:'Playoffs / Eliminatoria',historial:'Historial de temporadas',tv_mode:'Modo TV',inscripcion_online:'Inscripción online',modo_demo:'Modo Demo (solo lectura)'};
 
 function canUseFeature(feature){
   if(!currentLigaPlan)return true;
   return currentLigaPlan.features?.[feature]===true;
 }
+function isDemo(){return !!(currentLigaPlan&&currentLigaPlan.features&&currentLigaPlan.features.modo_demo===true);}
 function canAddItem(limitKey,currentCount){
   if(!currentLigaPlan)return true;
   const max=currentLigaPlan[limitKey];
@@ -3107,6 +3118,8 @@ async function loadCurrentLigaPlan(ligaId,planId){
       bannerNombre.textContent=p.nombre+' Plan';
       bannerVence.textContent=l?.plan_vencimiento?'Activo hasta '+formatFecha(l.plan_vencimiento):'Activo · Sin vencimiento';
       updateAdminMenuForPlan();
+      const demoBanner=document.getElementById('demo-banner');
+      if(demoBanner)demoBanner.style.display=isDemo()?'flex':'none';
     }
   }catch(e){currentLigaPlan=null;}
 }
@@ -3661,6 +3674,7 @@ async function confirmarEliminarLiga(id,nombre){
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function confirmarEliminarTorneo(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar el torneo "'+nombre+'"?\nEsto también eliminará sus divisiones.'))return;
   try{
     const {error}=await supa.from('torneos').delete().eq('id',id);
@@ -3670,6 +3684,7 @@ async function confirmarEliminarTorneo(id,nombre){
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function confirmarEliminarDivision(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar la división "'+nombre+'"?'))return;
   try{
     const {error}=await supa.from('divisiones').delete().eq('id',id);
@@ -3701,6 +3716,7 @@ function closeConfigLiga(e,force){
     document.getElementById('configLigaModal').classList.remove('open');
 }
 async function saveConfigLiga(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('cfg-liga-nombre').value.trim();
   const deporte=document.getElementById('cfg-liga-deporte').value.trim();
   const errEl=document.getElementById('cfg-liga-error');
@@ -5200,6 +5216,7 @@ function closeDelegJugador(e,force){
     document.getElementById('delegJugadorModal').classList.remove('open');
 }
 async function saveDelegJugador(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('dj-nombre').value.trim();
   const numero=parseInt(document.getElementById('dj-numero').value)||null;
   const posicion=document.getElementById('dj-posicion').value;
@@ -5441,6 +5458,7 @@ function _ncToggleDelegadoSection(){
   }
 }
 async function saveNuevoClub(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nc-nombre').value.trim();
   const abrev=document.getElementById('nc-abrev').value.trim().toUpperCase();
   const email=document.getElementById('nc-email').value.trim();
@@ -5482,6 +5500,7 @@ async function saveNuevoClub(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent=isEdit?'Guardar cambios':'Crear Club';}
 }
 async function confirmarEliminarClub(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar el club "'+nombre+'"?'))return;
   try{
     await supa.from('clubes').delete().eq('id',id);
@@ -5564,15 +5583,16 @@ function neRefreshClubSelect(){
     +'<option value="__nuevo__">➕ Crear nuevo club aquí</option>';
 }
 async function neCrearClubInline(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('ne-nc-nombre').value.trim();
   const abrev=document.getElementById('ne-nc-abrev').value.trim().toUpperCase().slice(0,4);
   const color=document.getElementById('ne-nc-color').value;
-  const email=document.getElementById('ne-nc-email').value.trim();
-  const pass=document.getElementById('ne-nc-pass').value.trim();
+  const email=canUseFeature('delegados')?document.getElementById('ne-nc-email').value.trim():'';
+  const pass=canUseFeature('delegados')?document.getElementById('ne-nc-pass').value.trim():'';
   const errEl=document.getElementById('ne-nc-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
-  if(!email){errEl.textContent='El email del delegado es obligatorio';errEl.style.display='';return;}
-  if(!pass){errEl.textContent='La contraseña del delegado es obligatoria';errEl.style.display='';return;}
+  if(canUseFeature('delegados')&&!email){errEl.textContent='El email del delegado es obligatorio';errEl.style.display='';return;}
+  if(canUseFeature('delegados')&&!pass){errEl.textContent='La contraseña del delegado es obligatoria';errEl.style.display='';return;}
   errEl.style.display='none';
   try{
     const {data:newClub,error}=await supa.from('clubes').insert({
@@ -5614,6 +5634,8 @@ function neOnClubChange(){
     document.getElementById('ne-nc-email').value='';
     document.getElementById('ne-nc-pass').value='';
     document.getElementById('ne-nc-error').style.display='none';
+    const neDelegSec=document.getElementById('ne-delegado-section');
+    if(neDelegSec)neDelegSec.style.display=canUseFeature('delegados')?'':'none';
     setTimeout(()=>document.getElementById('ne-nc-nombre').focus(),100);
   } else {
     form.style.display='none';
@@ -5632,6 +5654,7 @@ function neUpdatePreview(){
   if(n)document.getElementById('ne-preview-nombre').textContent=n;
 }
 async function saveNuevoEquipo(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const clubRaw=document.getElementById('ne-club').value;
   const clubId=clubRaw&&clubRaw!=='__nuevo__'?parseInt(clubRaw)||null:null;
   const nombreOverride=document.getElementById('ne-nombre').value.trim();
@@ -5672,6 +5695,7 @@ async function saveNuevoEquipo(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Inscribir club';}
 }
 async function confirmarEliminarEquipo(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Quitar el club "'+nombre+'" de esta división? También se eliminan sus jugadores.'))return;
   try{
     await supa.from('equipos').delete().eq('id',id);
@@ -5729,6 +5753,7 @@ function njUpdatePreview(){
   document.getElementById('nj-preview-nombre').textContent=document.getElementById('nj-nombre').value.trim()||'Sin nombre';
 }
 async function saveNuevoJugador(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nj-nombre').value.trim();
   const numero=parseInt(document.getElementById('nj-numero').value)||null;
   const posicion=document.getElementById('nj-posicion').value;
@@ -5768,6 +5793,7 @@ async function saveNuevoJugador(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';}
 }
 async function confirmarEliminarJugador(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar al jugador "'+nombre+'"?'))return;
   try{
     await supa.from('jugadores').delete().eq('id',id);
@@ -5991,6 +6017,7 @@ function setPoffN(n){
   genBtn.style.display='';
 }
 async function generarPlayoffs(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const btn=document.getElementById('playoffs-gen-btn');
   btn.disabled=true;btn.textContent='Generando…';
   try{
@@ -6075,6 +6102,7 @@ function npUpdatePreview(){
   document.getElementById('np-preview').textContent=l+' vs '+v;
 }
 async function saveNuevoPartido(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const localId=parseInt(document.getElementById('np-local').value)||null;
   const visitaId=parseInt(document.getElementById('np-visita').value)||null;
   const fecha=document.getElementById('np-fecha').value;
@@ -6100,6 +6128,7 @@ async function saveNuevoPartido(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Crear Partido';}
 }
 async function confirmarEliminarPartido(id){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar este partido?'))return;
   try{
     await supa.from('partidos').delete().eq('id',id);
@@ -6174,6 +6203,7 @@ function ntUpdatePreview(){
   document.getElementById('nt-preview-nombre').textContent=document.getElementById('nt-nombre').value.trim()||'Sin nombre';
 }
 async function saveNuevoTorneo(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nt-nombre').value.trim();
   const temporada=document.getElementById('nt-temporada').value.trim();
   const estado=document.getElementById('nt-estado').value;
@@ -6243,6 +6273,7 @@ function ndUpdatePreview(){
   document.getElementById('nd-preview-nombre').textContent=document.getElementById('nd-nombre').value.trim()||'Sin nombre';
 }
 async function saveNuevaDivision(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nd-nombre').value.trim();
   const categoria=document.getElementById('nd-categoria').value.trim();
   const genero=document.getElementById('nd-genero').value;
@@ -6408,6 +6439,7 @@ function updateScorerPlayerOptions(){
   }
 }
 async function saveAdminResult(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const gLocal=parseInt(document.getElementById('result-score-local').value)||0;
   const gVisita=parseInt(document.getElementById('result-score-visita').value)||0;
   const btn=document.querySelector('#resultModal .btn-primary');
@@ -6613,6 +6645,7 @@ async function openFixtureScreen(){
   }catch(e){if(resumen)resumen.textContent='Error cargando config';}
 }
 async function generarFixture(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const btn=document.getElementById('fixture-gen-btn');
   if(!currentAdminDivisionId){showToast('Primero seleccioná una división','error');return;}
   if(!currentAdminTorneoId){showToast('No hay torneo seleccionado','error');return;}
@@ -6726,6 +6759,7 @@ function ecUpdatePreview(){
   document.getElementById('ec-preview-icon').style.background=ecColor;
 }
 async function saveEditClub(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('ec-nombre').value.trim();
   const abreviacion=document.getElementById('ec-abrev').value.trim().toUpperCase();
   const errEl=document.getElementById('ec-error');
@@ -7115,6 +7149,7 @@ async function loadComunicados(){
   }
 }
 async function saveComunicado(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const texto=document.getElementById('comunicado-texto').value.trim();
   const tipo=document.getElementById('comunicado-tipo').value;
   if(!texto){showToast('Escribí el comunicado','error');return;}
@@ -7164,6 +7199,7 @@ async function loadMultas(){
   }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
 }
 async function saveMulta(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const dest=document.getElementById('multa-dest').value.trim();
   const motivo=document.getElementById('multa-motivo').value.trim();
   const monto=parseFloat(document.getElementById('multa-monto').value)||0;
@@ -7222,6 +7258,7 @@ function renderInformeIncidents(){
     </div>`).join('');
 }
 async function saveInformeArbitro(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const obs=document.getElementById('informe-obs').value.trim();
   const cal=document.getElementById('informe-calificacion').value;
   const arbitroEmail=arbitroCurrentUser?.email||null;
@@ -7313,6 +7350,7 @@ function closeNuevoArbitro(e,force){
     document.getElementById('nuevoArbitroModal').classList.remove('open');
 }
 async function saveArbitro(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('arb-nombre').value.trim();
   const email=document.getElementById('arb-email').value.trim();
   const telefono=document.getElementById('arb-telefono').value.trim();
@@ -7350,6 +7388,7 @@ async function saveArbitro(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Guardar';}
 }
 async function confirmarEliminarArbitro(id,nombre){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar al árbitro "'+nombre+'"?\nSe quitará de todos los partidos asignados.'))return;
   try{
     await supa.from('partidos').update({arbitro_id:null,arbitro_email:null}).eq('arbitro_id',id);
@@ -7378,6 +7417,7 @@ function closeReprogramar(e,force){
     document.getElementById('reprogramarModal').classList.remove('open');
 }
 async function saveReprogramacion(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const fecha=document.getElementById('reprogram-fecha').value;
   const hora=document.getElementById('reprogram-hora').value;
   const cancha=document.getElementById('reprogram-cancha').value.trim();
@@ -7480,6 +7520,7 @@ async function loadCanchas(){
   }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
 }
 async function saveCancha(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('cancha-nombre').value.trim();
   const dir=document.getElementById('cancha-direccion').value.trim();
   const cap=parseInt(document.getElementById('cancha-capacidad').value)||null;
@@ -7550,6 +7591,7 @@ function closeInscripcion(e,force){
     document.getElementById('inscripcionModal').classList.remove('open');
 }
 async function saveInscripcion(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const club=document.getElementById('insc-club').value.trim();
   const delegado=document.getElementById('insc-delegado').value.trim();
   const email=document.getElementById('insc-email').value.trim();
@@ -7623,6 +7665,7 @@ function openNuevoCT(){
   document.getElementById('ct-form').style.display='';
 }
 async function saveCT(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('ct-nombre').value.trim();
   const rol=document.getElementById('ct-rol').value;
   if(!nombre){showToast('El nombre es obligatorio','error');return;}
@@ -7654,6 +7697,7 @@ async function loadCuerpoTecnico(){
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar.</div>';}
 }
 async function eliminarCT(id){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   if(!confirm('¿Eliminar este integrante?'))return;
   try{
     await supa.from('cuerpo_tecnico').delete().eq('id',id);
@@ -7829,6 +7873,7 @@ function closeEditPass(e,force){
     document.getElementById('editPassModal').classList.remove('open');
 }
 async function saveEditPass(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const email=document.getElementById('ep-email').value.trim();
   const pass=document.getElementById('ep-pass').value.trim();
   const errEl=document.getElementById('ep-error');
