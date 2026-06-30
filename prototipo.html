@@ -4188,8 +4188,10 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   const canvas=document.createElement('canvas');
   canvas.width=CW*RETINA; canvas.height=CH*RETINA;
-  const ctx=canvas.getContext('2d');
+  const ctx=canvas.getContext('2d',{alpha:false});
   ctx.scale(RETINA,RETINA);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
 
   // — precargar logos de equipos + logo header (torneo o liga) —
   const imgCache={};
@@ -4435,6 +4437,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // ─── COMPARTIR ───────────────────────────────────────────────────
   showToast('Generando imagen…','');
+  // PNG lossless para guardar/compartir; WebP para preview en modal (más liviano)
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
   const fname=(esGoles?'goleadores':'tabla-posiciones')+'-sporvix.png';
   const file=new File([blob],fname,{type:'image/png'});
@@ -4443,11 +4446,15 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     try{await navigator.share({files:[file],title:titulo});return;}
     catch(e){if(e.name==='AbortError')return;}
   }
-  _showImageShareModal(canvas.toDataURL('image/png'),fname,titulo);
+  // preview: WebP si el browser lo soporta, sino PNG
+  const previewUrl=canvas.toDataURL('image/webp',0.92)||canvas.toDataURL('image/png');
+  _showImageShareModal(previewUrl,blob,fname,titulo);
 }
 
-function _showImageShareModal(dataUrl,fname,titulo){
+function _showImageShareModal(previewUrl,blob,fname,titulo){
   const old=document.getElementById('_imgShareModal');if(old)old.remove();
+  // URL de descarga: objectURL del blob PNG (liviano en memoria, full quality)
+  const dlUrl=URL.createObjectURL(blob);
   const waText=encodeURIComponent(titulo+'\n'+window.location.href);
   const m=document.createElement('div');
   m.id='_imgShareModal';
@@ -4455,18 +4462,20 @@ function _showImageShareModal(dataUrl,fname,titulo){
   m.innerHTML=`<div style="background:#131d3b;border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.8)">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07)">
       <span style="color:#f1f5f9;font-weight:800;font-size:14px">${titulo}</span>
-      <button onclick="document.getElementById('_imgShareModal').remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:24px;line-height:1;padding:0 2px">×</button>
+      <button id="_imgShareClose" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:24px;line-height:1;padding:0 2px">×</button>
     </div>
     <div style="padding:12px 12px 0;background:#0b1120;max-height:55vh;overflow-y:auto">
-      <img src="${dataUrl}" style="width:100%;border-radius:8px;display:block" alt="Tabla">
+      <img src="${previewUrl}" style="width:100%;border-radius:8px;display:block" alt="Tabla">
     </div>
     <div style="display:flex;gap:10px;padding:14px 16px">
-      <a href="${dataUrl}" download="${fname}" style="flex:1;background:#1a6ef5;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">⬇ Descargar PNG</a>
+      <a href="${dlUrl}" download="${fname}" style="flex:1;background:#1a6ef5;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">⬇ Descargar PNG</a>
       <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="flex:1;background:#25d366;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">💬 WhatsApp</a>
     </div>
   </div>`;
-  m.onclick=e=>{if(e.target===m)m.remove();};
+  const cleanup=()=>{URL.revokeObjectURL(dlUrl);m.remove();};
+  m.onclick=e=>{if(e.target===m)cleanup();};
   document.body.appendChild(m);
+  document.getElementById('_imgShareClose').onclick=cleanup;
 }
 
 let st2;
