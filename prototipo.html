@@ -4373,9 +4373,11 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.drawImage(hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);
     ctx.restore();
   } else {
-    ctx.font=`bold ${Math.round(logoR*1.05)}px system-ui,sans-serif`;
-    ctx.fillStyle=C.accent; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('⚡',logoX,logoY); ctx.textBaseline='alphabetic';
+    const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
+    lgG.addColorStop(0,'#4f8cff');lgG.addColorStop(1,'#a855f7');
+    ctx.font=`900 ${Math.round(logoR*1.1)}px system-ui,sans-serif`;
+    ctx.fillStyle=lgG; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('S',logoX,logoY); ctx.textBaseline='alphabetic';
   }
 
   const tX=logoX+logoR+Math.round(CW*0.022);
