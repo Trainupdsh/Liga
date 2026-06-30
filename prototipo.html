@@ -4160,7 +4160,16 @@ function _lhx(hex,a){
   catch{return hex||'#2a3a6a';}
 }
 
-// ── Renderizado de imagen — diseño Sporvix full-bleed ─────────────────────────
+function _rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
 async function _renderImgConFormato(divId,tipo,fmtId){
   const fmt=_SHARE_FMTS.find(f=>f.id===fmtId)||_SHARE_FMTS[0];
   const esGoles=tipo==='goleadores';
@@ -4171,31 +4180,36 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const filas=esGoles?_cachedScorers:_cachedStandings;
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
-  const RETINA=2, CW=fmt.CW||800, nRows=filas.length, isAuto=!fmt.CH;
-  const sT=fmt.safeTop||0, sB=fmt.safeBot||0;
+  // paleta app
+  const C={bg:'#0c1017',card:'#131820',card2:'#1b2130',accent:'#4f8cff',
+           text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#1b2130',
+           green:'#2ed573',red:'#ff4757'};
 
-  // — layout: filas llenan el área segura (excluye zonas cubiertas por UI de Instagram) —
-  let HDR_H,COL_H,ROW_H,FTR_H,CH;
+  const RETINA=2,CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
+  const sT=fmt.safeTop||0,sB=fmt.safeBot||0;
+  const PAD=Math.round(CW*0.04);
+
+  let BRAND_H,COL_H,ROW_H,FTR_H,CARD_GAP_TOP,CARD_GAP_BOT,CH;
   if(isAuto){
-    HDR_H=120; COL_H=36; FTR_H=48; ROW_H=esGoles?64:56;
-    CH=HDR_H+COL_H+nRows*ROW_H+FTR_H;
+    BRAND_H=96; COL_H=34; FTR_H=38; ROW_H=esGoles?64:56;
+    CARD_GAP_TOP=16; CARD_GAP_BOT=12;
+    CH=BRAND_H+CARD_GAP_TOP+COL_H+nRows*ROW_H+CARD_GAP_BOT+FTR_H;
   } else {
     CH=fmt.CH;
-    const avail=CH-sT-sB;
-    FTR_H=Math.round(avail*0.065);
-    HDR_H=Math.round(avail*0.22);
-    COL_H=Math.round(avail*0.038);
-    ROW_H=Math.floor((avail-HDR_H-COL_H-FTR_H)/nRows);
+    const av=CH-sT-sB;
+    FTR_H=Math.round(av*0.052); BRAND_H=Math.round(av*0.175);
+    COL_H=Math.round(av*0.034);
+    CARD_GAP_TOP=Math.round(av*0.024); CARD_GAP_BOT=Math.round(av*0.018);
+    ROW_H=Math.floor((av-BRAND_H-COL_H-FTR_H-CARD_GAP_TOP-CARD_GAP_BOT)/nRows);
   }
 
   const canvas=document.createElement('canvas');
   canvas.width=CW*RETINA; canvas.height=CH*RETINA;
   const ctx=canvas.getContext('2d',{alpha:false});
   ctx.scale(RETINA,RETINA);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
 
-  // — precargar logos de equipos + logo header (torneo o liga) —
+  // precargar logos
   const imgCache={};
   let hdrLogo=null;
   const hdrUrl=torneo?.logoUrl||liga?.logoUrl||null;
@@ -4213,225 +4227,213 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     })():Promise.resolve(),
   ]);
 
-  // ─── FONDO ───────────────────────────────────────────────────────
-  const bgG=ctx.createLinearGradient(0,0,CW*0.4,CH);
-  bgG.addColorStop(0,'#060f1c'); bgG.addColorStop(0.55,'#0b1830'); bgG.addColorStop(1,'#0f1e3a');
-  ctx.fillStyle=bgG; ctx.fillRect(0,0,CW,CH);
-  // textura de puntos
-  ctx.save();
-  for(let x=14;x<CW;x+=26)for(let y=14;y<CH;y+=26){
-    ctx.fillStyle='rgba(255,255,255,0.02)';
+  // ── FONDO ────────────────────────────────────────────────────────
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,CW,CH);
+  for(let x=16;x<CW;x+=24)for(let y=16;y<CH;y+=24){
+    ctx.fillStyle='rgba(255,255,255,0.018)';
     ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
   }
-  ctx.restore();
 
-  // ─── ZONAS INSEGURAS: decoración sutil bajo la UI de Instagram/WhatsApp ──
+  // decoración zonas inseguras (historia)
   if(sT>0){
-    const wS=Math.round(sT*0.28);
-    ctx.save(); ctx.globalAlpha=0.07; ctx.textBaseline='middle'; ctx.textAlign='center';
-    ctx.font=`bold ${wS}px system-ui,sans-serif`; ctx.fillStyle='#fff';
-    ctx.fillText('⚡  SPORVIX',CW/2,sT*0.52);
-    ctx.restore();
+    ctx.save(); ctx.globalAlpha=0.06;
+    ctx.font=`bold ${Math.round(sT*0.28)}px system-ui,sans-serif`;
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillText('SPORVIX',CW/2,sT*0.52); ctx.restore();
   }
   if(sB>0){
-    const uS=Math.round(sB*0.22), bY=CH-sB;
-    ctx.save(); ctx.globalAlpha=0.30; ctx.textBaseline='middle'; ctx.textAlign='center';
-    ctx.font=`bold ${uS}px system-ui,sans-serif`; ctx.fillStyle='#1a6ef5';
-    ctx.fillText('www.sporvix.com.ar',CW/2,bY+sB*0.52);
-    ctx.restore();
+    ctx.save(); ctx.globalAlpha=0.22;
+    ctx.font=`700 ${Math.round(sB*0.22)}px system-ui,sans-serif`;
+    ctx.fillStyle=C.accent; ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillText('www.sporvix.com.ar',CW/2,CH-sB+sB*0.52); ctx.restore();
   }
 
-  // ─── contenido desplazado a zona segura ──────────────────────────
+  // ── OFFSET ZONA SEGURA ───────────────────────────────────────────
   ctx.save(); ctx.translate(0,sT);
 
-  // ─── HEADER ──────────────────────────────────────────────────────
-  const hG=ctx.createLinearGradient(0,0,CW,HDR_H);
-  hG.addColorStop(0,'#07152a'); hG.addColorStop(1,'#0e2244');
-  ctx.fillStyle=hG; ctx.fillRect(0,0,CW,HDR_H);
-  // barra accent top
-  const acG=ctx.createLinearGradient(0,0,CW,0);
-  acG.addColorStop(0,'rgba(26,110,245,0)'); acG.addColorStop(0.2,'#1a6ef5');
-  acG.addColorStop(0.8,'#60a5fa'); acG.addColorStop(1,'rgba(96,165,250,0)');
-  ctx.fillStyle=acG; ctx.fillRect(0,0,CW,Math.max(3,Math.round(HDR_H*0.016)));
-  // triángulos decorativos
-  ctx.save(); ctx.globalAlpha=0.08; ctx.fillStyle='#1a6ef5';
-  ctx.beginPath();ctx.moveTo(CW*0.50,0);ctx.lineTo(CW,0);ctx.lineTo(CW,HDR_H);ctx.closePath();ctx.fill();
-  ctx.globalAlpha=0.05;
-  ctx.beginPath();ctx.moveTo(CW*0.72,0);ctx.lineTo(CW,0);ctx.lineTo(CW,HDR_H*0.52);ctx.closePath();ctx.fill();
-  ctx.restore();
+  // ── BRANDING ─────────────────────────────────────────────────────
+  const logoR=Math.round(BRAND_H*0.28);
+  const logoX=PAD+logoR, logoY=Math.round(BRAND_H*0.5);
 
-  const PAD=Math.round(CW*0.048);
-  // ícono ⚡ en círculo gradiente
-  const iR=Math.round(HDR_H*0.24), iX=PAD+iR, iY=Math.round(HDR_H*0.50);
-  // fondo del círculo siempre presente
-  const iG=ctx.createRadialGradient(iX,iY*0.7,0,iX,iY,iR);
-  iG.addColorStop(0,'#2563eb'); iG.addColorStop(1,'#0c3399');
-  ctx.fillStyle=iG; ctx.beginPath();ctx.arc(iX,iY,iR,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(96,165,250,0.35)'; ctx.lineWidth=Math.max(1.5,iR*0.06);
-  ctx.beginPath();ctx.arc(iX,iY,iR,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=C.card2;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=C.border; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
+
   if(hdrLogo){
-    // logo del torneo/liga con clip circular
-    ctx.save(); ctx.beginPath(); ctx.arc(iX,iY,iR,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(hdrLogo,iX-iR,iY-iR,iR*2,iR*2);
+    ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
+    ctx.drawImage(hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);
     ctx.restore();
   } else {
-    // fallback: rayo Sporvix
-    ctx.font=`bold ${Math.round(iR*1.1)}px system-ui,sans-serif`;
-    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('⚡',iX,iY); ctx.textBaseline='alphabetic';
+    ctx.font=`bold ${Math.round(logoR*1.05)}px system-ui,sans-serif`;
+    ctx.fillStyle=C.accent; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⚡',logoX,logoY); ctx.textBaseline='alphabetic';
   }
 
-  const tX=iX+iR+Math.round(CW*0.028);
-  const sS=Math.min(40,Math.round(HDR_H*0.21));
-  const lS=Math.min(22,Math.round(HDR_H*0.133));
-  const tS=Math.min(18,Math.round(HDR_H*0.112));
-  const dS=Math.min(15,Math.round(HDR_H*0.09));
+  const tX=logoX+logoR+Math.round(CW*0.022);
+  const s1=Math.min(28,Math.round(BRAND_H*0.23));
+  const s2=Math.min(16,Math.round(BRAND_H*0.136));
+  const s3=Math.min(13,Math.round(BRAND_H*0.115));
+  const s4=Math.min(11,Math.round(BRAND_H*0.098));
   const torNombre=torneo?.name||'';
-  const hasTor=!!torNombre;
-  const y1=Math.round(HDR_H*(hasTor?0.29:0.37));
-  const y2=Math.round(HDR_H*(hasTor?0.48:0.61));
-  const y3=hasTor?Math.round(HDR_H*0.64):0;
-  const y4=Math.round(HDR_H*(hasTor?0.82:0.81));
-  ctx.font=`900 ${sS}px system-ui,sans-serif`; ctx.fillStyle='#fff'; ctx.textAlign='left';
-  ctx.fillText('SPORVIX',tX,y1);
-  ctx.font=`bold ${lS}px system-ui,sans-serif`; ctx.fillStyle='#60a5fa';
-  ctx.fillText(_tTxt(ctx,liga.name||'',CW-tX-PAD),tX,y2);
-  if(hasTor){
-    ctx.font=`${tS}px system-ui,sans-serif`; ctx.fillStyle='#e2e8f0';
-    ctx.fillText(_tTxt(ctx,torNombre,CW-tX-PAD),tX,y3);
-  }
   const lblTxt=(esGoles?'Tabla de Goleadores':'Tabla de Posiciones')+(divNombre?' · '+divNombre:'');
-  ctx.font=`${dS}px system-ui,sans-serif`; ctx.fillStyle='#3d5a80';
-  ctx.fillText(_tTxt(ctx,lblTxt,CW-tX-PAD*2.5),tX,y4);
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
-  ctx.font=`${dS}px system-ui,sans-serif`; ctx.fillStyle='#1e3050'; ctx.textAlign='right';
-  ctx.fillText(fecha,CW-PAD,y4);
-  // separador header
-  ctx.fillStyle='rgba(26,110,245,0.22)'; ctx.fillRect(0,HDR_H-1,CW,1);
 
-  // ─── CABECERA COLUMNAS ────────────────────────────────────────────
-  ctx.fillStyle='rgba(5,10,22,0.94)'; ctx.fillRect(0,HDR_H,CW,COL_H);
-  ctx.fillStyle='rgba(26,110,245,0.16)'; ctx.fillRect(0,HDR_H+COL_H-1,CW,1);
+  const brandLines=[
+    {t:'SPORVIX',s:s1,c:C.text,w:900},
+    {t:liga.name||'',s:s2,c:C.accent,w:700},
+    ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
+    {t:lblTxt,s:s4,c:C.text3,w:400},
+  ].filter(l=>l.t);
+  const totalBH=brandLines.reduce((a,l)=>a+l.s*1.35,0);
+  let ly=(BRAND_H-totalBH)/2+brandLines[0].s;
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  for(const l of brandLines){
+    ctx.font=`${l.w} ${l.s}px system-ui,sans-serif`; ctx.fillStyle=l.c;
+    ctx.fillText(_tTxt(ctx,l.t,CW-tX-PAD*2),tX,ly); ly+=l.s*1.35;
+  }
+  ctx.font=`${s4}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textAlign='right';
+  ctx.fillText(fecha,CW-PAD,logoY+s4/2);
 
-  const usW=CW-PAD*2, numW=Math.round(CW*0.072);
+  // ── CARD ─────────────────────────────────────────────────────────
+  const cardX=PAD, cardY=BRAND_H+CARD_GAP_TOP, cardW=CW-PAD*2;
+  const CARD_H=COL_H+nRows*ROW_H;
+  const CR=Math.round(CW*0.02);
+
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowBlur=20; ctx.shadowOffsetY=6;
+  _rrect(ctx,cardX,cardY,cardW,CARD_H,CR);
+  ctx.fillStyle=C.card; ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle=C.border; ctx.lineWidth=1;
+  _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.stroke();
+
+  ctx.save();
+  _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.clip();
+
+  // franja encabezado columnas
+  const colG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
+  colG.addColorStop(0,C.card2); colG.addColorStop(1,C.card);
+  ctx.fillStyle=colG; ctx.fillRect(cardX,cardY,cardW,COL_H);
+  ctx.fillStyle=C.border; ctx.fillRect(cardX,cardY+COL_H-1,cardW,1);
+
+  const iP=Math.round(cardW*0.036);
+  const usW=cardW-iP*2;
+  const numW=Math.round(usW*0.082);
   let cols;
   if(esGoles){
-    const goW=Math.round(usW*0.15), tmW=Math.round(usW*0.27), nmW=usW-numW-tmW-goW;
+    const goW=Math.round(usW*0.15),tmW=Math.round(usW*0.27),nmW=usW-numW-tmW-goW;
     cols=[
-      {l:'#',x:PAD,w:numW,a:'center'},
-      {l:'JUGADOR',x:PAD+numW,w:nmW,a:'left'},
-      {l:'EQUIPO',x:PAD+numW+nmW,w:tmW,a:'left'},
-      {l:'GOL',x:PAD+numW+nmW+tmW,w:goW,a:'center'},
+      {l:'#',   x:cardX+iP,              w:numW,a:'center'},
+      {l:'JUGADOR',x:cardX+iP+numW,      w:nmW, a:'left'},
+      {l:'EQUIPO', x:cardX+iP+numW+nmW,  w:tmW, a:'left'},
+      {l:'GOL',    x:cardX+iP+numW+nmW+tmW,w:goW,a:'center'},
     ];
   } else {
-    const tmW=Math.round(usW*0.37), sW=Math.floor((usW-numW-tmW)/6);
+    const tmW=Math.round(usW*0.37),sW=Math.floor((usW-numW-tmW)/6);
     cols=[
-      {l:'#',x:PAD,w:numW,a:'center'},
-      {l:'EQUIPO',x:PAD+numW,w:tmW,a:'left'},
-      {l:'PJ',x:PAD+numW+tmW+sW*0,w:sW,a:'center'},
-      {l:'G', x:PAD+numW+tmW+sW*1,w:sW,a:'center'},
-      {l:'E', x:PAD+numW+tmW+sW*2,w:sW,a:'center'},
-      {l:'P', x:PAD+numW+tmW+sW*3,w:sW,a:'center'},
-      {l:'DIF',x:PAD+numW+tmW+sW*4,w:sW,a:'center'},
-      {l:'PTS',x:PAD+numW+tmW+sW*5,w:sW,a:'center'},
+      {l:'#',  x:cardX+iP,                   w:numW,a:'center'},
+      {l:'EQUIPO',x:cardX+iP+numW,            w:tmW, a:'left'},
+      {l:'PJ', x:cardX+iP+numW+tmW,           w:sW,  a:'center'},
+      {l:'G',  x:cardX+iP+numW+tmW+sW,        w:sW,  a:'center'},
+      {l:'E',  x:cardX+iP+numW+tmW+sW*2,      w:sW,  a:'center'},
+      {l:'P',  x:cardX+iP+numW+tmW+sW*3,      w:sW,  a:'center'},
+      {l:'DIF',x:cardX+iP+numW+tmW+sW*4,      w:sW,  a:'center'},
+      {l:'PTS',x:cardX+iP+numW+tmW+sW*5,      w:sW,  a:'center'},
     ];
   }
-  const cFS=Math.max(9,Math.min(16,Math.round(COL_H*0.35)));
-  ctx.font=`bold ${cFS}px system-ui,sans-serif`; ctx.fillStyle='#253d58'; ctx.textBaseline='middle';
-  cols.forEach(c=>{ctx.textAlign=c.a;ctx.fillText(c.l,c.a==='center'?c.x+c.w/2:c.x+2,HDR_H+COL_H/2);});
+  const cFS=Math.max(9,Math.min(13,Math.round(COL_H*0.32)));
+  ctx.font=`700 ${cFS}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textBaseline='middle';
+  cols.forEach(c=>{
+    ctx.textAlign=c.a;
+    ctx.fillText(c.l,c.a==='center'?c.x+c.w/2:c.x+2,cardY+COL_H/2);
+  });
   ctx.textBaseline='alphabetic';
 
-  // ─── FILAS ───────────────────────────────────────────────────────
-  const posCol=['#ffffff','#93c5fd','#60a5fa'];
-  const cR=Math.max(14,Math.min(Math.round(ROW_H*0.34),62));
-  const nFS=Math.max(11,Math.min(28,Math.round(ROW_H*0.25)));
-  const sFS=Math.max(9,Math.min(20,Math.round(ROW_H*0.17)));
-  const stFS=Math.max(10,Math.min(24,Math.round(ROW_H*0.21)));
-  const pFS=Math.max(12,Math.min(32,Math.round(ROW_H*0.28)));
-  const cX=PAD+numW+cR+Math.round(CW*0.012);
-  const nmX=cX+cR+Math.round(CW*0.014);
-  const nmMaxW=cols[1].x+cols[1].w-nmX-Math.round(CW*0.01);
+  // métricas de fila
+  const bR=Math.max(10,Math.min(Math.round(ROW_H*0.26),16));
+  const cR2=Math.max(11,Math.min(Math.round(ROW_H*0.32),20));
+  const nFS=Math.max(10,Math.min(22,Math.round(ROW_H*0.25)));
+  const sFS=Math.max(8,Math.min(17,Math.round(ROW_H*0.18)));
+  const stFS=Math.max(9,Math.min(19,Math.round(ROW_H*0.21)));
+  const pFS=Math.max(10,Math.min(24,Math.round(ROW_H*0.26)));
+  const badgeX=cols[0].x+cols[0].w/2;
+  const crestX=cardX+iP+numW+Math.round(ROW_H*0.06)+cR2;
+  const nmX=crestX+cR2+Math.round(CW*0.012);
+  const nmMaxW=cols[1].x+cols[1].w-nmX-4;
 
   filas.forEach((r,i)=>{
-    const ry=HDR_H+COL_H+i*ROW_H, midY=ry+ROW_H/2;
+    const ry=cardY+COL_H+i*ROW_H, midY=ry+ROW_H/2;
     const tC=r.color||'#1a2150';
-    const isTop=!esGoles&&r.pos<=3;
 
-    // fondo fila
-    if(isTop){
-      const tA=[0.07,0.05,0.04][r.pos-1];
-      const tRGB=['255,255,255','147,197,253','96,165,250'][r.pos-1];
-      ctx.fillStyle=`rgba(${tRGB},${tA})`;
-    } else {
-      ctx.fillStyle=i%2===0?'rgba(255,255,255,0.015)':'rgba(0,0,0,0.09)';
-    }
-    ctx.fillRect(0,ry,CW,ROW_H);
-    // barra de color de equipo
-    ctx.fillStyle=tC; ctx.fillRect(0,ry+1,3,ROW_H-2);
-    // separador
-    ctx.fillStyle='rgba(255,255,255,0.032)'; ctx.fillRect(PAD,ry+ROW_H-1,CW-PAD,1);
+    ctx.fillStyle=i%2===0?C.card:C.card2;
+    ctx.fillRect(cardX,ry,cardW,ROW_H);
+    if(i<nRows-1){ctx.fillStyle=C.border;ctx.fillRect(cardX,ry+ROW_H-1,cardW,1);}
+    ctx.fillStyle=tC; ctx.fillRect(cardX,ry,3,ROW_H);
 
     ctx.textBaseline='middle';
 
-    // número posición
-    const nX=PAD+numW/2;
-    if(isTop){
-      const nr=Math.round(ROW_H*0.23);
-      ctx.fillStyle=posCol[r.pos-1]+'18';
-      ctx.beginPath();ctx.arc(nX,midY,nr,0,Math.PI*2);ctx.fill();
+    // badge posición
+    const isPodium=!esGoles&&r.pos<=3;
+    ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);
+    if(isPodium){
+      const g=ctx.createLinearGradient(badgeX-bR,midY-bR,badgeX+bR,midY+bR);
+      if(r.pos===1){g.addColorStop(0,'gold');g.addColorStop(1,'#fa0');}
+      else if(r.pos===2){g.addColorStop(0,'#d0d8e0');g.addColorStop(1,'#a0a8b0');}
+      else{g.addColorStop(0,'#cd7f32');g.addColorStop(1,'#a06020');}
+      ctx.fillStyle=g;
+    } else {ctx.fillStyle=C.card2;}
+    ctx.fill();
+    if(!isPodium){
+      ctx.strokeStyle=C.border; ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);ctx.stroke();
     }
-    ctx.fillStyle=isTop?posCol[r.pos-1]:'#253d58';
-    ctx.font=isTop?`bold ${nFS}px system-ui,sans-serif`:`${sFS}px system-ui,sans-serif`;
-    ctx.textAlign='center'; ctx.fillText(String(r.pos),nX,midY);
+    ctx.fillStyle=isPodium?(r.pos===1?'#7a4800':r.pos===2?'#3a4050':'#fff'):C.text2;
+    ctx.font=`800 ${Math.round(bR*0.9)}px system-ui,sans-serif`;
+    ctx.textAlign='center'; ctx.fillText(String(r.pos),badgeX,midY);
 
     // escudo
     const logo=imgCache[r.logoUrl];
-    ctx.save(); ctx.beginPath(); ctx.arc(cX,midY,cR,0,Math.PI*2);
-    if(logo){ctx.clip();ctx.drawImage(logo,cX-cR,midY-cR,cR*2,cR*2);}
+    ctx.save();ctx.beginPath();ctx.arc(crestX,midY,cR2,0,Math.PI*2);
+    if(logo){ctx.clip();ctx.drawImage(logo,crestX-cR2,midY-cR2,cR2*2,cR2*2);}
     else{
-      const cG=ctx.createRadialGradient(cX,midY-cR*0.25,0,cX,midY,cR);
-      cG.addColorStop(0,_lhx(tC,45)); cG.addColorStop(1,tC);
-      ctx.fillStyle=cG; ctx.fill(); ctx.clip();
+      const cG=ctx.createRadialGradient(crestX,midY-cR2*0.25,0,crestX,midY,cR2);
+      cG.addColorStop(0,_lhx(tC,40));cG.addColorStop(1,tC);
+      ctx.fillStyle=cG;ctx.fill();ctx.clip();
       ctx.fillStyle=r.text||'#fff';
-      ctx.font=`bold ${Math.round(cR*0.82)}px system-ui,sans-serif`;
-      ctx.textAlign='center'; ctx.fillText((r.short||'?').toUpperCase().slice(0,2),cX,midY);
+      ctx.font=`bold ${Math.round(cR2*0.75)}px system-ui,sans-serif`;
+      ctx.textAlign='center';ctx.fillText((r.short||'?').toUpperCase().slice(0,2),crestX,midY);
     }
     ctx.restore();
 
     // nombre
-    ctx.fillStyle='#e8f0fe'; ctx.font=`bold ${nFS}px system-ui,sans-serif`; ctx.textAlign='left';
+    ctx.fillStyle=C.text;ctx.font=`600 ${nFS}px system-ui,sans-serif`;ctx.textAlign='left';
     if(esGoles){
-      ctx.fillText(_tTxt(ctx,r.name||'?',nmMaxW),nmX,midY-sFS*0.48);
-      ctx.fillStyle='#2d4a6a'; ctx.font=`${sFS}px system-ui,sans-serif`;
-      ctx.fillText(_tTxt(ctx,r.teamName||'',nmMaxW),nmX,midY+nFS*0.56);
-      // badge goles
-      const gc=cols[3], gcX=gc.x+gc.w/2, gcR=Math.round(ROW_H*0.28);
-      const gG=ctx.createRadialGradient(gcX,midY-gcR*0.28,0,gcX,midY,gcR);
-      gG.addColorStop(0,'#1e56c8'); gG.addColorStop(1,'#092b72');
-      ctx.fillStyle=gG; ctx.beginPath();ctx.arc(gcX,midY,gcR,0,Math.PI*2);ctx.fill();
-      // aro exterior
-      ctx.strokeStyle='rgba(96,165,250,0.3)'; ctx.lineWidth=Math.max(1,gcR*0.07);
-      ctx.beginPath();ctx.arc(gcX,midY,gcR,0,Math.PI*2);ctx.stroke();
-      ctx.fillStyle='#fff'; ctx.font=`bold ${pFS}px system-ui,sans-serif`; ctx.textAlign='center';
+      ctx.fillText(_tTxt(ctx,r.name||'?',nmMaxW),nmX,midY-sFS*0.5);
+      ctx.fillStyle=C.text2;ctx.font=`${sFS}px system-ui,sans-serif`;
+      ctx.fillText(_tTxt(ctx,r.teamName||'',nmMaxW),nmX,midY+nFS*0.55);
+      // círculo goles
+      const gc=cols[3],gcX=gc.x+gc.w/2,gcR=Math.round(ROW_H*0.27);
+      ctx.fillStyle='rgba(79,140,255,0.12)';
+      ctx.beginPath();ctx.arc(gcX,midY,gcR,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=C.accent;ctx.font=`800 ${pFS}px system-ui,sans-serif`;ctx.textAlign='center';
       ctx.fillText(String(r.goals),gcX,midY);
     } else {
       ctx.fillText(_tTxt(ctx,r.name||'?',nmMaxW),nmX,midY);
       const stats=[r.pj,r.pg,r.pe,r.pp,(r.dif>=0?'+':'')+r.dif,r.pts];
       cols.slice(2).forEach((c,si)=>{
-        ctx.textAlign='center'; const cx2=c.x+c.w/2;
+        const cx2=c.x+c.w/2; ctx.textAlign='center';
         if(si===5){
-          const pr=Math.round(ROW_H*0.26);
-          ctx.fillStyle='rgba(96,165,250,0.15)';
-          ctx.beginPath();ctx.arc(cx2,midY,pr,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#fff'; ctx.font=`bold ${pFS}px system-ui,sans-serif`;
+          ctx.fillStyle=C.accent;ctx.font=`800 ${pFS}px system-ui,sans-serif`;
           ctx.fillText(String(stats[si]),cx2,midY);
         } else if(si===4){
-          const n=parseInt(String(stats[si]));
-          ctx.fillStyle=n>0?'#7dd3fc':n<0?'#f87171':'#253d58';
-          ctx.font=`bold ${sFS}px system-ui,sans-serif`;
+          const n=parseInt(stats[si]);
+          ctx.fillStyle=n>0?C.green:n<0?C.red:C.text2;
+          ctx.font=`700 ${stFS}px system-ui,sans-serif`;
           ctx.fillText(String(stats[si]),cx2,midY);
         } else {
-          ctx.fillStyle='#3d5a80'; ctx.font=`${stFS}px system-ui,sans-serif`;
+          ctx.fillStyle=C.text2;ctx.font=`${stFS}px system-ui,sans-serif`;
           ctx.fillText(String(stats[si]),cx2,midY);
         }
       });
@@ -4439,27 +4441,21 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.textBaseline='alphabetic';
   });
 
-  // ─── FOOTER ──────────────────────────────────────────────────────
-  const fy=HDR_H+COL_H+nRows*ROW_H;
-  const fG=ctx.createLinearGradient(0,fy,0,fy+FTR_H);
-  fG.addColorStop(0,'#050d1a'); fG.addColorStop(1,'#030a14');
-  ctx.fillStyle=fG; ctx.fillRect(0,fy,CW,FTR_H);
-  const spG=ctx.createLinearGradient(0,0,CW,0);
-  spG.addColorStop(0,'rgba(26,110,245,0)'); spG.addColorStop(0.18,'#1a6ef5');
-  spG.addColorStop(0.82,'#1a6ef5'); spG.addColorStop(1,'rgba(26,110,245,0)');
-  ctx.fillStyle=spG; ctx.fillRect(0,fy,CW,1.5);
-  const fFS=Math.max(10,Math.min(16,Math.round(FTR_H*0.28)));
+  ctx.restore(); // fin clip card
+
+  // ── FOOTER ───────────────────────────────────────────────────────
+  const fy=cardY+CARD_H+CARD_GAP_BOT;
+  const fFS=Math.max(9,Math.min(14,Math.round(FTR_H*0.32)));
   ctx.textBaseline='middle';
-  ctx.font=`${fFS}px system-ui,sans-serif`; ctx.fillStyle='#1a3050'; ctx.textAlign='left';
+  ctx.font=`${fFS}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textAlign='left';
   ctx.fillText(fecha,PAD,fy+FTR_H/2);
-  ctx.fillStyle='#1a6ef5'; ctx.font=`bold ${fFS}px system-ui,sans-serif`; ctx.textAlign='right';
+  ctx.fillStyle=C.accent; ctx.font=`700 ${fFS}px system-ui,sans-serif`; ctx.textAlign='right';
   ctx.fillText('www.sporvix.com.ar',CW-PAD,fy+FTR_H/2);
   ctx.textBaseline='alphabetic';
   ctx.restore(); // fin offset zona segura
 
-  // ─── COMPARTIR ───────────────────────────────────────────────────
+  // ── COMPARTIR ────────────────────────────────────────────────────
   showToast('Generando imagen…','');
-  // PNG lossless para guardar/compartir; WebP para preview en modal (más liviano)
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
   const fname=(esGoles?'goleadores':'tabla-posiciones')+'-sporvix.png';
   const file=new File([blob],fname,{type:'image/png'});
@@ -4468,7 +4464,6 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     try{await navigator.share({files:[file],title:titulo});return;}
     catch(e){if(e.name==='AbortError')return;}
   }
-  // preview: WebP si el browser lo soporta, sino PNG
   const previewUrl=canvas.toDataURL('image/webp',0.92)||canvas.toDataURL('image/png');
   _showImageShareModal(previewUrl,blob,fname,titulo);
 }
