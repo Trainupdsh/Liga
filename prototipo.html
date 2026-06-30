@@ -4489,25 +4489,14 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     const ry=cardY+COL_H+i*ROW_H, midY=ry+ROW_H/2;
     const tC=r.color||'#1a2150';
 
-    // row background: podium tints for top-3 standings, alternating otherwise
-    if(!esGoles&&r.pos===1){
-      ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
-      ctx.fillStyle='rgba(255,200,50,0.07)'; ctx.fillRect(cardX,ry,cardW,ROW_H);
-    } else if(!esGoles&&r.pos===2){
-      ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
-      ctx.fillStyle='rgba(180,200,230,0.05)'; ctx.fillRect(cardX,ry,cardW,ROW_H);
-    } else if(!esGoles&&r.pos===3){
-      ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
-      ctx.fillStyle='rgba(180,110,50,0.06)'; ctx.fillRect(cardX,ry,cardW,ROW_H);
-    } else {
-      ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
-    }
-    // gradient left team-color strip
-    {const stripW=Math.round(cardW*0.10);
+    // row background: alternating, sin tinte de podio para no contaminar el color
+    ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
+    // gradient left team-color strip (más sutil: 12% alpha → transparente)
+    {const stripW=Math.round(cardW*0.08);
     const stripG=ctx.createLinearGradient(cardX,0,cardX+stripW,0);
-    stripG.addColorStop(0,tC+'55');stripG.addColorStop(1,'rgba(0,0,0,0)');
+    stripG.addColorStop(0,tC+'22');stripG.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=stripG; ctx.fillRect(cardX,ry,stripW,ROW_H);
-    ctx.fillStyle=tC; ctx.fillRect(cardX,ry,4,ROW_H);}
+    ctx.fillStyle=tC; ctx.fillRect(cardX,ry,3,ROW_H);}
     // fade separator
     if(i<nRows-1){
       const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
@@ -4526,8 +4515,6 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       if(r.pos===1){pg.addColorStop(0,'#ffe066');pg.addColorStop(0.5,'#ffba00');pg.addColorStop(1,'#e08800');}
       else if(r.pos===2){pg.addColorStop(0,'#edf2f8');pg.addColorStop(0.5,'#ccd4e0');pg.addColorStop(1,'#a0a8b8');}
       else{pg.addColorStop(0,'#e8a060');pg.addColorStop(0.5,'#cd7f32');pg.addColorStop(1,'#9a5520');}
-      const glowC=r.pos===1?'rgba(255,200,50,0.55)':r.pos===2?'rgba(180,200,230,0.45)':'rgba(210,130,55,0.5)';
-      ctx.shadowColor=glowC; ctx.shadowBlur=14;
       ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);
       ctx.fillStyle=pg; ctx.fill();
       ctx.restore();
@@ -4544,7 +4531,6 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     // escudo con glow de color de equipo
     const logo=imgCache[r.logoUrl];
     ctx.save();
-    ctx.shadowColor=tC+'70'; ctx.shadowBlur=10;
     ctx.beginPath();ctx.arc(crestX,midY,cR2,0,Math.PI*2);
     if(logo){ctx.clip();ctx.drawImage(logo,crestX-cR2,midY-cR2,cR2*2,cR2*2);}
     else{
