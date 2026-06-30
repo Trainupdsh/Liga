@@ -3899,6 +3899,8 @@ function switchTab(tab,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+tab).classList.add('active');
   el.classList.add('active');
+  if(tab==='goles')renderScorers();
+  if(tab==='tabla')renderStandings();
 }
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const _MON=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -4170,7 +4172,9 @@ async function renderScorers(){
   }catch(e){renderScorersLocal();}
 }
 function renderScorersLocal(){
-  const sorted=[...players].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0),medals=['🥇','🥈','🥉'];
+  const divTeamIds=new Set(standings.filter(s=>s.divId===currentDivisionId).map(s=>s.teamId));
+  const divPlayers=divTeamIds.size>0?players.filter(p=>divTeamIds.has(p.team)):players;
+  const sorted=[...divPlayers].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0).slice(0,30),medals=['🥇','🥈','🥉'];
   _cachedScorers=sorted.map((p,i)=>{const t=getTeam(p.team)||{name:'?',short:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:p.name||'?',short:(p.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color,text:t.text,teamName:t.name,logoUrl:t.logoUrl||null,goals:p.goals||0};});
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team)||{emoji:'?',name:'?',jersey:0},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
@@ -4258,6 +4262,8 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const torneo=torneos.find(t=>t.id===div?.torneoId);
   const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||{name:'Liga'};
   const divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
+  if(esGoles&&!_cachedScorers.length)await renderScorers();
+  if(!esGoles&&!_cachedStandings.length)await renderStandings();
   const filas=esGoles?_cachedScorers:_cachedStandings;
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
