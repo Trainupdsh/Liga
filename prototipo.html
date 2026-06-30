@@ -4106,7 +4106,7 @@ function _compartirTablaDiv(divId,tipo){ _generarImagenTabla(divId,tipo); }
 // ── Picker de formato ──────────────────────────────────────────────────────
 const _SHARE_FMTS=[
   {id:'mensaje',  CW:800,  CH:null, label:'Mensaje / Web',     sub:'WhatsApp · chats · web',        dims:'Auto',      wPv:58,hPv:34},
-  {id:'historia', CW:1080, CH:1920, label:'Historia / Estado', sub:'IG Stories · WhatsApp Status',  dims:'1080×1920', wPv:27,hPv:48},
+  {id:'historia', CW:1080, CH:1920, safeTop:240,safeBot:280,   label:'Historia / Estado', sub:'IG Stories · WhatsApp Status',  dims:'1080×1920', wPv:27,hPv:48},
   {id:'cuadrado', CW:1080, CH:1080, label:'Post cuadrado',     sub:'Instagram · Facebook',          dims:'1080×1080', wPv:44,hPv:44},
   {id:'retrato',  CW:1080, CH:1350, label:'Post retrato 4:5',  sub:'Instagram (mayor alcance)',     dims:'1080×1350', wPv:38,hPv:48},
 ];
@@ -4172,18 +4172,20 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
   const RETINA=2, CW=fmt.CW||800, nRows=filas.length, isAuto=!fmt.CH;
+  const sT=fmt.safeTop||0, sB=fmt.safeBot||0;
 
-  // — layout: el contenido ocupa todo el canvas sin márgenes muertos —
+  // — layout: filas llenan el área segura (excluye zonas cubiertas por UI de Instagram) —
   let HDR_H,COL_H,ROW_H,FTR_H,CH;
   if(isAuto){
     HDR_H=120; COL_H=36; FTR_H=48; ROW_H=esGoles?64:56;
     CH=HDR_H+COL_H+nRows*ROW_H+FTR_H;
   } else {
     CH=fmt.CH;
-    FTR_H=Math.round(CH*0.065);
-    HDR_H=Math.round(CH*0.22);
-    COL_H=Math.round(CH*0.038);
-    ROW_H=Math.floor((CH-HDR_H-COL_H-FTR_H)/nRows);
+    const avail=CH-sT-sB;
+    FTR_H=Math.round(avail*0.065);
+    HDR_H=Math.round(avail*0.22);
+    COL_H=Math.round(avail*0.038);
+    ROW_H=Math.floor((avail-HDR_H-COL_H-FTR_H)/nRows);
   }
 
   const canvas=document.createElement('canvas');
@@ -4222,6 +4224,25 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
   }
   ctx.restore();
+
+  // ─── ZONAS INSEGURAS: decoración sutil bajo la UI de Instagram/WhatsApp ──
+  if(sT>0){
+    const wS=Math.round(sT*0.28);
+    ctx.save(); ctx.globalAlpha=0.07; ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.font=`bold ${wS}px system-ui,sans-serif`; ctx.fillStyle='#fff';
+    ctx.fillText('⚡  SPORVIX',CW/2,sT*0.52);
+    ctx.restore();
+  }
+  if(sB>0){
+    const uS=Math.round(sB*0.22), bY=CH-sB;
+    ctx.save(); ctx.globalAlpha=0.30; ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.font=`bold ${uS}px system-ui,sans-serif`; ctx.fillStyle='#1a6ef5';
+    ctx.fillText('www.sporvix.com.ar',CW/2,bY+sB*0.52);
+    ctx.restore();
+  }
+
+  // ─── contenido desplazado a zona segura ──────────────────────────
+  ctx.save(); ctx.translate(0,sT);
 
   // ─── HEADER ──────────────────────────────────────────────────────
   const hG=ctx.createLinearGradient(0,0,CW,HDR_H);
@@ -4321,7 +4342,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   ctx.textBaseline='alphabetic';
 
   // ─── FILAS ───────────────────────────────────────────────────────
-  const posCol=['#f59e0b','#94a3b8','#cd7f32'];
+  const posCol=['#ffffff','#93c5fd','#60a5fa'];
   const cR=Math.max(14,Math.min(Math.round(ROW_H*0.34),62));
   const nFS=Math.max(11,Math.min(28,Math.round(ROW_H*0.25)));
   const sFS=Math.max(9,Math.min(20,Math.round(ROW_H*0.17)));
@@ -4338,8 +4359,8 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
     // fondo fila
     if(isTop){
-      const tA=[0.09,0.06,0.05][r.pos-1];
-      const tRGB=['245,158,11','170,180,195','185,145,85'][r.pos-1];
+      const tA=[0.07,0.05,0.04][r.pos-1];
+      const tRGB=['255,255,255','147,197,253','96,165,250'][r.pos-1];
       ctx.fillStyle=`rgba(${tRGB},${tA})`;
     } else {
       ctx.fillStyle=i%2===0?'rgba(255,255,255,0.015)':'rgba(0,0,0,0.09)';
@@ -4400,13 +4421,13 @@ async function _renderImgConFormato(divId,tipo,fmtId){
         ctx.textAlign='center'; const cx2=c.x+c.w/2;
         if(si===5){
           const pr=Math.round(ROW_H*0.26);
-          ctx.fillStyle='rgba(245,158,11,0.09)';
+          ctx.fillStyle='rgba(96,165,250,0.15)';
           ctx.beginPath();ctx.arc(cx2,midY,pr,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#f59e0b'; ctx.font=`bold ${pFS}px system-ui,sans-serif`;
+          ctx.fillStyle='#fff'; ctx.font=`bold ${pFS}px system-ui,sans-serif`;
           ctx.fillText(String(stats[si]),cx2,midY);
         } else if(si===4){
           const n=parseInt(String(stats[si]));
-          ctx.fillStyle=n>0?'#4ade80':n<0?'#f87171':'#253d58';
+          ctx.fillStyle=n>0?'#7dd3fc':n<0?'#f87171':'#253d58';
           ctx.font=`bold ${sFS}px system-ui,sans-serif`;
           ctx.fillText(String(stats[si]),cx2,midY);
         } else {
@@ -4434,6 +4455,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   ctx.fillStyle='#1a6ef5'; ctx.font=`bold ${fFS}px system-ui,sans-serif`; ctx.textAlign='right';
   ctx.fillText('www.sporvix.com.ar',CW-PAD,fy+FTR_H/2);
   ctx.textBaseline='alphabetic';
+  ctx.restore(); // fin offset zona segura
 
   // ─── COMPARTIR ───────────────────────────────────────────────────
   showToast('Generando imagen…','');
