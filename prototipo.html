@@ -989,7 +989,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="screen" id="screen-tabla">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
         <div class="section-title-sm" style="margin:0">TABLA DE POSICIONES</div>
-        <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="compartirTabla('posiciones')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+        <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="compartirTabla('posiciones')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
       </div>
       <div class="standings-card">
         <div class="standings-header">
@@ -1002,7 +1002,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div class="screen" id="screen-goles">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
         <div class="section-title-sm" style="margin:0">TABLA DE GOLEADORES</div>
-        <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="compartirTabla('goleadores')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+        <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="compartirTabla('goleadores')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
       </div>
       <div class="scorer-list" id="scorersList"></div>
     </div>
@@ -4217,11 +4217,12 @@ function _compartirProximaFechaDiv(divId){ _computeProximaFecha(divId); _generar
 function _computeProximaFecha(divId){
   const divMs=matches.filter(m=>!m.divId||m.divId===divId);
   const upcoming=divMs.filter(m=>m.status==='upcoming'||m.status==='live');
-  const pool=upcoming.length?upcoming:divMs.filter(m=>m.status==='done');
-  if(!pool.length){_cachedProximaFecha=[];_cachedProximaFechaRound=null;return;}
-  const rnd=upcoming.length?Math.min(...pool.map(m=>m.round||0)):Math.max(...pool.map(m=>m.round||0));
+  if(!divMs.length){_cachedProximaFecha=[];_cachedProximaFechaRound=null;return;}
+  let rnd;
+  if(upcoming.length){rnd=Math.min(...upcoming.map(m=>m.round||0));}
+  else{const done=divMs.filter(m=>m.status==='done');if(!done.length){_cachedProximaFecha=[];_cachedProximaFechaRound=null;return;}rnd=Math.max(...done.map(m=>m.round||0));}
   _cachedProximaFechaRound=rnd;
-  _cachedProximaFecha=pool.filter(m=>(m.round||0)===rnd).map(m=>({
+  _cachedProximaFecha=divMs.filter(m=>(m.round||0)===rnd).map(m=>({
     homeTeam:teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff',short:'?',logoUrl:null},
     awayTeam:teamsData.find(t=>t.id===m.away)||{name:'?',color:'#333',text:'#fff',short:'?',logoUrl:null},
     time:m.time||'',venue:m.venue||'',round:rnd,
@@ -9236,7 +9237,7 @@ function _dtDivStandingsCard(div){
         <div style="font-size:13px;font-weight:700">${escHtml(div.grupo?div.grupo+' · '+div.name:div.name)}</div>
         <div style="font-size:10px;color:var(--text3)">${div.currentRound?'Fecha '+div.currentRound+(div.rounds?' de '+div.rounds:'')+' · ':''}${div.teams||0} equipos</div>
       </div>
-      <button onclick="event.stopPropagation();_compartirTablaDiv(${div.id},'posiciones')" style="background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--text2);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700" title="Compartir tabla"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
+      <button onclick="event.stopPropagation();_compartirTablaDiv(${div.id},'posiciones')" style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;letter-spacing:.3px"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
       <span style="font-size:11px;color:var(--accent);font-weight:700">PARTIDOS →</span>
     </div>
     <div style="display:flex;padding:5px 16px;border-bottom:1px solid var(--border);background:var(--card2)">
@@ -9295,7 +9296,7 @@ function _dtDivMatchesHtml(divId){
   const divMs=matches.filter(m=>!m.divId||m.divId===divId);
   if(!divMs.length)return'<div style="padding:32px;text-align:center;font-size:12px;color:var(--text3)">Sin partidos</div>';
   const shareBtn=`<div style="display:flex;justify-content:flex-end;padding:12px 16px 0">
-    <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="_compartirProximaFechaDiv(${divId})"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir fecha</button>
+    <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="_compartirProximaFechaDiv(${divId})"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir fecha</button>
   </div>`;
   const byRound={};
   divMs.forEach(m=>{const r=m.round||0;if(!byRound[r])byRound[r]=[];byRound[r].push(m);});
@@ -9330,7 +9331,7 @@ function _dtDivScorersHtml(divId){
   if(!sorted.length)return'<div style="padding:32px;text-align:center;font-size:12px;color:var(--text3)">Sin goleadores</div>';
   const medals=['🥇','🥈','🥉'];
   let html=`<div style="display:flex;justify-content:flex-end;padding:12px 16px 0">
-    <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px;display:flex;align-items:center;gap:5px" onclick="_compartirTablaDiv(${divId},'goleadores')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+    <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="_compartirTablaDiv(${divId},'goleadores')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
   </div><div style="padding:0 16px">`;
   sorted.forEach((p,i)=>{
     const t=getTeam(p.team)||{name:'?',color:'#333',text:'#fff'};
