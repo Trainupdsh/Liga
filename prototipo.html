@@ -4491,8 +4491,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.font=`${l.w} ${l.s}px system-ui,sans-serif`; ctx.fillStyle=l.c;
     ctx.fillText(_tTxt(ctx,l.t,CW-tX-PAD*2),tX,ly); ly+=l.s*1.28;
   }
-  ctx.font=`${s4}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textAlign='right';
-  ctx.fillText(fecha,CW-PAD,logoY+s4/2);
+  // (la fecha va solo en el footer, junto a la web)
 
   // ── CARD ─────────────────────────────────────────────────────────
   const cardX=PAD, cardY=BRAND_H+CARD_GAP_TOP, cardW=CW-PAD*2;
