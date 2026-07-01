@@ -6101,20 +6101,30 @@ async function loadAdminJugadores(){
         <div style="width:32px;height:32px;border-radius:50%;background:${j.equipo?.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">${j.numero||'—'}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">${escHtml(j.nombre)}</div>
-          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')}</div>
+          <div style="font-size:11px;color:var(--text2)">${j.posicion||''} · ${escHtml(j.equipo?.nombre||'')}${j.dni?' · DNI '+escHtml(j.dni):''}</div>
         </div>
+        <button class="btn btn-sm" style="font-size:12px" onclick="openAdminEditJugador(${j.id})">✏️</button>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarJugador(${j.id},'${escHtml(j.nombre)}')">✕</button>
       </div>`).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Error al cargar</div>';}
 }
 
+function _njResetFoto(){
+  window._njFotoBlob=null;
+  const prev=document.getElementById('nj-foto-preview'),ph=document.getElementById('nj-foto-placeholder');
+  if(prev){prev.src='';prev.classList.remove('visible');}
+  if(ph)ph.style.display='';
+}
+let _njEditJugadorId=null;
 function openNuevoJugador(){
+  _njEditJugadorId=null;
   document.getElementById('nj-nombre').value='';
   document.getElementById('nj-dni').value='';
   document.getElementById('nj-numero').value='';
   document.getElementById('nj-posicion').value='Mediocampista';
   document.getElementById('nj-error').style.display='none';
   document.getElementById('nj-preview-nombre').textContent='Sin nombre';
+  _njResetFoto();
   // Llenar select de equipos
   const sel=document.getElementById('nj-equipo');
   sel.innerHTML=adminDivEquipos.length
@@ -6122,6 +6132,27 @@ function openNuevoJugador(){
     : '<option value="">Sin clubes — inscribí uno primero</option>';
   document.getElementById('nj-save-btn').disabled=false;
   document.getElementById('nj-save-btn').textContent='Agregar Jugador';
+  document.getElementById('nuevoJugadorModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nj-nombre').focus(),300);
+}
+async function openAdminEditJugador(id){
+  let j=null;
+  try{const {data,error}=await supa.from('jugadores').select('*').eq('id',id).single();if(error)throw error;j=data;}
+  catch(e){showToast('No se pudo cargar el jugador: '+e.message,'error');return;}
+  if(!adminDivEquipos.length)await loadAdminEquipos();
+  _njEditJugadorId=id;
+  document.getElementById('nj-nombre').value=j.nombre||'';
+  document.getElementById('nj-dni').value=j.dni||'';
+  document.getElementById('nj-numero').value=j.numero||'';
+  document.getElementById('nj-posicion').value=j.posicion||'Mediocampista';
+  document.getElementById('nj-error').style.display='none';
+  document.getElementById('nj-preview-nombre').textContent=j.nombre||'Sin nombre';
+  const sel=document.getElementById('nj-equipo');
+  sel.innerHTML=adminDivEquipos.map(e=>`<option value="${e.id}"${e.id===j.equipo_id?' selected':''}>${escHtml(e.nombre)}</option>`).join('');
+  _njResetFoto();
+  if(j.foto_url){const prev=document.getElementById('nj-foto-preview'),ph=document.getElementById('nj-foto-placeholder');if(prev){prev.src=j.foto_url;prev.classList.add('visible');}if(ph)ph.style.display='none';}
+  document.getElementById('nj-save-btn').disabled=false;
+  document.getElementById('nj-save-btn').textContent='Guardar cambios';
   document.getElementById('nuevoJugadorModal').classList.add('open');
   setTimeout(()=>document.getElementById('nj-nombre').focus(),300);
 }
@@ -6146,18 +6177,21 @@ async function saveNuevoJugador(){
   const btn=document.getElementById('nj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
   try{
-    const planMaxJug=currentLigaPlan?.max_jugadores;
-    if(planMaxJug!=null&&planMaxJug!==-1){
-      const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
-      if(count>=planMaxJug){
-        errEl.textContent=`Límite del plan: máx. ${planMaxJug} jugadores por equipo. Actualizá tu plan.`;
-        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
-      }
-    } else if(currentLeagueLimits.maxJugadores){
-      const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
-      if(count>=currentLeagueLimits.maxJugadores){
-        errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxJugadores} jugadores por equipo`;
-        errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
+    // El límite de jugadores por equipo aplica solo al alta, no a la edición
+    if(!_njEditJugadorId){
+      const planMaxJug=currentLigaPlan?.max_jugadores;
+      if(planMaxJug!=null&&planMaxJug!==-1){
+        const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
+        if(count>=planMaxJug){
+          errEl.textContent=`Límite del plan: máx. ${planMaxJug} jugadores por equipo. Actualizá tu plan.`;
+          errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
+        }
+      } else if(currentLeagueLimits.maxJugadores){
+        const {count}=await supa.from('jugadores').select('id',{count:'exact',head:true}).eq('equipo_id',equipoId);
+        if(count>=currentLeagueLimits.maxJugadores){
+          errEl.textContent=`Límite alcanzado: máx. ${currentLeagueLimits.maxJugadores} jugadores por equipo`;
+          errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';return;
+        }
       }
     }
     let fotoUrl=null;
@@ -6165,6 +6199,17 @@ async function saveNuevoJugador(){
     if(fotoBlob){
       try{fotoUrl=await uploadImageToStorage(fotoBlob,'jugadores',`jugador_${equipoId}_${Date.now()}.webp`);}
       catch(imgErr){console.warn('Foto upload failed:',imgErr);}
+    }
+    if(_njEditJugadorId){
+      const updates={equipo_id:equipoId,nombre,numero,posicion,dni:dni||null};
+      if(fotoUrl)updates.foto_url=fotoUrl; // solo pisar la foto si se eligió una nueva
+      const {error}=await supa.from('jugadores').update(updates).eq('id',_njEditJugadorId);
+      if(error)throw error;
+      window._njFotoBlob=null;_njEditJugadorId=null;
+      closeNuevoJugador(null,true);
+      showToast('"'+nombre+'" actualizado ✓','success');
+      await loadAdminJugadores();
+      return;
     }
     const njRow={equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl};
     if(dni)njRow.dni=dni;
@@ -6174,7 +6219,7 @@ async function saveNuevoJugador(){
     closeNuevoJugador(null,true);
     showToast('"'+nombre+'" agregado ✓','success');
     await loadAdminJugadores();
-  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Agregar Jugador';}
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent=_njEditJugadorId?'Guardar cambios':'Agregar Jugador';}
 }
 async function confirmarEliminarJugador(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
