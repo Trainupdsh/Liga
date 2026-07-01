@@ -4633,22 +4633,15 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       ctx.textBaseline='middle';
       // badge
       const isPodium=!esGoles&&r.pos<=3;
-      if(isPodium){
-        ctx.save();
-        const pg=ctx.createLinearGradient(badgeX-bR,midY-bR,badgeX+bR,midY+bR);
-        if(r.pos===1){pg.addColorStop(0,'#ffe066');pg.addColorStop(0.5,'#ffba00');pg.addColorStop(1,'#e08800');}
-        else if(r.pos===2){pg.addColorStop(0,'#edf2f8');pg.addColorStop(0.5,'#ccd4e0');pg.addColorStop(1,'#a0a8b8');}
-        else{pg.addColorStop(0,'#e8a060');pg.addColorStop(0.5,'#cd7f32');pg.addColorStop(1,'#9a5520');}
+      {
+        const podiumFill=[null,'rgba(79,140,255,0.22)','rgba(139,92,246,0.18)','rgba(99,102,241,0.15)'];
+        const podiumStroke=[null,'rgba(79,140,255,0.7)','rgba(139,92,246,0.6)','rgba(99,102,241,0.55)'];
         ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);
-        ctx.fillStyle=pg; ctx.fill();
-        ctx.restore();
-      } else {
-        ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);
-        ctx.fillStyle=C.card2; ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+        ctx.fillStyle=isPodium?podiumFill[r.pos]:C.card2; ctx.fill();
+        ctx.strokeStyle=isPodium?podiumStroke[r.pos]:'rgba(255,255,255,0.1)'; ctx.lineWidth=isPodium?1.5:1;
         ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);ctx.stroke();
       }
-      ctx.fillStyle=isPodium?(r.pos===1?'#6a3800':r.pos===2?'#2a3040':'#fff'):C.text2;
+      ctx.fillStyle=isPodium?(r.pos===1?'#4f8cff':r.pos===2?'#a78bfa':'#818cf8'):C.text2;
       ctx.font=`800 ${Math.round(bR*0.9)}px system-ui,sans-serif`;
       ctx.textAlign='center'; ctx.fillText(String(r.pos),badgeX,midY);
       // crest
