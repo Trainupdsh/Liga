@@ -3232,6 +3232,7 @@ async function loadVerPlanesPublic(){
     PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
     planes.sort((a,b)=>a.orden-b.orden);
   }
+  planes=planes.filter(p=>Number(p.precio_mensual)>=0);
   el.innerHTML=planes.map(p=>{
     const features=p.features||{};
     const precio=precioLabel(p.precio_mensual);
@@ -3275,6 +3276,7 @@ async function loadVerPlanes(){
       PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
       planes.sort((a,b)=>a.orden-b.orden);
     }
+    planes=planes.filter(p=>Number(p.precio_mensual)>=0);
     el.innerHTML=planes.map(p=>{
       const isCurrent=currentLigaPlan&&currentLigaPlan.id===p.id;
       const features=p.features||{};
