@@ -2940,7 +2940,6 @@ let asignarPlanLigaId=null;
 
 // Planes predeterminados — se sincronizan a Supabase con el botón "Sincronizar planes"
 const PLANES_HARDCODED=[
-  {id:null,nombre:'Demo',descripcion:'Explorá la plataforma completa en modo solo lectura',precio_mensual:0,max_divisiones:2,max_equipos:5,max_jugadores:15,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:false,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:true},color:'#8b5cf6',orden:0,activo:true},
   {id:null,nombre:'Starter',descripcion:'Liga chica — el admin carga todo. Sin usuarios por club.',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
   {id:null,nombre:'Club',descripcion:'Usuarios por club (delegados), comunicados, multas y playoffs',precio_mensual:-1,max_divisiones:8,max_equipos:24,max_jugadores:25,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:false,comunicados:true,multas:true,playoffs:true,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
   {id:null,nombre:'Pro',descripcion:'Todo incluido: árbitros, historial, modo TV e inscripción online',precio_mensual:-1,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#1a2150',orden:3,activo:true},
@@ -3232,8 +3231,10 @@ async function loadVerPlanesPublic(){
     PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
     planes.sort((a,b)=>a.orden-b.orden);
   }
-  // Solo Demo y Starter tienen precio visible; todo lo demás es Próximamente
-  const _freePlans=new Set(['Demo','Starter']);
+  // Ocultar Demo por completo (aunque quede en Supabase)
+  planes=planes.filter(p=>p.nombre!=='Demo');
+  // Solo Starter tiene precio visible; todo lo demás es Próximamente
+  const _freePlans=new Set(['Starter']);
   planes=planes.map(p=>({...p,precio_mensual:_freePlans.has(p.nombre)?0:-1}));
   el.innerHTML=planes.map(p=>{
     const features=p.features||{};
@@ -3278,7 +3279,8 @@ async function loadVerPlanes(){
       PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
       planes.sort((a,b)=>a.orden-b.orden);
     }
-    const _freePlans2=new Set(['Demo','Starter']);
+    planes=planes.filter(p=>p.nombre!=='Demo');
+    const _freePlans2=new Set(['Starter']);
     planes=planes.map(p=>({...p,precio_mensual:_freePlans2.has(p.nombre)?0:-1}));
     el.innerHTML=planes.map(p=>{
       const isCurrent=currentLigaPlan&&currentLigaPlan.id===p.id;
