@@ -982,9 +982,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div id="dateStrip" style="display:flex;flex:1"></div>
         <button class="mt-nav-btn" onclick="_divShiftDays(1)">›</button>
         <button class="mt-hoy-btn" style="margin-left:6px" onclick="_divGoToday()">HOY</button>
-        <button class="btn btn-secondary btn-sm" style="margin-left:6px;font-size:11px;padding:4px 8px;display:flex;align-items:center;gap:4px;flex-shrink:0" onclick="compartirProximaFecha()" title="Compartir próxima fecha"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Fecha</button>
       </div>
-      <div id="div-filter-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px"></div>
+      <div id="div-filter-bar" style="display:flex;gap:8px;flex-shrink:0;padding:8px 12px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch"></div>
       <div id="matchesList"></div>
     </div>
     <div class="screen" id="screen-tabla">
@@ -3965,7 +3964,9 @@ function _divRenderFilterBar(){
     {f:'done',label:'FINALIZADOS'},
     {f:'upcoming',label:'PROGRAMADOS'},
   ];
-  el.innerHTML=tabs.map(t=>`<button class="mt-ftab${currentFilter===t.f?' active':''}" onclick="filterMatches('${t.f}')">${t.label}</button>`).join('');
+  const svgShare=`<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>`;
+  el.innerHTML=tabs.map(t=>`<button class="filter-tab${currentFilter===t.f?' active':''}" onclick="filterMatches('${t.f}')">${t.label}</button>`).join('')
+    +`<button class="filter-tab" onclick="compartirProximaFecha()" style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:5px;background:var(--accent-dim);color:var(--accent);border-color:var(--accent)">${svgShare}Compartir fecha</button>`;
 }
 function filterMatches(filter){currentFilter=filter;_divRenderFilterBar();renderMatches();}
 function getTeam(id){return teamsData.find(t=>t.id===id);}
