@@ -3010,7 +3010,10 @@ async function loadCurrentLigaPlan(ligaId,planId){
     const {data:p}=await supa.from('planes').select('*').eq('id',planId).single();
     const {data:l}=await supa.from('ligas').select('plan_vencimiento').eq('id',ligaId).single();
     if(p){
-      currentLigaPlan={...p,vencimiento:l?.plan_vencimiento||null};
+      // PLANES_HARDCODED manda sobre las features/límites guardados en Supabase
+      const hc=PLANES_HARDCODED.find(h=>h.nombre===p.nombre);
+      const base=hc?{...p,features:hc.features,max_divisiones:hc.max_divisiones,max_equipos:hc.max_equipos,max_jugadores:hc.max_jugadores}:p;
+      currentLigaPlan={...base,vencimiento:l?.plan_vencimiento||null};
       bannerNombre.textContent=p.nombre+' Plan';
       bannerVence.textContent=l?.plan_vencimiento?'Activo hasta '+formatFecha(l.plan_vencimiento):'Activo · Sin vencimiento';
       updateAdminMenuForPlan();
@@ -5685,6 +5688,7 @@ function openAdminEditClub(c){
   document.getElementById('nc-save-btn').disabled=false;
   document.getElementById('nc-save-btn').textContent='Guardar cambios';
   window._ncLogoBlob=null;
+  _ncToggleDelegadoSection();
   document.getElementById('nuevoClubModal').classList.add('open');
   setTimeout(()=>document.getElementById('nc-nombre').focus(),300);
 }
@@ -5718,8 +5722,10 @@ async function saveNuevoClub(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nc-nombre').value.trim();
   const abrev=document.getElementById('nc-abrev').value.trim().toUpperCase();
-  const email=document.getElementById('nc-email').value.trim();
-  const pass=document.getElementById('nc-pass').value.trim();
+  // El plan sin delegados no puede generar usuarios de club
+  const delegadosOk=canUseFeature('delegados');
+  const email=delegadosOk?document.getElementById('nc-email').value.trim():'';
+  const pass=delegadosOk?document.getElementById('nc-pass').value.trim():'';
   const dir=document.getElementById('nc-dir').value.trim();
   const errEl=document.getElementById('nc-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
