@@ -1329,6 +1329,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
 
 <!-- ADMIN PANEL -->
 <div id="view-admin" style="display:none;">
+  <div id="sa-impersonation-bar" style="display:none;background:#7c3aed;color:#fff;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:200">
+    <span>👑 Superadmin — Gestionando liga</span>
+    <button onclick="logoutAdmin()" style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 14px;border-radius:20px;font-weight:800;cursor:pointer;font-size:12px">← Volver al Superadmin</button>
+  </div>
   <div id="admin-dashboard" class="admin-screen">
     <div class="admin-header-bar">
       <span style="font-size:13px;color:var(--accent);cursor:pointer" onclick="goHome()">🌐 Ligas</span>
@@ -3088,6 +3092,7 @@ function filterLeagues(q){
 
 let currentLeagueId=1,currentDivisionId=1;
 let currentAdminLeagueId=null,currentAdminTorneoId=null;
+let _saImpersonating=false;
 let currentLeagueLimits={maxEquipos:null,maxJugadores:null};
 let saPlanes=[];
 let currentLigaPlan=null;
@@ -3661,7 +3666,10 @@ async function doAdminLogin(){
   document.getElementById('login-error').style.display='block';
 }
 function showAdminForLeague(l){
-  _saveSession({role:'liga',leagueId:l.id});_hidePublicChrome();
+  if(!_saImpersonating){_saveSession({role:'liga',leagueId:l.id});}
+  _hidePublicChrome();
+  const saBar=document.getElementById('sa-impersonation-bar');
+  if(saBar)saBar.style.display=_saImpersonating?'flex':'none';
   currentAdminLeagueId=l.id;
   currentLigaPlan=null;
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
@@ -3709,7 +3717,17 @@ async function loadAdminDashStats(ligaId){
     document.getElementById('dash-stat-goles').textContent=totalGoles;
   }catch(e){console.warn('Error cargando stats del dashboard',e);}
 }
-function logoutAdmin(){_clearSession();_showPublicChrome();document.getElementById('view-admin').style.display='none';showView('view-home');if(typeof _dtApplyLayout==='function')_dtApplyLayout();showToast('Sesión cerrada','');}
+function logoutAdmin(){
+  if(_saImpersonating){
+    _saImpersonating=false;
+    const saBar=document.getElementById('sa-impersonation-bar');
+    if(saBar)saBar.style.display='none';
+    document.getElementById('view-admin').style.display='none';
+    showSuperAdminDash();
+    return;
+  }
+  _clearSession();_showPublicChrome();document.getElementById('view-admin').style.display='none';showView('view-home');if(typeof _dtApplyLayout==='function')_dtApplyLayout();showToast('Sesión cerrada','');
+}
 
 async function showSuperAdminDash(){
   _saveSession({role:'superadmin'});_hidePublicChrome();
@@ -3770,6 +3788,7 @@ function renderSuperLeagues(){
     </div>`).join('');
 }
 function openLeagueAsAdmin(id){
+  _saImpersonating=true;
   showAdminForLeague(leagues.find(x=>x.id===id));
 }
 async function confirmarEliminarLiga(id,nombre){
