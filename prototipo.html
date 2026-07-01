@@ -4016,13 +4016,19 @@ function switchModalTab(tab,el){
 async function renderStandings(){
   document.getElementById('standingsList').innerHTML='<div style="padding:16px;text-align:center;color:var(--text3)">⏳ Cargando...</div>';
   try{
-    const {data,error}=await supa.from('partidos')
-      .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,fase,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
-      .eq('division_id',currentDivisionId).eq('estado','finalizado');
-    if(error)throw error;
-    const regularData=(data||[]).filter(p=>!p.fase||p.fase==='regular');
-    if(!regularData.length){renderStandingsLocal();return;}
+    // Base: todos los equipos de la división arrancan en cero — la tabla
+    // existe (y se puede compartir) aunque no se haya jugado ningún partido.
+    const [{data:eqs,error:eqErr},{data,error}]=await Promise.all([
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)').eq('division_id',currentDivisionId),
+      supa.from('partidos')
+        .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,fase,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
+        .eq('division_id',currentDivisionId).eq('estado','finalizado')
+    ]);
+    if(error||eqErr)throw error||eqErr;
+    if(!eqs||!eqs.length){renderStandingsLocal();return;}
     const table={};
+    eqs.forEach(e=>{table[e.id]={id:e.id,info:e,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};});
+    const regularData=(data||[]).filter(p=>!p.fase||p.fase==='regular');
     regularData.forEach(p=>{
       const lId=p.equipo_local_id,vId=p.equipo_visita_id;
       if(!table[lId])table[lId]={id:lId,info:p.local,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};
@@ -4035,7 +4041,7 @@ async function renderStandings(){
       else if(gl<gv){table[vId].pg++;table[vId].pts+=3;table[lId].pp++;}
       else{table[lId].pe++;table[lId].pts++;table[vId].pe++;table[vId].pts++;}
     });
-    const sorted=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
+    const sorted=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc)||(a.info?.nombre||'').localeCompare(b.info?.nombre||''));
     _cachedStandings=sorted.map((row,i)=>{const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:t.nombre,short:t.abreviacion,color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',logoUrl:t.club?.logo_url||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
     const badges=['gold','silver','bronze'];
     document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
