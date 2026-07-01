@@ -1822,6 +1822,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre completo</label>
         <input class="form-input" id="nj-nombre" type="text" placeholder="Ej: Martín García" oninput="njUpdatePreview()" style="width:100%"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">DNI</label>
+        <input class="form-input" id="nj-dni" type="text" inputmode="numeric" placeholder="Ej: 38123456" style="width:100%"></div>
       <div style="display:flex;gap:10px">
         <div style="flex:0 0 90px"><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">N° Camiseta</label>
           <input class="form-input" id="nj-numero" type="number" min="1" max="99" placeholder="10" style="width:100%"></div>
@@ -2108,6 +2110,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Nombre completo</label>
         <input class="form-input" id="dj-nombre" type="text" placeholder="Ej: Martín García" oninput="document.getElementById('dj-preview-nombre').textContent=this.value||'Sin nombre'" style="width:100%"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">DNI</label>
+        <input class="form-input" id="dj-dni" type="text" inputmode="numeric" placeholder="Ej: 38123456" style="width:100%"></div>
       <div style="display:flex;gap:10px">
         <div style="flex:0 0 90px"><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">N° Camiseta</label>
           <input class="form-input" id="dj-numero" type="number" min="1" max="99" placeholder="10" style="width:100%"></div>
@@ -2759,6 +2763,7 @@ CREATE TABLE IF NOT EXISTS planes (
 );
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
+ALTER TABLE jugadores ADD COLUMN IF NOT EXISTS dni TEXT;
 INSERT INTO planes (nombre,descripcion,precio_mensual,max_divisiones,max_equipos,max_jugadores,features,color,orden) VALUES
 ('Demo','Explorá la plataforma completa — solo lectura',0,2,5,15,'{"delegados":false,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":true,"inscripcion_online":true,"modo_demo":true}','#8b5cf6',0),
 ('Gratis','Liga chica — el admin carga todo',0,4,16,20,'{"delegados":false,"arbitros":false,"comunicados":false,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#4b5563',1),
@@ -3577,12 +3582,12 @@ async function loadAdminDashStats(ligaId){
     const cEq=new Set((eqRows||[]).map(e=>e.club_id??('eq'+e.id))).size;
     document.getElementById('dash-stat-equipos').textContent=cEq;
     document.getElementById('dash-stat-partidos').textContent=cPart??0;
-    // jugadores únicos: mismo club + mismo nombre cuenta una sola vez
+    // jugadores únicos: por DNI si está cargado; si no, club + nombre
     // (un jugador cargado en dos divisiones son dos filas en la tabla)
     const eqIds=(eqRows||[]).map(e=>e.id);
     const eqClub=Object.fromEntries((eqRows||[]).map(e=>[e.id,e.club_id??('eq'+e.id)]));
-    const {data:jugRows}=eqIds.length?await supa.from('jugadores').select('nombre,equipo_id').in('equipo_id',eqIds):{data:[]};
-    const cJug=new Set((jugRows||[]).map(j=>eqClub[j.equipo_id]+'|'+(j.nombre||'').trim().toLowerCase())).size;
+    const {data:jugRows}=eqIds.length?await supa.from('jugadores').select('nombre,dni,equipo_id').in('equipo_id',eqIds):{data:[]};
+    const cJug=new Set((jugRows||[]).map(j=>j.dni?'dni:'+j.dni:eqClub[j.equipo_id]+'|'+(j.nombre||'').trim().toLowerCase())).size;
     document.getElementById('dash-stat-jugadores').textContent=cJug;
     // goles: sum of goles_local + goles_visita on partidos finalizados
     const {data:gData}=await supa.from('partidos').select('goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado');
@@ -5546,6 +5551,7 @@ function openDelegAgregarJugador(){
   _editJugadorId=null;
   const tt=document.getElementById('dj-modal-title');if(tt)tt.textContent='Nuevo Jugador';
   document.getElementById('dj-nombre').value='';
+  document.getElementById('dj-dni').value='';
   document.getElementById('dj-numero').value='';
   document.getElementById('dj-posicion').value='Mediocampista';
   document.getElementById('dj-error').style.display='none';
@@ -5565,6 +5571,7 @@ async function openEditDelegJugador(id){
   _editJugadorId=id;
   const tt=document.getElementById('dj-modal-title');if(tt)tt.textContent='Editar Jugador';
   document.getElementById('dj-nombre').value=j.nombre||'';
+  document.getElementById('dj-dni').value=j.dni||'';
   document.getElementById('dj-numero').value=j.numero||'';
   document.getElementById('dj-posicion').value=j.posicion||'Mediocampista';
   document.getElementById('dj-equipo').innerHTML=delegadoClub._equipos.map(e=>`<option value="${e.id}"${e.id===j.equipo_id?' selected':''}>${escHtml(e.nombre)}</option>`).join('');
@@ -5584,11 +5591,13 @@ function closeDelegJugador(e,force){
 async function saveDelegJugador(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('dj-nombre').value.trim();
+  const dni=document.getElementById('dj-dni').value.replace(/\D/g,'');
   const numero=parseInt(document.getElementById('dj-numero').value)||null;
   const posicion=document.getElementById('dj-posicion').value;
   const equipoId=parseInt(document.getElementById('dj-equipo').value)||null;
   const errEl=document.getElementById('dj-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(dni&&(dni.length<7||dni.length>9)){errEl.textContent='DNI inválido (7 a 9 dígitos)';errEl.style.display='';return;}
   if(!equipoId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
   const btn=document.getElementById('dj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
@@ -5600,7 +5609,7 @@ async function saveDelegJugador(){
       catch(imgErr){console.warn('Foto upload failed:',imgErr);}
     }
     if(_editJugadorId){
-      const updates={equipo_id:equipoId,nombre,numero,posicion};
+      const updates={equipo_id:equipoId,nombre,numero,posicion,dni:dni||null};
       if(fotoUrl)updates.foto_url=fotoUrl; // only overwrite photo if a new one was chosen
       const {error}=await supa.from('jugadores').update(updates).eq('id',_editJugadorId);
       if(error)throw error;
@@ -5610,7 +5619,9 @@ async function saveDelegJugador(){
       await loadDelegPlantel();
       return;
     }
-    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl});
+    const djRow={equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl};
+    if(dni)djRow.dni=dni;
+    const {error}=await supa.from('jugadores').insert(djRow);
     if(error)throw error;
     window._djFotoBlob=null;
     closeDelegJugador(null,true);
@@ -6100,6 +6111,7 @@ async function loadAdminJugadores(){
 
 function openNuevoJugador(){
   document.getElementById('nj-nombre').value='';
+  document.getElementById('nj-dni').value='';
   document.getElementById('nj-numero').value='';
   document.getElementById('nj-posicion').value='Mediocampista';
   document.getElementById('nj-error').style.display='none';
@@ -6124,11 +6136,13 @@ function njUpdatePreview(){
 async function saveNuevoJugador(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const nombre=document.getElementById('nj-nombre').value.trim();
+  const dni=document.getElementById('nj-dni').value.replace(/\D/g,'');
   const numero=parseInt(document.getElementById('nj-numero').value)||null;
   const posicion=document.getElementById('nj-posicion').value;
   const equipoId=parseInt(document.getElementById('nj-equipo').value)||null;
   const errEl=document.getElementById('nj-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
+  if(dni&&(dni.length<7||dni.length>9)){errEl.textContent='DNI inválido (7 a 9 dígitos)';errEl.style.display='';return;}
   if(!equipoId){errEl.textContent='Seleccioná un club';errEl.style.display='';return;}
   const btn=document.getElementById('nj-save-btn');
   btn.disabled=true;btn.textContent='Guardando…';
@@ -6153,7 +6167,9 @@ async function saveNuevoJugador(){
       try{fotoUrl=await uploadImageToStorage(fotoBlob,'jugadores',`jugador_${equipoId}_${Date.now()}.webp`);}
       catch(imgErr){console.warn('Foto upload failed:',imgErr);}
     }
-    const {error}=await supa.from('jugadores').insert({equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl});
+    const njRow={equipo_id:equipoId,nombre,numero,posicion,foto_url:fotoUrl};
+    if(dni)njRow.dni=dni;
+    const {error}=await supa.from('jugadores').insert(njRow);
     if(error)throw error;
     window._njFotoBlob=null;
     closeNuevoJugador(null,true);
