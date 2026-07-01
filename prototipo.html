@@ -4184,6 +4184,15 @@ function _lhx(hex,a){
   catch{return hex||'#2a3a6a';}
 }
 
+// Dibuja una imagen llenando el destino SIN deformar: escala manteniendo la
+// proporción y centra, recortando el excedente (equivalente a object-fit:cover;
+// el clip circular del llamador se encarga del recorte).
+function _drawImgCover(ctx,img,x,y,w,h){
+  const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+  if(!iw||!ih){ctx.drawImage(img,x,y,w,h);return;}
+  const s=Math.max(w/iw,h/ih),dw=iw*s,dh=ih*s;
+  ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
 function _rrect(ctx,x,y,w,h,r){
   ctx.beginPath();
   ctx.moveTo(x+r,y);
@@ -4366,12 +4375,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   if(hdrLogo){
     ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
-    ctx.drawImage(hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);
+    _drawImgCover(ctx,hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);
     ctx.restore();
   } else if(sporvixLogo){
     const pad=logoR*0.12;
     ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
-    ctx.drawImage(sporvixLogo,logoX-logoR+pad,logoY-logoR+pad,logoR*2-pad*2,logoR*2-pad*2);
+    _drawImgCover(ctx,sporvixLogo,logoX-logoR+pad,logoY-logoR+pad,logoR*2-pad*2,logoR*2-pad*2);
     ctx.restore();
   } else {
     const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
@@ -4544,7 +4553,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const _drawCrest=(cx,cy,cr,team)=>{
     const logo=imgCache[team.logoUrl];
     ctx.save();ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);
-    if(logo){ctx.clip();ctx.drawImage(logo,cx-cr,cy-cr,cr*2,cr*2);}
+    if(logo){ctx.clip();_drawImgCover(ctx,logo,cx-cr,cy-cr,cr*2,cr*2);}
     else{
       const cG=ctx.createRadialGradient(cx,cy-cr*0.3,0,cx,cy,cr);
       cG.addColorStop(0,_lhx(team.color||'#1a2150',45));cG.addColorStop(1,team.color||'#1a2150');
