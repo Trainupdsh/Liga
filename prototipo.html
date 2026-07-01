@@ -4305,9 +4305,14 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const torneo=torneos.find(t=>t.id===div?.torneoId);
   const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||{name:'Liga'};
   const divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
-  if(esProxima&&!_cachedProximaFecha.length)_computeProximaFecha(divId);
-  if(!esProxima&&esGoles&&!_cachedScorers.length)await renderScorers();
-  if(!esProxima&&!esGoles&&!_cachedStandings.length)await renderStandings();
+  // Siempre recargar para el divId correcto (la caché puede ser de otra división)
+  _cachedStandings=[]; _cachedScorers=[];
+  const _origDivId=currentDivisionId; currentDivisionId=divId;
+  try{
+    if(esProxima) _computeProximaFecha(divId);
+    else if(esGoles) await renderScorers();
+    else await renderStandings();
+  }finally{ currentDivisionId=_origDivId; }
   const filas=esProxima?_cachedProximaFecha:(esGoles?_cachedScorers:_cachedStandings).slice(0,10);
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
