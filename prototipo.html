@@ -6172,7 +6172,7 @@ function renderPartidoCard(p){
       <span style="font-size:11px;color:var(--text2)">${faseTag}${p.fecha?formatFecha(p.fecha):''} ${p.hora?p.hora.slice(0,5):''} ${p.jornada&&(p.fase==='regular'||!p.fase)?'· Fecha '+p.jornada:''}</span>
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:11px;color:${p.estado==='en_curso'?'var(--green)':'var(--text3)'}">${estadoLabel[p.estado]||''}</span>
-        ${p.estado!=='finalizado'?`<button class="btn btn-sm" style="background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:2px 7px;font-size:10px" onclick="openAdminResultModal(${p.id})">Res.</button>`:''}
+        <button class="btn btn-sm" style="background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:2px 7px;font-size:10px" onclick="openAdminResultModal(${p.id})">${p.estado==='finalizado'?'✏️ Res.':'Res.'}</button>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:2px 7px" onclick="confirmarEliminarPartido(${p.id})">✕</button>
       </div>
     </div>
@@ -6192,16 +6192,14 @@ function renderPartidoCard(p){
       </div>
     </div>
     ${(p.cancha||p.local?.club?.direccion)?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">📍 ${escHtml(p.cancha||p.local?.club?.direccion)}</div>`:''}
-    ${p.estado!=='finalizado'?`
     <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
       <span style="font-size:13px;flex-shrink:0">🟡</span>
       <select style="flex:1;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text)" onchange="asignarArbitroPartido(${p.id},this.value)">
         <option value="">Sin árbitro</option>
         ${ligaArbitros.map(a=>`<option value="${a.id}"${p.arbitro?.id===a.id?' selected':''}>${escHtml(a.nombre)}</option>`).join('')}
       </select>
-      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px;flex-shrink:0" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'},${p.equipo_local_id||'null'},${p.equipo_visita_id||'null'},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}')">✏️</button>
-    </div>`
-    :p.arbitro?.nombre?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">🟡 ${escHtml(p.arbitro.nombre)}</div>`:''}
+      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px;flex-shrink:0" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'},${p.equipo_local_id||'null'},${p.equipo_visita_id||'null'},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}','${p.estado||''}')">✏️</button>
+    </div>
   </div>`;
 }
 async function asignarArbitroPartido(matchId, arbitroId){
@@ -7767,8 +7765,10 @@ async function confirmarEliminarArbitro(id,nombre){
 // ═══ REPROGRAMAR ═══
 let _reprogramarMatchId=null;
 let _reprogramarLV=null; // {localId,visitaId,localN,visitaN,swapped}
-function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId,localId,visitaId,localN,visitaN){
+let _reprogramarEstado=null;
+function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId,localId,visitaId,localN,visitaN,estado){
   _reprogramarMatchId=matchId;
+  _reprogramarEstado=estado||null;
   document.getElementById('reprogramar-title').textContent=titulo||'Partido';
   document.getElementById('reprogram-fecha').value=fecha||'';
   document.getElementById('reprogram-hora').value=hora||'';
@@ -7812,7 +7812,8 @@ async function saveReprogramacion(){
   const arbitroIdVal=document.getElementById('reprogram-arbitro').value;
   if(!fecha){showToast('Seleccioná una fecha','error');return;}
   try{
-    const updates={estado:'programado'};
+    // Un partido finalizado conserva su estado al editarlo; el resto vuelve a programado
+    const updates={estado:_reprogramarEstado==='finalizado'?'finalizado':'programado'};
     if(fecha)updates.fecha=fecha;
     if(hora)updates.hora=hora;
     updates.cancha=cancha||null;
@@ -7822,6 +7823,11 @@ async function saveReprogramacion(){
     if(_reprogramarLV?.swapped){
       updates.equipo_local_id=_reprogramarLV.visitaId;
       updates.equipo_visita_id=_reprogramarLV.localId;
+      // Si ya tiene resultado, invertir también los goles para que siga siendo correcto
+      if(_reprogramarEstado==='finalizado'){
+        const {data:cur}=await supa.from('partidos').select('goles_local,goles_visita').eq('id',_reprogramarMatchId).single();
+        if(cur){updates.goles_local=cur.goles_visita;updates.goles_visita=cur.goles_local;}
+      }
     }
     await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);
     closeReprogramar(null,true);
