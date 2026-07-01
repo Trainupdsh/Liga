@@ -4651,18 +4651,14 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     filas.forEach((r,i)=>{
       const ry=cardY+COL_H+i*ROW_H, midY=ry+ROW_H/2;
       _rowBg(ry,i);
-      // team color ambient tints
       const ht=r.homeTeam||{}, at=r.awayTeam||{};
-      {const hc=ht.color||'#1a2150', ac=at.color||'#1a2150';
-      const hTint=ctx.createLinearGradient(cardX,0,cardX+cardW*0.42,0);
-      hTint.addColorStop(0,hc+'28');hTint.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=hTint; ctx.fillRect(cardX,ry,cardW/2,ROW_H);
-      const aTint=ctx.createLinearGradient(cardX+cardW*0.58,0,cardX+cardW,0);
-      aTint.addColorStop(0,'rgba(0,0,0,0)');aTint.addColorStop(1,ac+'28');
-      ctx.fillStyle=aTint; ctx.fillRect(cardX+cardW/2,ry,cardW/2,ROW_H);
-      // solid edge strips
-      ctx.fillStyle=hc; ctx.fillRect(cardX,ry,3,ROW_H);
-      ctx.fillStyle=ac; ctx.fillRect(cardX+cardW-3,ry,3,ROW_H);}
+      // left accent strip (uniform blue/celeste, igual que tabla y goleadores)
+      {const stripW=Math.round(cardW*0.16);
+      const aR=isLight?'37,99,235':'79,140,255';
+      const stripG=ctx.createLinearGradient(cardX,0,cardX+stripW,0);
+      stripG.addColorStop(0,`rgba(${aR},0.20)`);stripG.addColorStop(0.5,`rgba(${aR},0.07)`);stripG.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=stripG; ctx.fillRect(cardX,ry,stripW,ROW_H);
+      ctx.fillStyle=`rgba(${aR},0.60)`; ctx.fillRect(cardX,ry,4,ROW_H);}
       ctx.textBaseline='middle';
       const isLive=r.status==='live', isDone=r.status==='done';
       // center score/vs pill
