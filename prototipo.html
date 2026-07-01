@@ -4457,10 +4457,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   }
 
   const tX=logoX+logoR+Math.round(CW*0.022);
-  const s1=Math.min(36,Math.round(BRAND_H*0.26));
-  const s2=Math.min(22,Math.round(BRAND_H*0.155));
-  const s3=Math.min(17,Math.round(BRAND_H*0.130));
-  const s4=Math.min(14,Math.round(BRAND_H*0.112));
+  // Tamaños proporcionales al ancho (con tope por altura de banda) para que
+  // liga/torneo/división se lean bien también en los formatos grandes (1080px)
+  const s1=Math.round(Math.min(CW*0.052,BRAND_H*0.30));
+  const s2=Math.round(Math.min(CW*0.036,BRAND_H*0.21));
+  const s3=Math.round(Math.min(CW*0.028,BRAND_H*0.165));
+  const s4=Math.round(Math.min(CW*0.023,BRAND_H*0.135));
   const lblTxt=esProxima
     ?('Próxima Fecha'+(_cachedProximaFechaRound?' · Fecha '+_cachedProximaFechaRound:''))+(divNombre?' · '+divNombre:'')
     :(esGoles?'Tabla de Goleadores':'Tabla de Posiciones')+(divNombre?' · '+divNombre:'');
@@ -4472,12 +4474,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
     {t:lblTxt,s:s4,c:C.text3,w:400},
   ].filter(l=>l.t);
-  const totalBH=brandLines.reduce((a,l)=>a+l.s*1.35,0);
+  const totalBH=brandLines.reduce((a,l)=>a+l.s*1.28,0);
   let ly=(BRAND_H-totalBH)/2+brandLines[0].s;
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   for(const l of brandLines){
     ctx.font=`${l.w} ${l.s}px system-ui,sans-serif`; ctx.fillStyle=l.c;
-    ctx.fillText(_tTxt(ctx,l.t,CW-tX-PAD*2),tX,ly); ly+=l.s*1.35;
+    ctx.fillText(_tTxt(ctx,l.t,CW-tX-PAD*2),tX,ly); ly+=l.s*1.28;
   }
   ctx.font=`${s4}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textAlign='right';
   ctx.fillText(fecha,CW-PAD,logoY+s4/2);
@@ -4807,7 +4809,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // ── FOOTER ───────────────────────────────────────────────────────
   const fy=cardY+CARD_H+CARD_GAP_BOT;
-  const fFS=Math.max(9,Math.min(14,Math.round(FTR_H*0.32)));
+  const fFS=Math.max(12,Math.round(Math.min(CW*0.021,FTR_H*0.42)));
   ctx.textBaseline='middle';
   ctx.font=`${fFS}px system-ui,sans-serif`; ctx.fillStyle=C.text3; ctx.textAlign='left';
   ctx.fillText(fecha,PAD,fy+FTR_H/2);
