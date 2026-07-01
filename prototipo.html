@@ -4309,10 +4309,19 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const filas=esProxima?_cachedProximaFecha:(esGoles?_cachedScorers:_cachedStandings).slice(0,10);
   if(!filas.length){showToast('Sin datos para compartir','');return;}
 
-  // paleta app
-  const C={bg:'#0c1017',card:'#131820',card2:'#1b2130',accent:'#4f8cff',
-           text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#1b2130',
-           green:'#2ed573',red:'#ff4757'};
+  // paleta — sigue el tema activo de la app
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const C=isLight?{
+    bg:'#edf2ff',card:'#ffffff',card2:'#f3f6ff',
+    accent:'#2563eb',accentP:'#7c3aed',
+    text:'#0f172a',text2:'#475569',text3:'#94a3b8',
+    border:'#dde5ff',green:'#16a34a',red:'#dc2626',isLight:true
+  }:{
+    bg:'#0c1017',card:'#131820',card2:'#1b2130',
+    accent:'#4f8cff',accentP:'#8b5cf6',
+    text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',
+    border:'#1b2130',green:'#2ed573',red:'#ff4757',isLight:false
+  };
 
   const RETINA=3,CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
   const sT=fmt.safeTop||0,sB=fmt.safeBot||0;
@@ -4359,26 +4368,43 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // ── FONDO ────────────────────────────────────────────────────────
   {
-    const bgG=ctx.createLinearGradient(0,0,0,CH);
-    bgG.addColorStop(0,'#050a16');bgG.addColorStop(0.3,'#0a1428');bgG.addColorStop(0.65,'#0e1830');bgG.addColorStop(1,'#04070e');
+    // base gradient
+    const bgG=ctx.createLinearGradient(0,0,CW*0.25,CH);
+    if(isLight){
+      bgG.addColorStop(0,'#dce6ff');bgG.addColorStop(0.45,'#edf2ff');bgG.addColorStop(1,'#e0eaff');
+    } else {
+      bgG.addColorStop(0,'#04071a');bgG.addColorStop(0.3,'#08102a');bgG.addColorStop(0.65,'#0c1532');bgG.addColorStop(1,'#030508');
+    }
     ctx.fillStyle=bgG; ctx.fillRect(0,0,CW,CH);
-    // top-right strong blue glow
-    const glTR=ctx.createRadialGradient(CW*0.92,0,0,CW*0.92,0,CW*0.72);
-    glTR.addColorStop(0,'rgba(79,140,255,0.26)');glTR.addColorStop(0.5,'rgba(79,140,255,0.10)');glTR.addColorStop(1,'rgba(79,140,255,0)');
+
+    // glows — top-right blue
+    const glA=isLight?0.18:0.32, glB=isLight?0.10:0.20;
+    const glTR=ctx.createRadialGradient(CW*0.92,CH*0.05,0,CW*0.92,CH*0.05,CW*0.75);
+    glTR.addColorStop(0,`rgba(79,140,255,${glA})`);glTR.addColorStop(0.5,`rgba(79,140,255,${glA*0.38})`);glTR.addColorStop(1,'rgba(79,140,255,0)');
     ctx.fillStyle=glTR; ctx.fillRect(0,0,CW,CH);
-    // bottom-left purple glow
-    const glBL=ctx.createRadialGradient(CW*0.06,CH,0,CW*0.06,CH,CW*0.68);
-    glBL.addColorStop(0,'rgba(139,92,246,0.22)');glBL.addColorStop(0.5,'rgba(139,92,246,0.08)');glBL.addColorStop(1,'rgba(139,92,246,0)');
+    // bottom-left purple
+    const glBL=ctx.createRadialGradient(CW*0.06,CH*0.95,0,CW*0.06,CH*0.95,CW*0.72);
+    glBL.addColorStop(0,`rgba(139,92,246,${glB})`);glBL.addColorStop(0.5,`rgba(139,92,246,${glB*0.36})`);glBL.addColorStop(1,'rgba(139,92,246,0)');
     ctx.fillStyle=glBL; ctx.fillRect(0,0,CW,CH);
-    // top-left subtle blue highlight
-    const glTL=ctx.createRadialGradient(0,0,0,0,0,CW*0.5);
-    glTL.addColorStop(0,'rgba(79,140,255,0.10)');glTL.addColorStop(1,'rgba(79,140,255,0)');
-    ctx.fillStyle=glTL; ctx.fillRect(0,0,CW,CH);
-    // fine grid texture
-    ctx.strokeStyle='rgba(255,255,255,0.028)'; ctx.lineWidth=0.5;
+    // center depth vignette (makes card pop)
+    const vig=ctx.createRadialGradient(CW/2,CH*0.48,CW*0.18,CW/2,CH*0.48,CW*0.78);
+    vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,isLight?'rgba(10,20,80,0.08)':'rgba(0,0,0,0.45)');
+    ctx.fillStyle=vig; ctx.fillRect(0,0,CW,CH);
+
+    // fine grid
+    ctx.strokeStyle=isLight?'rgba(30,60,200,0.06)':'rgba(255,255,255,0.025)'; ctx.lineWidth=0.5;
     const gS=Math.round(CW*0.038);
     for(let gx=0;gx<=CW;gx+=gS){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,CH);ctx.stroke();}
     for(let gy=0;gy<=CH;gy+=gS){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(CW,gy);ctx.stroke();}
+
+    // film grain / noise texture (adds tactile depth)
+    const nc=document.createElement('canvas'); nc.width=nc.height=160;
+    const nx=nc.getContext('2d'), ni=nx.createImageData(160,160), nd=ni.data;
+    const nv=isLight?0:255, na=isLight?10:7;
+    for(let i=0;i<nd.length;i+=4){nd[i]=nd[i+1]=nd[i+2]=nv; nd[i+3]=Math.random()<0.45?Math.random()*na|0:0;}
+    nx.putImageData(ni,0,0);
+    const nPat=ctx.createPattern(nc,'repeat');
+    ctx.fillStyle=nPat; ctx.fillRect(0,0,CW,CH);
   }
 
 
@@ -4389,9 +4415,16 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const logoR=Math.round(BRAND_H*0.28);
   const logoX=PAD+logoR, logoY=Math.round(BRAND_H*0.5);
 
+  // logo circle with subtle glow ring
+  if(!isLight){
+    ctx.save();
+    ctx.shadowColor='rgba(79,140,255,0.35)'; ctx.shadowBlur=22;
+    ctx.beginPath();ctx.arc(logoX,logoY,logoR+2,0,Math.PI*2);ctx.fillStyle='transparent';ctx.stroke();
+    ctx.restore();
+  }
   ctx.fillStyle=C.card2;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=C.border; ctx.lineWidth=1.5;
+  ctx.strokeStyle=isLight?'rgba(37,99,235,0.30)':'rgba(255,255,255,0.12)'; ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
 
   if(hdrLogo){
@@ -4438,25 +4471,49 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const CARD_H=COL_H+nRows*ROW_H;
   const CR=Math.round(CW*0.02);
 
-  // glow halo behind card
-  {const haloG=ctx.createRadialGradient(cardX+cardW/2,cardY+CARD_H*0.4,0,cardX+cardW/2,cardY+CARD_H*0.4,cardW*0.7);
-  haloG.addColorStop(0,'rgba(79,140,255,0.10)');haloG.addColorStop(0.6,'rgba(79,140,255,0.04)');haloG.addColorStop(1,'rgba(79,140,255,0)');
-  ctx.fillStyle=haloG; ctx.fillRect(0,cardY-40,CW,CARD_H+80);}
+  // glow halo behind card (accent-colored ambient light)
+  {const haloG=ctx.createRadialGradient(cardX+cardW/2,cardY+CARD_H*0.35,0,cardX+cardW/2,cardY+CARD_H*0.35,cardW*0.85);
+  const hA=isLight?0.12:0.14;
+  haloG.addColorStop(0,`rgba(79,140,255,${hA})`);haloG.addColorStop(0.5,`rgba(79,140,255,${hA*0.3})`);haloG.addColorStop(1,'rgba(79,140,255,0)');
+  ctx.fillStyle=haloG; ctx.fillRect(0,cardY-60,CW,CARD_H+120);}
 
+  // card shadow — diffuse ambient layer
   ctx.save();
-  ctx.shadowColor='rgba(0,0,0,0.92)'; ctx.shadowBlur=80; ctx.shadowOffsetY=32; ctx.shadowOffsetX=0;
-  _rrect(ctx,cardX,cardY,cardW,CARD_H,CR);
-  ctx.fillStyle=C.card; ctx.fill();
+  ctx.shadowColor=isLight?'rgba(20,40,160,0.18)':'rgba(0,2,20,0.98)';
+  ctx.shadowBlur=isLight?50:130; ctx.shadowOffsetY=isLight?14:48;
+  _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.fillStyle=C.card; ctx.fill();
   ctx.restore();
+  // card shadow — sharp close layer (crisp edge)
+  if(!isLight){
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,0.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=8;
+    _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.fillStyle=C.card; ctx.fill();
+    ctx.restore();
+  }
 
-  // glass gradient border
+  // card border
   {const bG=ctx.createLinearGradient(cardX,cardY,cardX,cardY+CARD_H);
-  bG.addColorStop(0,'rgba(255,255,255,0.30)');bG.addColorStop(0.2,'rgba(255,255,255,0.12)');bG.addColorStop(0.6,'rgba(255,255,255,0.05)');bG.addColorStop(1,'rgba(255,255,255,0.02)');
+  if(isLight){
+    bG.addColorStop(0,'rgba(37,99,235,0.30)');bG.addColorStop(0.3,'rgba(37,99,235,0.12)');bG.addColorStop(1,'rgba(37,99,235,0.04)');
+  } else {
+    bG.addColorStop(0,'rgba(255,255,255,0.35)');bG.addColorStop(0.15,'rgba(255,255,255,0.14)');bG.addColorStop(0.55,'rgba(255,255,255,0.05)');bG.addColorStop(1,'rgba(255,255,255,0.02)');
+  }
   ctx.strokeStyle=bG; ctx.lineWidth=1.5;
   _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.stroke();}
 
   ctx.save();
   _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.clip();
+
+  // inner top light reflection (elevation illusion)
+  if(!isLight){
+    const iHL=ctx.createLinearGradient(cardX,cardY,cardX,cardY+48);
+    iHL.addColorStop(0,'rgba(255,255,255,0.09)');iHL.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=iHL; ctx.fillRect(cardX,cardY,cardW,48);
+  }
+  // inner bottom fade (depth)
+  {const iBF=ctx.createLinearGradient(cardX,cardY+CARD_H-70,cardX,cardY+CARD_H);
+  iBF.addColorStop(0,'rgba(0,0,0,0)');iBF.addColorStop(1,isLight?'rgba(20,50,200,0.05)':'rgba(0,0,0,0.25)');
+  ctx.fillStyle=iBF; ctx.fillRect(cardX,cardY+CARD_H-70,cardW,70);}
 
   // accent bar at card top
   {const abG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
@@ -4469,7 +4526,8 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // franja encabezado columnas
   const colG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
-  colG.addColorStop(0,'rgba(12,20,42,0.98)');colG.addColorStop(0.6,C.card2);colG.addColorStop(1,C.card);
+  colG.addColorStop(0,isLight?'rgba(219,234,255,0.98)':'rgba(10,16,40,0.98)');
+  colG.addColorStop(0.6,C.card2);colG.addColorStop(1,C.card);
   ctx.fillStyle=colG; ctx.fillRect(cardX,cardY+6,cardW,COL_H-6);
   // gradient separator line
   {const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
