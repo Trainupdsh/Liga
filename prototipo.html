@@ -3577,10 +3577,13 @@ async function loadAdminDashStats(ligaId){
     const cEq=new Set((eqRows||[]).map(e=>e.club_id??('eq'+e.id))).size;
     document.getElementById('dash-stat-equipos').textContent=cEq;
     document.getElementById('dash-stat-partidos').textContent=cPart??0;
-    // jugadores
+    // jugadores únicos: mismo club + mismo nombre cuenta una sola vez
+    // (un jugador cargado en dos divisiones son dos filas en la tabla)
     const eqIds=(eqRows||[]).map(e=>e.id);
-    const {count:cJug}=eqIds.length?await supa.from('jugadores').select('id',{count:'exact',head:true}).in('equipo_id',eqIds):{count:0};
-    document.getElementById('dash-stat-jugadores').textContent=cJug??0;
+    const eqClub=Object.fromEntries((eqRows||[]).map(e=>[e.id,e.club_id??('eq'+e.id)]));
+    const {data:jugRows}=eqIds.length?await supa.from('jugadores').select('nombre,equipo_id').in('equipo_id',eqIds):{data:[]};
+    const cJug=new Set((jugRows||[]).map(j=>eqClub[j.equipo_id]+'|'+(j.nombre||'').trim().toLowerCase())).size;
+    document.getElementById('dash-stat-jugadores').textContent=cJug;
     // goles: sum of goles_local + goles_visita on partidos finalizados
     const {data:gData}=await supa.from('partidos').select('goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado');
     const totalGoles=(gData||[]).reduce((s,p)=>s+(p.goles_local??0)+(p.goles_visita??0),0);
