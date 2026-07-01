@@ -3232,9 +3232,9 @@ async function loadVerPlanesPublic(){
     PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
     planes.sort((a,b)=>a.orden-b.orden);
   }
-  // Precio controlado por PLANES_HARDCODED: si hardcoded dice -1, forzar Próximamente
-  const _hcPriceMap=Object.fromEntries(PLANES_HARDCODED.map(h=>[h.nombre,h.precio_mensual]));
-  planes=planes.map(p=>({...p,precio_mensual:(_hcPriceMap[p.nombre]??p.precio_mensual)}));
+  // Solo Demo y Starter tienen precio visible; todo lo demás es Próximamente
+  const _freePlans=new Set(['Demo','Starter']);
+  planes=planes.map(p=>({...p,precio_mensual:_freePlans.has(p.nombre)?0:-1}));
   el.innerHTML=planes.map(p=>{
     const features=p.features||{};
     const precio=precioLabel(p.precio_mensual);
@@ -3278,8 +3278,8 @@ async function loadVerPlanes(){
       PLANES_HARDCODED.forEach(h=>{if(!dbNames.has(h.nombre))planes.push(h);});
       planes.sort((a,b)=>a.orden-b.orden);
     }
-    const _hcMap=Object.fromEntries(PLANES_HARDCODED.map(h=>[h.nombre,h.precio_mensual]));
-    planes=planes.map(p=>({...p,precio_mensual:(_hcMap[p.nombre]??p.precio_mensual)}));
+    const _freePlans2=new Set(['Demo','Starter']);
+    planes=planes.map(p=>({...p,precio_mensual:_freePlans2.has(p.nombre)?0:-1}));
     el.innerHTML=planes.map(p=>{
       const isCurrent=currentLigaPlan&&currentLigaPlan.id===p.id;
       const features=p.features||{};
