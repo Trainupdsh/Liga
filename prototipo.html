@@ -2969,6 +2969,13 @@ function formatFecha(str){
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return dias[d.getDay()]+' '+d.getDate()+' '+meses[d.getMonth()];
 }
+// Versión compacta para columnas angostas: "Lun 20/7"
+function _fechaCorta(str){
+  if(!str)return '';
+  const d=new Date(str+'T12:00:00');
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return dias[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);
+}
 
 // ─── PLANES / FEATURE GATES ───
 const FEATURE_LABELS={fixture:'Fixture automático y manual',jugadores:'Carga de jugadores',goles_tarjetas:'Goles y tarjetas',canchas_horarios:'Canchas y horarios',delegados:'Usuarios por club (delegados)',arbitros:'Gestión de árbitros',comunicados:'Comunicados y avisos',multas:'Multas y sanciones',playoffs:'Playoffs / Eliminatoria',historial:'Historial de temporadas',tv_mode:'Modo TV',inscripcion_online:'Inscripción online',modo_demo:'Modo Demo (solo lectura)'};
@@ -3896,7 +3903,7 @@ async function renderMatches(){
         const awayWon=isDone&&(p.goles_visita||0)>(p.goles_local||0);
         const timeStr=isLive?'🔴':p.hora?p.hora.slice(0,5):'—';
         html+=`<div class="match-item" onclick="openMatchDB(${p.id})">
-          <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div></div>
+          <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div>${p.fecha?`<div style="font-size:8.5px;color:var(--text3);margin-top:1px;line-height:1.2">${_fechaCorta(p.fecha)}</div>`:''}</div>
           <div class="match-teams">
             <div class="match-team-row"><div class="shield" style="background:${lLogo?'transparent':lColor};color:${lText};overflow:hidden">${lShieldInner}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(lName)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_local:(isLive?p.goles_local??0:'-')}</span></div>
             <div class="match-team-row"><div class="shield" style="background:${vLogo?'transparent':vColor};color:${vText};overflow:hidden">${vShieldInner}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(vName)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_visita:(isLive?p.goles_visita??0:'-')}</span></div>
@@ -3923,7 +3930,7 @@ function renderMatchesLocal(){
       const home=getTeam(m.home),away=getTeam(m.away),isDone=m.status==='done',isLive=m.status==='live';
       const homeWon=isDone&&m.homeScore>m.awayScore,awayWon=isDone&&m.awayScore>m.homeScore;
       html+=`<div class="match-item" onclick="openMatch(${m.id})">
-        <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
+        <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div>${m.fecha?`<div style="font-size:8.5px;color:var(--text3);margin-top:1px;line-height:1.2">${_fechaCorta(m.fecha)}</div>`:''}</div>
         <div class="match-teams">
           <div class="match-team-row"><div class="shield" style="background:${home.logoUrl?'transparent':home.color};color:${home.text};overflow:hidden">${_teamShieldInner(home)}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'—':'-')}</span></div>
           <div class="match-team-row"><div class="shield" style="background:${away.logoUrl?'transparent':away.color};color:${away.text};overflow:hidden">${_teamShieldInner(away)}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'—':'-')}</span></div>
@@ -9245,7 +9252,7 @@ async function _mtLoadRealMatches(){
       matches.push({id:mid,home:p.equipo_local_id+RID,away:p.equipo_visita_id+RID,
         round:p.jornada,homeScore:p.goles_local,awayScore:p.goles_visita,
         status,time:status==='live'?'VIVO':(p.hora?p.hora.slice(0,5):'—'),
-        venue:p.cancha||'',divId:p.division_id+RID,dayOff});
+        venue:p.cancha||'',divId:p.division_id+RID,dayOff,fecha:p.fecha||null});
     });
     _mtRealLoaded=true; // éxito: no repetir el fetch en próximas navegaciones
   }catch(e){console.warn('No se pudieron cargar los partidos reales',e);}
@@ -9411,6 +9418,7 @@ function _dtDivMatchesHtml(divId){
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px;padding-left:2px">
           <span style="font-size:10px;font-weight:700;color:${statusColor}">${escHtml(statusLabel)}</span>
+          ${m.fecha?`<span style="font-size:10px;color:var(--text3)">· ${formatFecha(m.fecha)}</span>`:''}
           ${m.venue?`<span style="font-size:10px;color:var(--text3)">· ${escHtml(m.venue)}</span>`:''}
         </div>
       </div>`;
