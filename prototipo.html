@@ -205,7 +205,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .modal-tournament{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.5px;text-align:center;text-transform:uppercase;margin-bottom:12px;}
 .modal-teams{display:flex;align-items:center;justify-content:space-between;padding:0 8px;}
 .modal-team{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;}
-.modal-shield{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;border:3px solid var(--border);}
+.modal-shield{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;border:3px solid var(--border);overflow:hidden;}
+.modal-shield img{width:100%;height:100%;object-fit:cover;}
 .modal-team-name{font-size:13px;font-weight:700;text-align:center;}
 .modal-score-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 12px;}
 .modal-score{font-size:48px;font-weight:900;letter-spacing:-2px;}
@@ -3932,19 +3933,23 @@ function renderMatchesLocal(){
   });
   document.getElementById('matchesList').innerHTML=html;
 }
+// Pinta un shield del modal: escudo del club si existe, sino abreviación con color.
+function _setModalShield(elId,logoUrl,shortTxt,bg,fg){
+  const el=document.getElementById(elId);if(!el)return;
+  if(logoUrl){el.innerHTML=`<img src="${logoUrl}" alt="">`;el.style.cssText='background:transparent';}
+  else{el.textContent=shortTxt||'?';el.style.cssText=`background:${bg};color:${fg}`;}
+}
 async function openMatchDB(id){
   try{
     const {data:p}=await supa.from('partidos')
-      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto)')
+      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
       .eq('id',id).single();
     if(!p)throw new Error('no data');
     const local=p.local,visita=p.visita;
     const isDone=p.estado==='finalizado',isLive=p.estado==='en_curso';
-    document.getElementById('modal-home-shield').textContent=local?.abreviacion||'?';
-    document.getElementById('modal-home-shield').style.cssText=`background:${local?.color_principal||'#1a2150'};color:${local?.color_texto||'#fff'}`;
+    _setModalShield('modal-home-shield',local?.club?.logo_url,local?.abreviacion,local?.color_principal||'#1a2150',local?.color_texto||'#fff');
     document.getElementById('modal-home-name').textContent=local?.nombre||'Local';
-    document.getElementById('modal-away-shield').textContent=visita?.abreviacion||'?';
-    document.getElementById('modal-away-shield').style.cssText=`background:${visita?.color_principal||'#1a2150'};color:${visita?.color_texto||'#fff'}`;
+    _setModalShield('modal-away-shield',visita?.club?.logo_url,visita?.abreviacion,visita?.color_principal||'#1a2150',visita?.color_texto||'#fff');
     document.getElementById('modal-away-name').textContent=visita?.nombre||'Visitante';
     document.getElementById('modal-score').textContent=isDone?`${p.goles_local??0} - ${p.goles_visita??0}`:isLive?`${p.goles_local??0} - ${p.goles_visita??0}`:'- - -';
     const st=document.getElementById('modal-status-tag');
@@ -3968,11 +3973,9 @@ async function openMatchDB(id){
 function openMatch(id){
   const m=matches.find(x=>x.id===id),home=getTeam(m?.home),away=getTeam(m?.away);
   if(!m||!home||!away)return;
-  document.getElementById('modal-home-shield').textContent=home.short;
-  document.getElementById('modal-home-shield').style.cssText=`background:${home.color};color:${home.text}`;
+  _setModalShield('modal-home-shield',home.logoUrl,home.short,home.color,home.text);
   document.getElementById('modal-home-name').textContent=home.name;
-  document.getElementById('modal-away-shield').textContent=away.short;
-  document.getElementById('modal-away-shield').style.cssText=`background:${away.color};color:${away.text}`;
+  _setModalShield('modal-away-shield',away.logoUrl,away.short,away.color,away.text);
   document.getElementById('modal-away-name').textContent=away.name;
   document.getElementById('modal-score').textContent=m.status==='done'?`${m.homeScore} - ${m.awayScore}`:m.status==='live'?`${m.homeScore??0} - ${m.awayScore??0}`:'- - -';
   const st=document.getElementById('modal-status-tag');
