@@ -4119,15 +4119,46 @@ function compartirTabla(tipo){ _generarImagenTabla(currentDivisionId,tipo); }
 function _compartirTablaDiv(divId,tipo){ _generarImagenTabla(divId,tipo); }
 
 function compartirProximaFecha(){ _compartirProximaFechaDiv(currentDivisionId); }
-function _compartirProximaFechaDiv(divId){ _computeProximaFecha(divId); _generarImagenTabla(divId,'proxima'); }
+// El cómputo real lo hace _renderImgConFormato (await) al elegir formato.
+function _compartirProximaFechaDiv(divId){ _generarImagenTabla(divId,'proxima'); }
 
-function _computeProximaFecha(divId){
+async function _computeProximaFecha(divId){
+  _cachedProximaFecha=[];_cachedProximaFechaRound=null;
+  // Fuente primaria: Supabase con el id real de la división (el divId puede
+  // venir de la vista mobile con id real o del árbol desktop con offset RID).
+  const dv=divisiones.find(d=>d.id===divId||d._rid===divId);
+  const realId=dv?._rid||divId;
+  if(supa){
+    try{
+      const {data:ps}=await supa.from('partidos')
+        .select('jornada,fecha,hora,cancha,estado,goles_local,goles_visita,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
+        .eq('division_id',realId);
+      if(ps&&ps.length){
+        const upcoming=ps.filter(p=>p.estado==='programado'||p.estado==='en_curso');
+        const done=ps.filter(p=>p.estado==='finalizado');
+        const rnd=upcoming.length?Math.min(...upcoming.map(p=>p.jornada||0))
+          :(done.length?Math.max(...done.map(p=>p.jornada||0)):null);
+        if(rnd!=null){
+          const mk=t=>({name:t?.nombre||'?',short:t?.abreviacion||'?',color:t?.color_principal||'#333',text:t?.color_texto||'#fff',logoUrl:t?.club?.logo_url||null});
+          _cachedProximaFechaRound=rnd;
+          _cachedProximaFecha=ps.filter(p=>(p.jornada||0)===rnd).map(p=>({
+            homeTeam:mk(p.local),awayTeam:mk(p.visita),
+            time:p.hora?p.hora.slice(0,5):'',venue:p.cancha||'',round:rnd,
+            status:p.estado==='finalizado'?'done':p.estado==='en_curso'?'live':'upcoming',
+            homeScore:p.goles_local,awayScore:p.goles_visita,
+          }));
+          return;
+        }
+      }
+    }catch(e){}
+  }
+  // Fallback: arrays en memoria (ids con offset RID)
   const divMs=matches.filter(m=>!m.divId||m.divId===divId);
   const upcoming=divMs.filter(m=>m.status==='upcoming'||m.status==='live');
-  if(!divMs.length){_cachedProximaFecha=[];_cachedProximaFechaRound=null;return;}
+  if(!divMs.length)return;
   let rnd;
   if(upcoming.length){rnd=Math.min(...upcoming.map(m=>m.round||0));}
-  else{const done=divMs.filter(m=>m.status==='done');if(!done.length){_cachedProximaFecha=[];_cachedProximaFechaRound=null;return;}rnd=Math.max(...done.map(m=>m.round||0));}
+  else{const done=divMs.filter(m=>m.status==='done');if(!done.length)return;rnd=Math.max(...done.map(m=>m.round||0));}
   _cachedProximaFechaRound=rnd;
   _cachedProximaFecha=divMs.filter(m=>(m.round||0)===rnd).map(m=>({
     homeTeam:teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff',short:'?',logoUrl:null},
@@ -4243,7 +4274,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   _cachedStandings=[]; _cachedScorers=[];
   const _origDivId=currentDivisionId; currentDivisionId=divId;
   try{
-    if(esProxima) _computeProximaFecha(divId);
+    if(esProxima) await _computeProximaFecha(divId);
     else if(esGoles) await renderScorers();
     else await renderStandings();
   }finally{ currentDivisionId=_origDivId; }
