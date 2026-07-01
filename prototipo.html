@@ -15,7 +15,7 @@
   --text: #f0f2f5; --text2: #9aa0b0; --text3: #5c6274;
   --border: #1b2130; --border-hover: #2d3548;
   --green: #2ed573; --red: #ff4757; --yellow: #ffc312;
-  --gold: gold; --silver: silver; --bronze: #cd7f32;
+  --gold: #4f8cff; --silver: #a78bfa; --bronze: #818cf8;
   --shadow: rgba(0,0,0,0.6); --input-bg: #131820; --overlay: rgba(0,0,0,0.8);
   --hover: #1e2536; --gradient-start: #4f8cff; --gradient-end: #a855f7;
   --header-bg: rgba(10,14,22,0.84); --nav-bg: rgba(10,14,22,0.92);
@@ -29,7 +29,7 @@
   --text: #0f1419; --text2: #536471; --text3: #8899a6;
   --border: #e4e7ec; --border-hover: #c8cdd5;
   --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
-  --gold: #d97706; --silver: #64748b; --bronze: #92400e;
+  --gold: #2563eb; --silver: #7c3aed; --bronze: #4f46e5;
   --shadow: rgba(0,0,0,0.1); --input-bg: #f0f2f5; --overlay: rgba(0,0,0,0.5);
   --hover: #e8ebf0; --gradient-start: #2563eb; --gradient-end: #9333ea;
   --header-bg: rgba(255,255,255,0.88); --nav-bg: rgba(255,255,255,0.92);
@@ -161,9 +161,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .standing-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);}
 .standing-row:last-child{border-bottom:none;}
 .pos-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:6px;flex-shrink:0;}
-.pos-badge.gold{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);}
-.pos-badge.silver{background:rgba(148,163,184,0.15);color:var(--silver);border:1px solid rgba(148,163,184,0.3);}
-.pos-badge.bronze{background:rgba(180,83,9,0.15);color:var(--bronze);border:1px solid rgba(180,83,9,0.3);}
+.pos-badge.gold{background:rgba(79,140,255,0.15);color:var(--gold);border:1px solid rgba(79,140,255,0.4);}
+.pos-badge.silver{background:rgba(167,139,250,0.15);color:var(--silver);border:1px solid rgba(167,139,250,0.4);}
+.pos-badge.bronze{background:rgba(129,140,248,0.15);color:var(--bronze);border:1px solid rgba(129,140,248,0.4);}
 .pos-badge.normal{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
 .col-team-cell{flex:1;display:flex;align-items:center;gap:8px;}
 .col-team-name{font-size:13px;font-weight:600;}
@@ -760,9 +760,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .slide-in-right{animation:.25s ease-out slideInRight;}
 .scale-in{animation:.2s ease-out scaleIn;}
 /* Position gradient badges */
-.pos-badge.gold{background:linear-gradient(135deg,gold,#fa0);color:#7a4800;border:none;}
-.pos-badge.silver{background:linear-gradient(135deg,#d0d8e0,#a0a8b0);color:#3a4050;border:none;}
-.pos-badge.bronze{background:linear-gradient(135deg,#cd7f32,#a06020);color:#fff;border:none;}
+.pos-badge.gold{background:rgba(79,140,255,0.2);color:#4f8cff;border:1px solid rgba(79,140,255,0.5);}
+.pos-badge.silver{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid rgba(167,139,250,0.5);}
+.pos-badge.bronze{background:rgba(129,140,248,0.2);color:#818cf8;border:1px solid rgba(129,140,248,0.5);}
 /* Form indicators */
 .form-W{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-size:9px;font-weight:800;}
 .form-D{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--yellow);color:#fff;font-size:9px;font-weight:800;}
@@ -4314,7 +4314,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
            text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#1b2130',
            green:'#2ed573',red:'#ff4757'};
 
-  const RETINA=2,CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
+  const RETINA=3,CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
   const sT=fmt.safeTop||0,sB=fmt.safeBot||0;
   const PAD=Math.round(CW*0.04);
 
@@ -6163,7 +6163,7 @@ async function loadAdminPartidos(){
       const fasesSorted=[...new Set(playoffs.map(p=>p.fase))].sort((a,b)=>(faseOrder[a]||9)-(faseOrder[b]||9));
       fasesSorted.forEach(fase=>{
         const faseLabelMap={cuartos:'Cuartos de final',semis:'Semifinales',final:'Final',tercer_puesto:'Tercer puesto'};
-        html+=`<div style="font-size:11px;font-weight:700;color:var(--gold,#d97706);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 8px">🏆 ${faseLabelMap[fase]||fase}</div>`;
+        html+=`<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 8px">🏆 ${faseLabelMap[fase]||fase}</div>`;
         html+=playoffs.filter(p=>p.fase===fase).map(renderPartidoCard).join('');
       });
     }
