@@ -597,6 +597,8 @@ header .subtitle{font-size:12px;color:var(--text2);}
     grid-template-rows:58px calc(100vh - 58px);
     height:100vh;overflow:hidden;}
   .view,#view-admin{grid-area:dmain;overflow-y:auto;max-width:none;}
+  /* En escritorio el panel central muestra las ligas en una sola columna */
+  .leagues-list{display:flex!important;flex-direction:column!important;grid-template-columns:unset;}
   /* Desktop nav */
   #dt-nav{grid-area:dnav;display:flex!important;align-items:center;
     background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;gap:0;}
