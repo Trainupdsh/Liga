@@ -4322,17 +4322,17 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   let BRAND_H,COL_H,ROW_H,FTR_H,CARD_GAP_TOP,CARD_GAP_BOT,CH;
   if(isAuto){
-    BRAND_H=96; FTR_H=38; CARD_GAP_TOP=16; CARD_GAP_BOT=12;
-    if(esProxima){COL_H=36;ROW_H=76;}
-    else if(esGoles){COL_H=34;ROW_H=64;}
-    else{COL_H=34;ROW_H=56;}
+    BRAND_H=116; FTR_H=46; CARD_GAP_TOP=22; CARD_GAP_BOT=18;
+    if(esProxima){COL_H=44;ROW_H=98;}
+    else if(esGoles){COL_H=42;ROW_H=82;}
+    else{COL_H=42;ROW_H=74;}
     CH=BRAND_H+CARD_GAP_TOP+COL_H+nRows*ROW_H+CARD_GAP_BOT+FTR_H;
   } else {
     CH=fmt.CH;
     const av=CH-sT-sB;
-    FTR_H=Math.round(av*0.052); BRAND_H=Math.round(av*0.175);
-    COL_H=Math.round(av*0.034);
-    CARD_GAP_TOP=Math.round(av*0.024); CARD_GAP_BOT=Math.round(av*0.018);
+    FTR_H=Math.round(av*0.058); BRAND_H=Math.round(av*0.195);
+    COL_H=Math.round(av*0.042);
+    CARD_GAP_TOP=Math.round(av*0.028); CARD_GAP_BOT=Math.round(av*0.022);
     ROW_H=Math.floor((av-BRAND_H-COL_H-FTR_H-CARD_GAP_TOP-CARD_GAP_BOT)/nRows);
   }
 
@@ -4362,18 +4362,22 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   // ── FONDO ────────────────────────────────────────────────────────
   {
     const bgG=ctx.createLinearGradient(0,0,0,CH);
-    bgG.addColorStop(0,'#080d18');bgG.addColorStop(0.45,'#0c1525');bgG.addColorStop(1,'#06090f');
+    bgG.addColorStop(0,'#050a16');bgG.addColorStop(0.3,'#0a1428');bgG.addColorStop(0.65,'#0e1830');bgG.addColorStop(1,'#04070e');
     ctx.fillStyle=bgG; ctx.fillRect(0,0,CW,CH);
-    // top-right blue accent glow
-    const glTR=ctx.createRadialGradient(CW*0.95,0,0,CW*0.95,0,CW*0.65);
-    glTR.addColorStop(0,'rgba(79,140,255,0.14)');glTR.addColorStop(1,'rgba(79,140,255,0)');
+    // top-right strong blue glow
+    const glTR=ctx.createRadialGradient(CW*0.92,0,0,CW*0.92,0,CW*0.72);
+    glTR.addColorStop(0,'rgba(79,140,255,0.26)');glTR.addColorStop(0.5,'rgba(79,140,255,0.10)');glTR.addColorStop(1,'rgba(79,140,255,0)');
     ctx.fillStyle=glTR; ctx.fillRect(0,0,CW,CH);
-    // bottom-left purple accent glow
-    const glBL=ctx.createRadialGradient(CW*0.05,CH,0,CW*0.05,CH,CW*0.6);
-    glBL.addColorStop(0,'rgba(139,92,246,0.11)');glBL.addColorStop(1,'rgba(139,92,246,0)');
+    // bottom-left purple glow
+    const glBL=ctx.createRadialGradient(CW*0.06,CH,0,CW*0.06,CH,CW*0.68);
+    glBL.addColorStop(0,'rgba(139,92,246,0.22)');glBL.addColorStop(0.5,'rgba(139,92,246,0.08)');glBL.addColorStop(1,'rgba(139,92,246,0)');
     ctx.fillStyle=glBL; ctx.fillRect(0,0,CW,CH);
+    // top-left subtle blue highlight
+    const glTL=ctx.createRadialGradient(0,0,0,0,0,CW*0.5);
+    glTL.addColorStop(0,'rgba(79,140,255,0.10)');glTL.addColorStop(1,'rgba(79,140,255,0)');
+    ctx.fillStyle=glTL; ctx.fillRect(0,0,CW,CH);
     // fine grid texture
-    ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.lineWidth=0.5;
+    ctx.strokeStyle='rgba(255,255,255,0.028)'; ctx.lineWidth=0.5;
     const gS=Math.round(CW*0.038);
     for(let gx=0;gx<=CW;gx+=gS){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,CH);ctx.stroke();}
     for(let gy=0;gy<=CH;gy+=gS){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(CW,gy);ctx.stroke();}
@@ -4405,10 +4409,10 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   }
 
   const tX=logoX+logoR+Math.round(CW*0.022);
-  const s1=Math.min(28,Math.round(BRAND_H*0.23));
-  const s2=Math.min(16,Math.round(BRAND_H*0.136));
-  const s3=Math.min(13,Math.round(BRAND_H*0.115));
-  const s4=Math.min(11,Math.round(BRAND_H*0.098));
+  const s1=Math.min(36,Math.round(BRAND_H*0.26));
+  const s2=Math.min(22,Math.round(BRAND_H*0.155));
+  const s3=Math.min(17,Math.round(BRAND_H*0.130));
+  const s4=Math.min(14,Math.round(BRAND_H*0.112));
   const torNombre=torneo?.name||'';
   const lblTxt=esProxima
     ?('Próxima Fecha'+(_cachedProximaFechaRound?' · Fecha '+_cachedProximaFechaRound:''))+(divNombre?' · '+divNombre:'')
@@ -4436,30 +4440,39 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const CARD_H=COL_H+nRows*ROW_H;
   const CR=Math.round(CW*0.02);
 
+  // glow halo behind card
+  {const haloG=ctx.createRadialGradient(cardX+cardW/2,cardY+CARD_H*0.4,0,cardX+cardW/2,cardY+CARD_H*0.4,cardW*0.7);
+  haloG.addColorStop(0,'rgba(79,140,255,0.10)');haloG.addColorStop(0.6,'rgba(79,140,255,0.04)');haloG.addColorStop(1,'rgba(79,140,255,0)');
+  ctx.fillStyle=haloG; ctx.fillRect(0,cardY-40,CW,CARD_H+80);}
+
   ctx.save();
-  ctx.shadowColor='rgba(0,0,0,0.75)'; ctx.shadowBlur=44; ctx.shadowOffsetY=18;
+  ctx.shadowColor='rgba(0,0,0,0.92)'; ctx.shadowBlur=80; ctx.shadowOffsetY=32; ctx.shadowOffsetX=0;
   _rrect(ctx,cardX,cardY,cardW,CARD_H,CR);
   ctx.fillStyle=C.card; ctx.fill();
   ctx.restore();
 
   // glass gradient border
   {const bG=ctx.createLinearGradient(cardX,cardY,cardX,cardY+CARD_H);
-  bG.addColorStop(0,'rgba(255,255,255,0.18)');bG.addColorStop(0.35,'rgba(255,255,255,0.07)');bG.addColorStop(1,'rgba(255,255,255,0.02)');
+  bG.addColorStop(0,'rgba(255,255,255,0.30)');bG.addColorStop(0.2,'rgba(255,255,255,0.12)');bG.addColorStop(0.6,'rgba(255,255,255,0.05)');bG.addColorStop(1,'rgba(255,255,255,0.02)');
   ctx.strokeStyle=bG; ctx.lineWidth=1.5;
   _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.stroke();}
 
   ctx.save();
   _rrect(ctx,cardX,cardY,cardW,CARD_H,CR); ctx.clip();
 
-  // thin blue→purple accent bar at card top
+  // accent bar at card top
   {const abG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
   abG.addColorStop(0,'#4f8cff');abG.addColorStop(0.5,'#7c5cf6');abG.addColorStop(1,'#8b5cf6');
-  ctx.fillStyle=abG; ctx.fillRect(cardX,cardY,cardW,4);}
+  ctx.fillStyle=abG; ctx.fillRect(cardX,cardY,cardW,6);
+  // glow emanating from bar
+  const barGlow=ctx.createLinearGradient(cardX,cardY,cardX,cardY+28);
+  barGlow.addColorStop(0,'rgba(100,150,255,0.22)');barGlow.addColorStop(1,'rgba(100,150,255,0)');
+  ctx.fillStyle=barGlow; ctx.fillRect(cardX,cardY+6,cardW,28);}
 
   // franja encabezado columnas
   const colG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
   colG.addColorStop(0,'rgba(12,20,42,0.98)');colG.addColorStop(0.6,C.card2);colG.addColorStop(1,C.card);
-  ctx.fillStyle=colG; ctx.fillRect(cardX,cardY+4,cardW,COL_H-4);
+  ctx.fillStyle=colG; ctx.fillRect(cardX,cardY+6,cardW,COL_H-6);
   // gradient separator line
   {const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
   sepG.addColorStop(0,'rgba(79,140,255,0.0)');sepG.addColorStop(0.15,'rgba(79,140,255,0.55)');
@@ -4469,7 +4482,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const iP=Math.round(cardW*0.036);
   const usW=cardW-iP*2;
   const numW=Math.round(usW*0.082);
-  const cFS=Math.max(9,Math.min(13,Math.round(COL_H*0.32)));
+  const cFS=Math.max(11,Math.min(17,Math.round(COL_H*0.38)));
   ctx.textBaseline='middle';
   if(esProxima){
     const rndLabel=_cachedProximaFechaRound?'FECHA '+_cachedProximaFechaRound:'PARTIDOS';
@@ -4512,12 +4525,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   ctx.textBaseline='alphabetic';
 
   // métricas de fila
-  const bR=Math.max(10,Math.min(Math.round(ROW_H*0.26),16));
-  const cR2=Math.max(11,Math.min(Math.round(ROW_H*0.32),20));
-  const nFS=Math.max(10,Math.min(22,Math.round(ROW_H*0.25)));
-  const sFS=Math.max(8,Math.min(17,Math.round(ROW_H*0.18)));
-  const stFS=Math.max(9,Math.min(19,Math.round(ROW_H*0.21)));
-  const pFS=Math.max(10,Math.min(24,Math.round(ROW_H*0.26)));
+  const bR=Math.max(12,Math.min(Math.round(ROW_H*0.29),24));
+  const cR2=Math.max(14,Math.min(Math.round(ROW_H*0.36),28));
+  const nFS=Math.max(12,Math.min(30,Math.round(ROW_H*0.28)));
+  const sFS=Math.max(10,Math.min(22,Math.round(ROW_H*0.21)));
+  const stFS=Math.max(11,Math.min(25,Math.round(ROW_H*0.24)));
+  const pFS=Math.max(13,Math.min(32,Math.round(ROW_H*0.30)));
 
   const _drawCrest=(cx,cy,cr,team)=>{
     const logo=imgCache[team.logoUrl];
@@ -4537,18 +4550,24 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   };
 
   const _rowBg=(ry,i)=>{
-    ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
+    ctx.fillStyle=i%2===0?C.card:'#161e2c'; ctx.fillRect(cardX,ry,cardW,ROW_H);
+    // subtle top-edge highlight on even rows (gives lift/depth)
+    if(i%2===0){
+      const shineG=ctx.createLinearGradient(cardX,ry,cardX,ry+ROW_H*0.35);
+      shineG.addColorStop(0,'rgba(255,255,255,0.04)');shineG.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=shineG; ctx.fillRect(cardX,ry,cardW,ROW_H*0.35);
+    }
     if(i<nRows-1){
       const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
-      sepG.addColorStop(0,'rgba(255,255,255,0)');sepG.addColorStop(0.12,'rgba(255,255,255,0.055)');
-      sepG.addColorStop(0.88,'rgba(255,255,255,0.055)');sepG.addColorStop(1,'rgba(255,255,255,0)');
+      sepG.addColorStop(0,'rgba(255,255,255,0)');sepG.addColorStop(0.12,'rgba(255,255,255,0.07)');
+      sepG.addColorStop(0.88,'rgba(255,255,255,0.07)');sepG.addColorStop(1,'rgba(255,255,255,0)');
       ctx.fillStyle=sepG; ctx.fillRect(cardX,ry+ROW_H-1,cardW,1);
     }
   };
 
   if(esProxima){
-    const cR=Math.max(14,Math.min(Math.round(ROW_H*0.28),22));
-    const nFS2=Math.max(10,Math.min(Math.round(ROW_H*0.22),18));
+    const cR=Math.max(16,Math.min(Math.round(ROW_H*0.31),30));
+    const nFS2=Math.max(12,Math.min(Math.round(ROW_H*0.25),26));
     const cPillW=Math.round(cardW*0.17);
     const centerX=cardX+cardW/2;
     filas.forEach((r,i)=>{
@@ -4565,11 +4584,11 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       ctx.fillStyle=pillBg; _rrect(ctx,cPillX,cPillY,cPillW,cPillH,7); ctx.fill();
       ctx.strokeStyle='rgba(255,255,255,0.14)';ctx.lineWidth=1;
       _rrect(ctx,cPillX,cPillY,cPillW,cPillH,7);ctx.stroke();
-      const cFS2=Math.max(11,Math.min(Math.round(ROW_H*0.22),18));
+      const cFS2=Math.max(12,Math.min(Math.round(ROW_H*0.26),28));
       ctx.fillStyle=isLive?'#fff':C.text;ctx.font=`800 ${cFS2}px system-ui,sans-serif`;
       ctx.textAlign='center';ctx.fillText(centerTxt,centerX,midY);
       if(!isDone&&!isLive&&r.time){
-        const tFS=Math.max(8,Math.min(Math.round(ROW_H*0.14),11));
+        const tFS=Math.max(9,Math.min(Math.round(ROW_H*0.15),14));
         ctx.fillStyle=C.text3;ctx.font=`${tFS}px system-ui,sans-serif`;
         ctx.fillText(r.time,centerX,midY+cPillH/2+tFS*1.1);
       }
