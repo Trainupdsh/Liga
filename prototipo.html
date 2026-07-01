@@ -3896,11 +3896,15 @@ async function renderMatches(){
       return true;
     });
     if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">Sin partidos con este filtro</div>';return;}
+    const hoyStr=new Date().toISOString().split('T')[0];
     const byJornada={};
     filtered.forEach(p=>{const j=p.jornada||1;if(!byJornada[j])byJornada[j]=[];byJornada[j].push(p);});
     let html='';
     const divName=document.getElementById('division-header-name').textContent||'División';
-    Object.entries(byJornada).sort((a,b)=>b[0]-a[0]).forEach(([jornada,ps])=>{
+    // Programados: la fecha más próxima primero. Finalizados/Todos: la más reciente primero.
+    const jornadaAsc=currentFilter==='upcoming';
+    Object.entries(byJornada).sort((a,b)=>jornadaAsc?a[0]-b[0]:b[0]-a[0]).forEach(([jornada,ps])=>{
+      ps.sort((a,b)=>((a.fecha||'')+(a.hora||'')).localeCompare((b.fecha||'')+(b.hora||'')));
       html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">⚽</span><span class="tournament-name">${divName.toUpperCase()}</span><span class="round-badge">FECHA ${jornada}</span></div>`;
       ps.forEach(p=>{
         const local=p.local,visita=p.visita;
@@ -3916,8 +3920,13 @@ async function renderMatches(){
         const homeWon=isDone&&(p.goles_local||0)>(p.goles_visita||0);
         const awayWon=isDone&&(p.goles_visita||0)>(p.goles_local||0);
         const timeStr=isLive?'🔴':p.hora?p.hora.slice(0,5):'—';
+        // Programado con fecha ya pasada y sin resultado → pendiente de resolver
+        const vencido=!isDone&&!isLive&&p.fecha&&p.fecha<hoyStr;
+        const fechaLine=vencido
+          ?`<div style="font-size:8.5px;color:#d4af37;font-weight:700;margin-top:1px;line-height:1.2">Pendiente</div>`
+          :(p.fecha?`<div style="font-size:8.5px;color:var(--text3);margin-top:1px;line-height:1.2">${_fechaCorta(p.fecha)}</div>`:'');
         html+=`<div class="match-item" onclick="openMatchDB(${p.id})">
-          <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div>${p.fecha?`<div style="font-size:8.5px;color:var(--text3);margin-top:1px;line-height:1.2">${_fechaCorta(p.fecha)}</div>`:''}</div>
+          <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div>${fechaLine}</div>
           <div class="match-teams">
             <div class="match-team-row"><div class="shield" style="background:${lLogo?'transparent':lColor};color:${lText};overflow:hidden">${lShieldInner}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(lName)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_local:(isLive?p.goles_local??0:'-')}</span></div>
             <div class="match-team-row"><div class="shield" style="background:${vLogo?'transparent':vColor};color:${vText};overflow:hidden">${vShieldInner}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(vName)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_visita:(isLive?p.goles_visita??0:'-')}</span></div>
@@ -9473,8 +9482,9 @@ function _dtDivMatchesHtml(divId){
       const score=isDone||isLive?`${m.homeScore??0} - ${m.awayScore??0}`:'vs';
       const scoreBg=isLive?'var(--green)':isDone?'var(--card2)':'transparent';
       const scoreColor=isLive?'#fff':'var(--text)';
-      const statusLabel=isDone?'FINALIZADO':isLive?'● EN VIVO':(m.time||'PROGRAMADO');
-      const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
+      const vencido=!isDone&&!isLive&&m.fecha&&m.fecha<new Date().toISOString().split('T')[0];
+      const statusLabel=isDone?'FINALIZADO':isLive?'● EN VIVO':vencido?'⚠ PENDIENTE':(m.time||'PROGRAMADO');
+      const statusColor=isDone?'var(--text3)':isLive?'var(--green)':vencido?'#d4af37':'var(--accent)';
       html+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:6px;overflow:hidden">
