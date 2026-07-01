@@ -7064,6 +7064,11 @@ function showToast(msg,type=''){
 }
 // Año dinámico en el footer (evita que quede desactualizado)
 (function(){const y=document.getElementById('footer-year');if(y)y.textContent=new Date().getFullYear();})();
+// Resuelve cuando `leagues` ya tiene los datos reales de Supabase (o falló y usa demo).
+// Cualquier función que dependa de `leagues`/`_real` debe esperar esta promesa
+// para evitar condiciones de carrera con la carga inicial.
+let _resolveLigasReady;
+const _ligasReadyPromise=new Promise(res=>{_resolveLigasReady=res;});
 // Inicio: cargar ligas desde Supabase + mezclar con demo data
 (async()=>{
   try{
@@ -7090,6 +7095,7 @@ function showToast(msg,type=''){
     leagues=[...DEMO_LEAGUES];
     renderLeagues(leagues);
   }
+  _resolveLigasReady();
   // Restore an active session (refresh / back) — only cleared on Salir or tab close
   try{await _restoreSession();}catch(e){console.warn('restore session',e);}
 })();
@@ -9183,15 +9189,17 @@ async function _dtEnsureTorneos(ligaId){
 let _mtRealLoaded=false;
 async function _mtLoadRealMatches(){
   if(!supa||_mtRealLoaded)return;
-  _mtRealLoaded=true;
+  await _ligasReadyPromise; // espera a que `leagues` tenga los datos reales (evita carrera con el boot)
+  const realLeagues=leagues.filter(l=>l._real);
+  if(!realLeagues.length){_mtRealLoaded=true;return;} // no hay ligas reales: nada para cargar
   try{
-    await Promise.all(leagues.filter(l=>l._real).map(l=>_dtEnsureTorneos(l.id)));
+    await Promise.all(realLeagues.map(l=>_dtEnsureTorneos(l.id)));
     const realDivIds=divisiones.filter(d=>d._rid!=null).map(d=>d._rid);
-    if(!realDivIds.length)return;
+    if(!realDivIds.length){_mtRealLoaded=true;return;}
     const {data:ps,error}=await supa.from('partidos')
       .select('id,division_id,equipo_local_id,equipo_visita_id,jornada,fecha,hora,cancha,estado,goles_local,goles_visita')
       .in('division_id',realDivIds);
-    if(error||!ps)return;
+    if(error||!ps)return; // no marca como cargado: permite reintentar en la próxima llamada
     const today=new Date();today.setHours(0,0,0,0);
     ps.forEach(p=>{
       const mid=p.id+RID;
@@ -9204,7 +9212,8 @@ async function _mtLoadRealMatches(){
         status,time:status==='live'?'VIVO':(p.hora?p.hora.slice(0,5):'—'),
         venue:p.cancha||'',divId:p.division_id+RID,dayOff});
     });
-  }catch(e){_mtRealLoaded=false;console.warn('No se pudieron cargar los partidos reales',e);}
+    _mtRealLoaded=true; // éxito: no repetir el fetch en próximas navegaciones
+  }catch(e){console.warn('No se pudieron cargar los partidos reales',e);}
 }
 async function _dtToggleLiga(id){
   if(_dtExpLigas.has(id)){
@@ -9345,16 +9354,30 @@ function _dtDivMatchesHtml(divId){
   Object.keys(byRound).sort((a,b)=>Number(b)-Number(a)).forEach(r=>{
     html+=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:2px">Fecha ${r}</div>`;
     byRound[r].forEach(m=>{
-      const ht=teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff'};
-      const at=teamsData.find(t=>t.id===m.away)||{name:'?',color:'#333',text:'#fff'};
+      const ht=teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff',logoUrl:null};
+      const at=teamsData.find(t=>t.id===m.away)||{name:'?',color:'#333',text:'#fff',logoUrl:null};
       const isDone=m.status==='done',isLive=m.status==='live';
       const score=isDone||isLive?`${m.homeScore??0} - ${m.awayScore??0}`:'vs';
       const scoreBg=isLive?'var(--green)':isDone?'var(--card2)':'transparent';
       const scoreColor=isLive?'#fff':'var(--text)';
-      html+=`<div style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
-        <div style="flex:1;text-align:right;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ht.name)}</div>
-        <div style="font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px;background:${scoreBg};color:${scoreColor};min-width:52px;text-align:center;flex-shrink:0">${score}</div>
-        <div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(at.name)}</div>
+      const statusLabel=isDone?'FINALIZADO':isLive?'● EN VIVO':(m.time||'PROGRAMADO');
+      const statusColor=isDone?'var(--text3)':isLive?'var(--green)':'var(--accent)';
+      html+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:6px;overflow:hidden">
+            <span style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ht.name)}</span>
+            <div class="shield" style="width:22px;height:22px;font-size:9px;flex-shrink:0;background:${ht.logoUrl?'transparent':ht.color};color:${ht.text};overflow:hidden">${_teamShieldInner(ht)}</div>
+          </div>
+          <div style="font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px;background:${scoreBg};color:${scoreColor};min-width:52px;text-align:center;flex-shrink:0">${score}</div>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;overflow:hidden">
+            <div class="shield" style="width:22px;height:22px;font-size:9px;flex-shrink:0;background:${at.logoUrl?'transparent':at.color};color:${at.text};overflow:hidden">${_teamShieldInner(at)}</div>
+            <span style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(at.name)}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;padding-left:2px">
+          <span style="font-size:10px;font-weight:700;color:${statusColor}">${escHtml(statusLabel)}</span>
+          ${m.venue?`<span style="font-size:10px;color:var(--text3)">· ${escHtml(m.venue)}</span>`:''}
+        </div>
       </div>`;
     });
     html+='<div style="height:4px"></div>';
@@ -9395,7 +9418,8 @@ function _dtDivScorersHtml(divId){
 }
 
 // Shows a single division's standings table in the center panel
-function _dtShowDivisionCenter(divId){
+async function _dtShowDivisionCenter(divId){
+  await _mtLoadRealMatches(); // asegura que `matches` tenga los partidos reales antes de renderizar la pestaña Partidos
   const div=divisiones.find(d=>d.id===divId);if(!div)return;
   const torneo=torneos.find(t=>t.id===div.torneoId);
   const liga=torneo?leagues.find(l=>l.id===torneo.leagueId):null;
