@@ -2567,6 +2567,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <label class="form-label">Notas</label>
         <textarea class="form-input" id="reprogram-motivo" rows="2" placeholder="Notas adicionales..." style="resize:none"></textarea>
       </div>
+      <button id="reprogram-revert-btn" style="display:none;width:100%;background:rgba(212,175,55,0.12);color:#d4af37;border:1px solid rgba(212,175,55,0.35);border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer" onclick="quitarResultadoPartido()">↩ Quitar resultado (volver a Programado)</button>
       <div style="display:flex;gap:10px;margin-top:4px">
         <button class="btn btn-secondary" style="flex:1" onclick="closeReprogramar(null,true)">Cancelar</button>
         <button class="btn" style="flex:1" onclick="saveReprogramacion()">Guardar</button>
@@ -7777,6 +7778,9 @@ function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId,localId,visi
   const sel=document.getElementById('reprogram-arbitro');
   sel.innerHTML='<option value="">Sin árbitro asignado</option>'+(ligaArbitros||[]).map(a=>`<option value="${a.id}">${escHtml(a.nombre)}</option>`).join('');
   sel.value=arbitroId||'';
+  // Botón "Quitar resultado" solo para partidos finalizados
+  const revertBtn=document.getElementById('reprogram-revert-btn');
+  if(revertBtn)revertBtn.style.display=_reprogramarEstado==='finalizado'?'':'none';
   // Bloque de localía: solo si el llamador pasó los dos equipos
   const lvBlock=document.getElementById('reprogram-lv-block');
   if(localId&&visitaId){
@@ -7803,6 +7807,16 @@ function _reprogramSwapLV(){
 function closeReprogramar(e,force){
   if(force||e?.target===document.getElementById('reprogramarModal'))
     document.getElementById('reprogramarModal').classList.remove('open');
+}
+async function quitarResultadoPartido(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
+  if(!confirm('¿Quitar el resultado y volver el partido a Programado?\n\nSe borran los goles del marcador. Ojo: si al cargar el resultado sumaste goles a jugadores, esos goles quedan en sus fichas — corregilos desde Jugadores si hace falta.'))return;
+  try{
+    await supa.from('partidos').update({estado:'programado',goles_local:null,goles_visita:null}).eq('id',_reprogramarMatchId);
+    closeReprogramar(null,true);
+    showToast('Resultado quitado — partido Programado ↩','success');
+    await loadAdminPartidos();
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function saveReprogramacion(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
