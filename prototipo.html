@@ -4198,10 +4198,28 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const fmt=_SHARE_FMTS.find(f=>f.id===fmtId)||_SHARE_FMTS[0];
   const esGoles=tipo==='goleadores';
   const esProxima=tipo==='proxima';
-  const div=divisiones.find(d=>d.id===divId);
+  // El divId puede ser el id real de Supabase (vista mobile) o el id con offset
+  // RID de los arrays en memoria (vista desktop): buscar por ambos.
+  const div=divisiones.find(d=>d.id===divId||d._rid===divId);
   const torneo=torneos.find(t=>t.id===div?.torneoId);
-  const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||{name:'Liga'};
-  const divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
+  const liga=leagues.find(l=>l.id===(torneo?.leagueId||currentLeagueId))||null;
+  let ligaName=liga?.name||'';
+  let torNombre=torneo?.name||'';
+  let divNombre=div?(div.grupo?div.grupo+' · '+div.name:div.name):'';
+  // El canvas siempre lleva liga + torneo + división: si algo falta en memoria,
+  // completar los nombres directo desde Supabase.
+  if(supa&&(!divNombre||!torNombre||!ligaName)){
+    try{
+      const realId=div?._rid||divId;
+      const {data:d}=await supa.from('divisiones').select('nombre,categoria,torneo:torneos(nombre,liga:ligas(nombre))').eq('id',realId).single();
+      if(d){
+        if(!divNombre)divNombre=d.categoria?d.categoria+' · '+d.nombre:d.nombre;
+        if(!torNombre)torNombre=d.torneo?.nombre||'';
+        if(!ligaName)ligaName=d.torneo?.liga?.nombre||'';
+      }
+    }catch(e){}
+  }
+  if(!ligaName)ligaName='Liga';
   // Siempre recargar para el divId correcto (la caché puede ser de otra división)
   _cachedStandings=[]; _cachedScorers=[];
   const _origDivId=currentDivisionId; currentDivisionId=divId;
@@ -4368,7 +4386,6 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const s2=Math.min(22,Math.round(BRAND_H*0.155));
   const s3=Math.min(17,Math.round(BRAND_H*0.130));
   const s4=Math.min(14,Math.round(BRAND_H*0.112));
-  const torNombre=torneo?.name||'';
   const lblTxt=esProxima
     ?('Próxima Fecha'+(_cachedProximaFechaRound?' · Fecha '+_cachedProximaFechaRound:''))+(divNombre?' · '+divNombre:'')
     :(esGoles?'Tabla de Goleadores':'Tabla de Posiciones')+(divNombre?' · '+divNombre:'');
@@ -4376,7 +4393,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   const brandLines=[
     {t:'SPORVIX',s:s1,c:C.text,w:900},
-    {t:liga.name||'',s:s2,c:C.accent,w:700},
+    {t:ligaName,s:s2,c:C.accent,w:700},
     ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
     {t:lblTxt,s:s4,c:C.text3,w:400},
   ].filter(l=>l.t);
@@ -4733,7 +4750,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
   const fname=(esProxima?'proxima-fecha':esGoles?'goleadores':'tabla-posiciones')+'-sporvix.png';
   const file=new File([blob],fname,{type:'image/png'});
-  const titulo=(esProxima?'📅 Próxima Fecha':esGoles?'⚽ Goleadores':'📊 Posiciones')+' — '+(liga.name||'Liga');
+  const titulo=(esProxima?'📅 Próxima Fecha':esGoles?'⚽ Goleadores':'📊 Posiciones')+' — '+ligaName;
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:titulo});return;}
     catch(e){if(e.name==='AbortError')return;}
