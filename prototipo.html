@@ -3861,7 +3861,7 @@ async function renderMatches(){
   document.getElementById('matchesList').innerHTML='<div class="empty-state">⏳ Cargando partidos...</div>';
   try{
     const {data,error}=await supa.from('partidos')
-      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,equipo_local_id,equipo_visita_id,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto)')
+      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,equipo_local_id,equipo_visita_id,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
       .eq('division_id',currentDivisionId)
       .order('jornada',{ascending:false})
       .order('fecha',{ascending:false});
@@ -3888,14 +3888,17 @@ async function renderMatches(){
         const vAbrev=escHtml(visita?.abreviacion||vName.slice(0,2).toUpperCase());
         const lColor=local?.color_principal||'#1a2150',vColor=visita?.color_principal||'#1a2150';
         const lText=local?.color_texto||'#fff',vText=visita?.color_texto||'#fff';
+        const lLogo=local?.club?.logo_url||null,vLogo=visita?.club?.logo_url||null;
+        const lShieldInner=lLogo?`<img src="${lLogo}" style="width:100%;height:100%;object-fit:cover" alt="">`:lAbrev;
+        const vShieldInner=vLogo?`<img src="${vLogo}" style="width:100%;height:100%;object-fit:cover" alt="">`:vAbrev;
         const homeWon=isDone&&(p.goles_local||0)>(p.goles_visita||0);
         const awayWon=isDone&&(p.goles_visita||0)>(p.goles_local||0);
         const timeStr=isLive?'🔴':p.hora?p.hora.slice(0,5):'—';
         html+=`<div class="match-item" onclick="openMatchDB(${p.id})">
           <div class="match-time"><div class="status-dot ${isLive?'live':isDone?'done':'upcoming'}"></div><div class="time">${timeStr}</div></div>
           <div class="match-teams">
-            <div class="match-team-row"><div class="shield" style="background:${lColor};color:${lText}">${lAbrev}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(lName)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_local:(isLive?p.goles_local??0:'-')}</span></div>
-            <div class="match-team-row"><div class="shield" style="background:${vColor};color:${vText}">${vAbrev}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(vName)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_visita:(isLive?p.goles_visita??0:'-')}</span></div>
+            <div class="match-team-row"><div class="shield" style="background:${lLogo?'transparent':lColor};color:${lText};overflow:hidden">${lShieldInner}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${escHtml(lName)}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_local:(isLive?p.goles_local??0:'-')}</span></div>
+            <div class="match-team-row"><div class="shield" style="background:${vLogo?'transparent':vColor};color:${vText};overflow:hidden">${vShieldInner}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${escHtml(vName)}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?p.goles_visita:(isLive?p.goles_visita??0:'-')}</span></div>
           </div><span class="chevron">›</span></div>`;
       });
       html+='</div>';
@@ -3921,8 +3924,8 @@ function renderMatchesLocal(){
       html+=`<div class="match-item" onclick="openMatch(${m.id})">
         <div class="match-time"><div class="status-dot ${m.status}"></div><div class="time">${isLive?'🔴':m.time}</div></div>
         <div class="match-teams">
-          <div class="match-team-row"><div class="shield" style="background:${home.color};color:${home.text}">${home.short}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'—':'-')}</span></div>
-          <div class="match-team-row"><div class="shield" style="background:${away.color};color:${away.text}">${away.short}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'—':'-')}</span></div>
+          <div class="match-team-row"><div class="shield" style="background:${home.logoUrl?'transparent':home.color};color:${home.text};overflow:hidden">${_teamShieldInner(home)}</div><span class="match-team-name ${isDone?(homeWon?'winner':'loser'):''}">${home.name}</span><span class="match-score ${isDone?(homeWon?'winner':'loser'):'upcoming'}">${isDone?m.homeScore:(isLive?'—':'-')}</span></div>
+          <div class="match-team-row"><div class="shield" style="background:${away.logoUrl?'transparent':away.color};color:${away.text};overflow:hidden">${_teamShieldInner(away)}</div><span class="match-team-name ${isDone?(awayWon?'winner':'loser'):''}">${away.name}</span><span class="match-score ${isDone?(awayWon?'winner':'loser'):'upcoming'}">${isDone?m.awayScore:(isLive?'—':'-')}</span></div>
         </div><span class="chevron">›</span></div>`;
     });
     html+='</div>';
@@ -4014,7 +4017,7 @@ async function renderStandings(){
   document.getElementById('standingsList').innerHTML='<div style="padding:16px;text-align:center;color:var(--text3)">⏳ Cargando...</div>';
   try{
     const {data,error}=await supa.from('partidos')
-      .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,fase,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto)')
+      .select('equipo_local_id,equipo_visita_id,goles_local,goles_visita,fase,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
       .eq('division_id',currentDivisionId).eq('estado','finalizado');
     if(error)throw error;
     const regularData=(data||[]).filter(p=>!p.fase||p.fase==='regular');
@@ -4033,13 +4036,15 @@ async function renderStandings(){
       else{table[lId].pe++;table[lId].pts++;table[vId].pe++;table[vId].pts++;}
     });
     const sorted=Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gf-b.gc)-(a.gf-a.gc));
-    _cachedStandings=sorted.map((row,i)=>{const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:t.nombre,short:t.abreviacion,color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',logoUrl:t.logo_url||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
+    _cachedStandings=sorted.map((row,i)=>{const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:t.nombre,short:t.abreviacion,color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',logoUrl:t.club?.logo_url||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
     const badges=['gold','silver','bronze'];
     document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
       const t=row.info||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
       const dif=row.gf-row.gc;
+      const tLogo=t.club?.logo_url||null;
+      const tShieldInner=tLogo?`<img src="${tLogo}" style="width:100%;height:100%;object-fit:cover" alt="">`:escHtml(t.abreviacion||'?');
       return `<div class="standing-row" style="cursor:pointer" onclick="openClubProfile(${row.id},{pj:${row.pj},pg:${row.pg},pe:${row.pe},pp:${row.pp},gf:${row.gf},gc:${row.gc},pts:${row.pts}})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div>
-        <div class="col-team-cell"><div class="shield" style="background:${t.color_principal||'#1a2150'};color:${t.color_texto||'#fff'};width:22px;height:22px;font-size:9px">${escHtml(t.abreviacion||'?')}</div><span class="col-team-name">${escHtml(t.nombre||'?')}</span></div>
+        <div class="col-team-cell"><div class="shield" style="background:${tLogo?'transparent':(t.color_principal||'#1a2150')};color:${t.color_texto||'#fff'};width:22px;height:22px;font-size:9px;overflow:hidden">${tShieldInner}</div><span class="col-team-name">${escHtml(t.nombre||'?')}</span></div>
         <span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span>
         <span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
     }).join('');
@@ -4052,7 +4057,7 @@ function renderStandingsLocal(){
   _cachedStandings=sorted.map((row,i)=>{const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:t.name,short:t.short,color:t.color,text:t.text,logoUrl:t.logoUrl||null,pj:row.pj,pg:row.pg,pe:row.pe,pp:row.pp,gf:row.gf,gc:row.gc,dif:row.gf-row.gc,pts:row.pts};});
   document.getElementById('standingsList').innerHTML=sorted.map((row,i)=>{
     const t=getTeam(row.teamId)||{short:'?',name:'?',color:'#1a2150',text:'#fff'},dif=row.gf-row.gc;
-    return `<div class="standing-row" style="cursor:pointer" onclick="_dtDblClickClub(${row.teamId})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.color};color:${t.text};width:22px;height:22px;font-size:9px">${t.short}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
+    return `<div class="standing-row" style="cursor:pointer" onclick="_dtDblClickClub(${row.teamId})"><div class="pos-badge ${i<3?badges[i]:'normal'}">${i+1}</div><div class="col-team-cell"><div class="shield" style="background:${t.logoUrl?'transparent':t.color};color:${t.text};width:22px;height:22px;font-size:9px;overflow:hidden">${_teamShieldInner(t)}</div><span class="col-team-name">${t.name}</span></div><span class="col-stat-val">${row.pj}</span><span class="col-stat-val">${row.pg}</span><span class="col-stat-val">${row.pe}</span><span class="col-stat-val">${row.pp}</span><span class="col-stat-val" style="color:${dif>=0?'var(--green)':'var(--red)'}">${dif>0?'+':''}${dif}</span><span class="col-pts-val">${row.pts}</span></div>`;
   }).join('');
 }
 
@@ -8708,7 +8713,7 @@ function _dtDblClickPlayer(id){
   document.getElementById('dt-right').style.display='none';
 }
 
-function dtGoPartidos(){
+async function dtGoPartidos(){
   _dtSetActiveTab(document.querySelector('.dt-tab'));
   _dtSelDiv=null;
   document.getElementById('view-admin').style.display='none';
@@ -8716,6 +8721,10 @@ function dtGoPartidos(){
   _renderDtRight(null);
   _mtDayOffset=0;_mtFilterCur='todos';
   _mtRenderDays();_mtRenderFilterBar();_mtRenderGroups();
+  const groupsEl=document.getElementById('mt-groups');
+  if(groupsEl&&!_mtRealLoaded)groupsEl.innerHTML='<div class="dt-empty" style="padding-top:40px">⏳ Cargando partidos...</div>';
+  await _mtLoadRealMatches();
+  _mtRenderFilterBar();_mtRenderGroups();
 }
 
 // ── Partidos: date bar ──
@@ -8860,12 +8869,12 @@ function _mtMatchRow(m){
     <div class="mt-row-status" style="color:${statusColor}">${statusLabel}</div>
     <div class="mt-row-teams">
       <div class="mt-team-line${homeWon?' winner':''}">
-        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${home.color};color:${home.text}">${home.short}</div>
+        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${home.logoUrl?'transparent':home.color};color:${home.text};overflow:hidden">${_teamShieldInner(home)}</div>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(home.name)}</span>
         ${scoreH}
       </div>
       <div class="mt-team-line${awayWon?' winner':''}">
-        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${away.color};color:${away.text}">${away.short}</div>
+        <div class="shield" style="width:16px;height:16px;min-width:16px;font-size:7px;border-radius:4px;background:${away.logoUrl?'transparent':away.color};color:${away.text};overflow:hidden">${_teamShieldInner(away)}</div>
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(away.name)}</span>
         ${scoreA}
       </div>
@@ -8941,12 +8950,12 @@ function _mtRenderPredict(id){
       <div style="font-size:10px;color:${statusColor};font-weight:800;letter-spacing:.5px;margin-bottom:10px">${statusLabel}</div>
       <div class="prd-teams">
         <div style="text-align:center;flex:1">
-          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${home.color};color:${home.text};margin:0 auto 6px;border-radius:12px${homeWon?';box-shadow:0 0 0 2px var(--green)':''}">${home.short}</div>
+          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${home.logoUrl?'transparent':home.color};color:${home.text};margin:0 auto 6px;border-radius:12px;overflow:hidden${homeWon?';box-shadow:0 0 0 2px var(--green)':''}">${_teamShieldInner(home)}</div>
           <div class="prd-team-name${homeWon?' ':''}${homeWon?'style="color:var(--green)"':''}">${escHtml(home.name)}</div>
         </div>
         <div class="prd-score">${isDone||isLive?`${m.homeScore??0}<span style="font-size:16px;color:var(--text3)"> – </span>${m.awayScore??0}`:'<span style="font-size:18px;color:var(--text3)">vs</span>'}</div>
         <div style="text-align:center;flex:1">
-          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${away.color};color:${away.text};margin:0 auto 6px;border-radius:12px${awayWon?';box-shadow:0 0 0 2px var(--green)':''}">${away.short}</div>
+          <div class="shield" style="width:44px;height:44px;font-size:15px;background:${away.logoUrl?'transparent':away.color};color:${away.text};margin:0 auto 6px;border-radius:12px;overflow:hidden${awayWon?';box-shadow:0 0 0 2px var(--green)':''}">${_teamShieldInner(away)}</div>
           <div class="prd-team-name">${escHtml(away.name)}</div>
         </div>
       </div>
@@ -9007,12 +9016,12 @@ function _mtOpenMatch(id){
     <div class="dt-match-status" style="color:${statusColor}">${statusText}</div>
     <div class="dt-match-shields">
       <div style="text-align:center;flex:1">
-        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${home.color};color:${home.text};margin:0 auto 4px">${home.short}</div>
+        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${home.logoUrl?'transparent':home.color};color:${home.text};margin:0 auto 4px;overflow:hidden">${_teamShieldInner(home)}</div>
         <div style="font-size:10px;font-weight:700;max-width:70px;margin:0 auto;overflow:hidden;text-overflow:ellipsis">${escHtml(home.name)}</div>
       </div>
       <div class="dt-match-score">${isDone||isLive?`${m.homeScore??0}-${m.awayScore??0}`:'—'}</div>
       <div style="text-align:center;flex:1">
-        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${away.color};color:${away.text};margin:0 auto 4px">${away.short}</div>
+        <div class="shield" style="width:36px;height:36px;font-size:12px;background:${away.logoUrl?'transparent':away.color};color:${away.text};margin:0 auto 4px;overflow:hidden">${_teamShieldInner(away)}</div>
         <div style="font-size:10px;font-weight:700;max-width:70px;margin:0 auto;overflow:hidden;text-overflow:ellipsis">${escHtml(away.name)}</div>
       </div>
     </div>
@@ -9168,6 +9177,34 @@ async function _dtEnsureTorneos(ligaId){
     _dtLoadedLigas.delete(ligaId); // allow retry on next expand
     console.warn('No se pudieron cargar torneos de la liga',ligaId,e);
   }
+}
+// Carga los partidos reales (todas las ligas) al array local `matches`,
+// para la pantalla pública "Partidos" (feed cruzado de todas las ligas).
+let _mtRealLoaded=false;
+async function _mtLoadRealMatches(){
+  if(!supa||_mtRealLoaded)return;
+  _mtRealLoaded=true;
+  try{
+    await Promise.all(leagues.filter(l=>l._real).map(l=>_dtEnsureTorneos(l.id)));
+    const realDivIds=divisiones.filter(d=>d._rid!=null).map(d=>d._rid);
+    if(!realDivIds.length)return;
+    const {data:ps,error}=await supa.from('partidos')
+      .select('id,division_id,equipo_local_id,equipo_visita_id,jornada,fecha,hora,cancha,estado,goles_local,goles_visita')
+      .in('division_id',realDivIds);
+    if(error||!ps)return;
+    const today=new Date();today.setHours(0,0,0,0);
+    ps.forEach(p=>{
+      const mid=p.id+RID;
+      if(matches.some(m=>m.id===mid))return;
+      const status=p.estado==='finalizado'?'done':p.estado==='en_curso'?'live':'upcoming';
+      let dayOff=0;
+      if(p.fecha){const d=new Date(p.fecha+'T00:00:00');dayOff=Math.round((d-today)/86400000);}
+      matches.push({id:mid,home:p.equipo_local_id+RID,away:p.equipo_visita_id+RID,
+        round:p.jornada,homeScore:p.goles_local,awayScore:p.goles_visita,
+        status,time:status==='live'?'VIVO':(p.hora?p.hora.slice(0,5):'—'),
+        venue:p.cancha||'',divId:p.division_id+RID,dayOff});
+    });
+  }catch(e){_mtRealLoaded=false;console.warn('No se pudieron cargar los partidos reales',e);}
 }
 async function _dtToggleLiga(id){
   if(_dtExpLigas.has(id)){
