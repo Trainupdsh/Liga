@@ -4550,13 +4550,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   };
 
   const _rowBg=(ry,i)=>{
-    ctx.fillStyle=i%2===0?C.card:'#161e2c'; ctx.fillRect(cardX,ry,cardW,ROW_H);
-    // subtle top-edge highlight on even rows (gives lift/depth)
-    if(i%2===0){
-      const shineG=ctx.createLinearGradient(cardX,ry,cardX,ry+ROW_H*0.35);
-      shineG.addColorStop(0,'rgba(255,255,255,0.04)');shineG.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.fillStyle=shineG; ctx.fillRect(cardX,ry,cardW,ROW_H*0.35);
-    }
+    ctx.fillStyle=i%2===0?C.card:C.card2; ctx.fillRect(cardX,ry,cardW,ROW_H);
     if(i<nRows-1){
       const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
       sepG.addColorStop(0,'rgba(255,255,255,0)');sepG.addColorStop(0.12,'rgba(255,255,255,0.07)');
