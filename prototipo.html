@@ -2531,6 +2531,20 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div style="font-size:16px;font-weight:900;margin-top:2px" id="reprogramar-title">Partido</div>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div id="reprogram-lv-block" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;text-align:right;min-width:0">
+            <div id="reprogram-lv-local" style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Local</div>
+            <div style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">Local</div>
+          </div>
+          <button type="button" onclick="_reprogramSwapLV()" title="Invertir local y visitante" style="flex-shrink:0;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:50%;width:34px;height:34px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center">⇄</button>
+          <div style="flex:1;min-width:0">
+            <div id="reprogram-lv-visita" style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Visitante</div>
+            <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Visitante</div>
+          </div>
+        </div>
+        <div id="reprogram-lv-hint" style="display:none;font-size:11px;color:var(--accent);text-align:center;margin-top:8px;font-weight:700">⇄ Se invertirá la localía al guardar</div>
+      </div>
       <div>
         <label class="form-label">Fecha</label>
         <input class="form-input" type="date" id="reprogram-fecha">
@@ -6180,7 +6194,7 @@ function renderPartidoCard(p){
         <option value="">Sin árbitro</option>
         ${ligaArbitros.map(a=>`<option value="${a.id}"${p.arbitro?.id===a.id?' selected':''}>${escHtml(a.nombre)}</option>`).join('')}
       </select>
-      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px;flex-shrink:0" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'})">✏️</button>
+      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:5px 10px;flex-shrink:0" onclick="openReprogramar(${p.id},'${escHtml(p.local?.nombre||'Local')} vs ${escHtml(p.visita?.nombre||'Visitante')}','${p.fecha||''}','${p.hora?p.hora.slice(0,5):''}','${escHtml(p.cancha||'')}',${p.arbitro?.id||'null'},${p.equipo_local_id||'null'},${p.equipo_visita_id||'null'},'${escHtml(p.local?.nombre||'Local')}','${escHtml(p.visita?.nombre||'Visitante')}')">✏️</button>
     </div>`
     :p.arbitro?.nombre?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">🟡 ${escHtml(p.arbitro.nombre)}</div>`:''}
   </div>`;
@@ -7747,7 +7761,8 @@ async function confirmarEliminarArbitro(id,nombre){
 
 // ═══ REPROGRAMAR ═══
 let _reprogramarMatchId=null;
-function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId){
+let _reprogramarLV=null; // {localId,visitaId,localN,visitaN,swapped}
+function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId,localId,visitaId,localN,visitaN){
   _reprogramarMatchId=matchId;
   document.getElementById('reprogramar-title').textContent=titulo||'Partido';
   document.getElementById('reprogram-fecha').value=fecha||'';
@@ -7757,7 +7772,28 @@ function openReprogramar(matchId,titulo,fecha,hora,cancha,arbitroId){
   const sel=document.getElementById('reprogram-arbitro');
   sel.innerHTML='<option value="">Sin árbitro asignado</option>'+(ligaArbitros||[]).map(a=>`<option value="${a.id}">${escHtml(a.nombre)}</option>`).join('');
   sel.value=arbitroId||'';
+  // Bloque de localía: solo si el llamador pasó los dos equipos
+  const lvBlock=document.getElementById('reprogram-lv-block');
+  if(localId&&visitaId){
+    _reprogramarLV={localId,visitaId,localN:localN||'Local',visitaN:visitaN||'Visitante',swapped:false};
+    _reprogramRenderLV();
+    lvBlock.style.display='';
+  }else{
+    _reprogramarLV=null;
+    lvBlock.style.display='none';
+  }
   document.getElementById('reprogramarModal').classList.add('open');
+}
+function _reprogramRenderLV(){
+  const lv=_reprogramarLV;if(!lv)return;
+  document.getElementById('reprogram-lv-local').textContent=lv.swapped?lv.visitaN:lv.localN;
+  document.getElementById('reprogram-lv-visita').textContent=lv.swapped?lv.localN:lv.visitaN;
+  document.getElementById('reprogram-lv-hint').style.display=lv.swapped?'':'none';
+}
+function _reprogramSwapLV(){
+  if(!_reprogramarLV)return;
+  _reprogramarLV.swapped=!_reprogramarLV.swapped;
+  _reprogramRenderLV();
 }
 function closeReprogramar(e,force){
   if(force||e?.target===document.getElementById('reprogramarModal'))
@@ -7778,6 +7814,10 @@ async function saveReprogramacion(){
     updates.arbitro_id=arbitroIdVal?parseInt(arbitroIdVal):null;
     const arb=ligaArbitros.find(a=>a.id===parseInt(arbitroIdVal));
     updates.arbitro_email=arb?.email||null;
+    if(_reprogramarLV?.swapped){
+      updates.equipo_local_id=_reprogramarLV.visitaId;
+      updates.equipo_visita_id=_reprogramarLV.localId;
+    }
     await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);
     closeReprogramar(null,true);
     showToast('Partido actualizado ✓','success');
