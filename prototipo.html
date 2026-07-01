@@ -2766,183 +2766,23 @@ const DEMO_LEAGUES=[
 ];
 let leagues=[];
 
-const teamsData=[
-  // ── Equipos originales ──
-  {id:1,name:'Los Andes',short:'LA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:2,name:'River Baires',short:'RB',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:3,name:'Club Tigre',short:'CT',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:4,name:'Deportivo Norte',short:'DN',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:5,name:'Atlético Sur',short:'AS',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  {id:6,name:'Unión FC',short:'UF',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  {id:7,name:'San Martín',short:'SM',color:'#1a3d3d',text:'#14b8a6',emoji:'🩵'},
-  {id:8,name:'Boca Juniors',short:'BJ',color:'#1a1a3d',text:'#eab308',emoji:'💛'},
-  // ── Liga Handball BA (101–106) ──
-  {id:101,name:'Los Gladiadores',short:'GL',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:102,name:'River HB',short:'RH',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:103,name:'Tigre HB',short:'TH',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:104,name:'Norte HC',short:'NO',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:105,name:'Atlético Sur HC',short:'AS',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  {id:106,name:'Unión Handball',short:'UH',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  // ── Liga Fútbol CABA (107–112) ──
-  {id:107,name:'Boca CABA',short:'BC',color:'#0d1a40',text:'#eab308',emoji:'💛'},
-  {id:108,name:'San Martín FC',short:'SM',color:'#1a3d3d',text:'#14b8a6',emoji:'🩵'},
-  {id:109,name:'Vélez Amateur',short:'VA',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:110,name:'Independiente B',short:'IB',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:111,name:'Racing Club',short:'RC',color:'#202020',text:'#9ca3af',emoji:'⚫'},
-  {id:112,name:'Huracán FC',short:'HU',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  // ── Liga Basketball Zona Norte (113–118) ──
-  {id:113,name:'Los Andes BB',short:'AB',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:114,name:'Quilmes BC',short:'QB',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:115,name:'Platense BC',short:'PB',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  {id:116,name:'Ferro BC',short:'FB',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:117,name:'Atlanta BC',short:'AT',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:118,name:'All Boys BC',short:'AB',color:'#252525',text:'#9ca3af',emoji:'⚫'},
-  // ── Liga Volleyball Mendoza (119–124) ──
-  {id:119,name:'Vélez VB',short:'VV',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:120,name:'River VB',short:'RV',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:121,name:'Boca VB',short:'BV',color:'#0d1a40',text:'#eab308',emoji:'💛'},
-  {id:122,name:'San Lorenzo VB',short:'SL',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:123,name:'Estudiantes VB',short:'ES',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  {id:124,name:'Club del Sur VB',short:'CS',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  // ── Liga Fútbol 5 Palermo (125–130) ──
-  {id:125,name:'Los Pibes FC5',short:'LP',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:126,name:'El Porvenir',short:'EP',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:127,name:'Los Galácticos',short:'LG',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:128,name:'Team Alpha',short:'TA',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  {id:129,name:'Náutico FC5',short:'NF',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  {id:130,name:'Los Amigos FC5',short:'AF',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  // ── Club Náutico Deportivo (131–136) ──
-  {id:131,name:'Seagulls HC',short:'SG',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  {id:132,name:'Neptuno HC',short:'NE',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:133,name:'Delfines',short:'DF',color:'#1a3d3d',text:'#14b8a6',emoji:'🩵'},
-  {id:134,name:'Puerto Nuevo',short:'PN',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:135,name:'Club Mar',short:'CM',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:136,name:'Los Corsarios',short:'LC',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  // ── Liga Tenis Costa Este (137–144) ──
-  {id:137,name:'Costa Este TC',short:'CE',color:'#0d3030',text:'#14b8a6',emoji:'🩵'},
-  {id:138,name:'Mar Azul TC',short:'MA',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:139,name:'Club Plata TC',short:'CP',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:140,name:'Los Abiertos',short:'LA',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:141,name:'Club Riviera',short:'CR',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:142,name:'Academia Tennis',short:'AT',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  {id:143,name:'TC Baires',short:'TB',color:'#252525',text:'#9ca3af',emoji:'⚫'},
-  {id:144,name:'Club Roma TC',short:'RT',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-  // ── Liga Rugby Buenos Aires (145–150) ──
-  {id:145,name:'Los Pumas RC',short:'LP',color:'#1a2150',text:'#5b6ef5',emoji:'🔵'},
-  {id:146,name:'Baires Rugby',short:'BR',color:'#3d1a1a',text:'#ef4444',emoji:'🔴'},
-  {id:147,name:'Club del Río RC',short:'CR',color:'#1a3d20',text:'#22c55e',emoji:'🟢'},
-  {id:148,name:'Sur Rugby',short:'SR',color:'#3d2f1a',text:'#f59e0b',emoji:'🟡'},
-  {id:149,name:'Norte RC',short:'NR',color:'#2f1a3d',text:'#a855f7',emoji:'🟣'},
-  {id:150,name:'Club Cóndor',short:'CC',color:'#1a2f3d',text:'#06b6d4',emoji:'🩵'},
-];
+const teamsData=[];
 
 const players=[];
 
-const torneos=[
-  // ── Torneos originales ──
-  {id:1,leagueId:1,name:'Apertura 2025',status:'active',start:'Mar 2025',divsCount:3},
-  {id:2,leagueId:1,name:'Clausura 2024',status:'done',start:'Ago 2024',divsCount:3},
-  {id:3,leagueId:2,name:'Clausura 2025',status:'active',start:'Ene 2025',divsCount:2},
-  {id:4,leagueId:3,name:'Torneo 2025',status:'active',start:'Feb 2025',divsCount:4},
-  {id:5,leagueId:5,name:'Temporada 2025',status:'active',start:'Mar 2025',divsCount:2},
-  // ── Torneos demo ──
-  {id:101,leagueId:101,name:'Apertura 2025',status:'active',start:'Mar 2025',divsCount:4},
-  {id:102,leagueId:101,name:'Clausura 2024',status:'done',start:'Ago 2024',divsCount:3},
-  {id:103,leagueId:102,name:'Apertura 2025',status:'active',start:'Feb 2025',divsCount:3},
-  {id:104,leagueId:102,name:'Clausura 2024',status:'done',start:'Jul 2024',divsCount:2},
-  {id:105,leagueId:103,name:'Copa Norte 2025',status:'active',start:'Mar 2025',divsCount:3},
-  {id:106,leagueId:104,name:'Temporada 2025',status:'active',start:'Ene 2025',divsCount:2},
-  {id:107,leagueId:105,name:'Liga 5 Invierno 2025',status:'active',start:'Abr 2025',divsCount:2},
-  {id:108,leagueId:106,name:'Copa Náutico 2025',status:'active',start:'Feb 2025',divsCount:2},
-  {id:109,leagueId:107,name:'Torneo Verano 2025',status:'active',start:'Ene 2025',divsCount:3},
-  {id:110,leagueId:108,name:'Apertura Rugby 2025',status:'active',start:'Mar 2025',divsCount:2},
-];
+const torneos=[];
 
-const divisiones=[
-  // ── Divisiones originales ──
-  {id:1,torneoId:1,name:'Mayores Masculino',teams:8,rounds:7,currentRound:5,icon:'🤾‍♂️'},
-  {id:2,torneoId:1,name:'Mayores Femenino',teams:6,rounds:5,currentRound:3,icon:'🤾‍♀️'},
-  {id:3,torneoId:1,name:'Sub-18 Masculino',teams:6,rounds:5,currentRound:4,icon:'👦'},
-  {id:4,torneoId:2,name:'Mayores Masculino',teams:8,rounds:7,currentRound:7,icon:'🤾‍♂️'},
-  {id:5,torneoId:2,name:'Mayores Femenino',teams:6,rounds:5,currentRound:5,icon:'🤾‍♀️'},
-  {id:6,torneoId:3,name:'Primera División',teams:12,rounds:11,currentRound:8,icon:'⚽'},
-  {id:7,torneoId:3,name:'Reserva',teams:12,rounds:11,currentRound:8,icon:'⚽'},
-  {id:8,torneoId:4,name:'Mayores Masculino',teams:6,rounds:5,currentRound:3,icon:'🏀'},
-  {id:9,torneoId:4,name:'Mayores Femenino',teams:6,rounds:5,currentRound:2,icon:'🏀'},
-  {id:10,torneoId:4,name:'Sub-18',teams:4,rounds:3,currentRound:2,icon:'🏀'},
-  {id:11,torneoId:4,name:'Sub-15',teams:4,rounds:3,currentRound:1,icon:'🏀'},
-  {id:12,torneoId:5,name:'Cat. A Mixto',teams:16,rounds:8,currentRound:4,icon:'🎾'},
-  {id:13,torneoId:5,name:'Cat. B Mixto',teams:16,rounds:8,currentRound:3,icon:'🎾'},
-  // ── Divisiones demo — Handball BA (t101) ──
-  {id:101,torneoId:101,name:'Masculino',grupo:'Mayores',teams:6,rounds:10,currentRound:7,icon:'🤾‍♂️'},
-  {id:102,torneoId:101,name:'Femenino',grupo:'Mayores',teams:6,rounds:10,currentRound:6,icon:'🤾‍♀️'},
-  {id:103,torneoId:101,name:'Masculino',grupo:'Sub-18',teams:6,rounds:8,currentRound:5,icon:'👦'},
-  {id:104,torneoId:101,name:'Mixto',grupo:'Sub-15',teams:6,rounds:6,currentRound:3,icon:'🧒'},
-  // Fútbol CABA (t103)
-  {id:105,torneoId:103,name:'Primera División',grupo:'Masculino',teams:6,rounds:10,currentRound:8,icon:'⚽'},
-  {id:106,torneoId:103,name:'Reserva',grupo:'Masculino',teams:6,rounds:10,currentRound:7,icon:'⚽'},
-  {id:107,torneoId:103,name:'Sub-20',grupo:'Masculino',teams:6,rounds:8,currentRound:6,icon:'⚽'},
-  // Basketball Zona Norte (t105)
-  {id:108,torneoId:105,name:'Mayores',grupo:'Masculino',teams:6,rounds:10,currentRound:6,icon:'🏀'},
-  {id:109,torneoId:105,name:'Mayores',grupo:'Femenino',teams:6,rounds:8,currentRound:5,icon:'🏀'},
-  {id:110,torneoId:105,name:'Sub-18',grupo:'Masculino',teams:6,rounds:8,currentRound:4,icon:'🏀'},
-  // Volleyball Mendoza (t106)
-  {id:111,torneoId:106,name:'Primera',grupo:'Damas',teams:6,rounds:10,currentRound:7,icon:'🏐'},
-  {id:112,torneoId:106,name:'Primera',grupo:'Caballeros',teams:6,rounds:10,currentRound:8,icon:'🏐'},
-  // Fútbol 5 (t107)
-  {id:113,torneoId:107,name:'Categoría A',grupo:'Mixto',teams:6,rounds:10,currentRound:5,icon:'⚡'},
-  {id:114,torneoId:107,name:'Categoría B',grupo:'Mixto',teams:6,rounds:10,currentRound:4,icon:'⚡'},
-  // Club Náutico (t108)
-  {id:115,torneoId:108,name:'Primera',grupo:'Masculino',teams:6,rounds:10,currentRound:6,icon:'⛵'},
-  {id:116,torneoId:108,name:'Primera',grupo:'Femenino',teams:6,rounds:8,currentRound:4,icon:'⛵'},
-  // Tenis (t109)
-  {id:117,torneoId:109,name:'Categoría A',grupo:'Mixto',teams:8,rounds:7,currentRound:5,icon:'🎾'},
-  {id:118,torneoId:109,name:'Categoría B',grupo:'Masculino',teams:8,rounds:7,currentRound:4,icon:'🎾'},
-  {id:119,torneoId:109,name:'Categoría C',grupo:'Femenino',teams:8,rounds:7,currentRound:3,icon:'🎾'},
-  // Rugby (t110)
-  {id:120,torneoId:110,name:'Primera División',teams:6,rounds:10,currentRound:7,icon:'🏉'},
-  {id:121,torneoId:110,name:'Desarrollo',teams:6,rounds:8,currentRound:5,icon:'🏉'},
-];
+const divisiones=[];
 
-// Equipos por división demo (para generar matches y standings)
-const _DIV_TEAMS={
-  101:[101,102,103,104,105,106], 102:[101,102,103,104,105,106],
-  103:[101,102,103,104,105,106], 104:[101,102,103,104,105,106],
-  105:[107,108,109,110,111,112], 106:[107,108,109,110,111,112],
-  107:[107,108,109,110,111,112],
-  108:[113,114,115,116,117,118], 109:[113,114,115,116,117,118], 110:[113,114,115,116,117,118],
-  111:[119,120,121,122,123,124], 112:[119,120,121,122,123,124],
-  113:[125,126,127,128,129,130], 114:[125,126,127,128,129,130],
-  115:[131,132,133,134,135,136], 116:[131,132,133,134,135,136],
-  117:[137,138,139,140,141,142], 118:[137,138,139,140,141,142], 119:[137,138,139,140,141,142],
-  120:[145,146,147,148,149,150], 121:[145,146,147,148,149,150],
-};
+const _DIV_TEAMS={};
 const _VENUES=['Polideportivo Central','Estadio Municipal','Club Local','Gimnasio Norte','Cancha Sur','Centro Deportivo'];
 const _TIMES=['10:00','12:00','14:00','16:00','18:00','20:00'];
 
-const matches=[
-  // ── Partidos originales ──
-  {id:1,home:1,away:2,round:5,homeScore:18,awayScore:14,status:'done',time:'10:00',venue:'Polideportivo Baires',divId:1},
-  {id:2,home:3,away:4,round:5,homeScore:null,awayScore:null,status:'upcoming',time:'12:00',venue:'Club Tigre',divId:1},
-  {id:3,home:5,away:6,round:5,homeScore:null,awayScore:null,status:'live',time:'VIVO',venue:'Centro Deportivo Sur',divId:1},
-  {id:4,home:7,away:8,round:5,homeScore:22,awayScore:20,status:'done',time:'16:00',venue:'Estadio Municipal',divId:1},
-  {id:5,home:2,away:3,round:4,homeScore:16,awayScore:18,status:'done',time:'10:00',venue:'River Baires',divId:1},
-  {id:6,home:1,away:4,round:4,homeScore:24,awayScore:15,status:'done',time:'12:00',venue:'Polideportivo Baires',divId:1},
-];
-const standings=[
-  // ── Standings originales ──
-  {teamId:1,pj:5,pg:4,pe:0,pp:1,gf:92,gc:74,pts:12,divId:1},
-  {teamId:2,pj:5,pg:3,pe:1,pp:1,gf:85,gc:78,pts:10,divId:1},
-  {teamId:3,pj:5,pg:3,pe:0,pp:2,gf:88,gc:82,pts:9,divId:1},
-  {teamId:4,pj:5,pg:2,pe:2,pp:1,gf:79,gc:80,pts:8,divId:1},
-  {teamId:5,pj:5,pg:2,pe:1,pp:2,gf:76,gc:83,pts:7,divId:1},
-  {teamId:6,pj:5,pg:2,pe:0,pp:3,gf:70,gc:85,pts:6,divId:1},
-  {teamId:7,pj:5,pg:1,pe:1,pp:3,gf:72,gc:88,pts:4,divId:1},
-  {teamId:8,pj:5,pg:0,pe:1,pp:4,gf:65,gc:97,pts:1,divId:1},
-];
+const matches=[];
+const standings=[];
 
-// Generar partidos, tabla y jugadores para todas las divisiones demo
-(function generateDemoData(){
+// (generateDemoData eliminado — sin datos demo)
+(function generateDemoData(){if(!Object.keys(_DIV_TEAMS).length)return;
   const fn=['Juan','Carlos','Luis','Miguel','José','Pedro','Pablo','Andrés','Diego','Matías','Nicolás','Facundo','Tomás','Agustín','Franco','Sebastián','Rodrigo','Gonzalo','Ezequiel','Lautaro'];
   const ln=['García','López','Martínez','González','Rodríguez','Pérez','Sánchez','Ramírez','Torres','Flores','Rivera','Gómez','Díaz','Reyes','Morales','Cruz','Ortiz','Gutiérrez','Chávez','Ramos'];
   const ROUND_CFG=[
