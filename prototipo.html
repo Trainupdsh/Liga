@@ -2941,15 +2941,15 @@ let asignarPlanLigaId=null;
 // Planes predeterminados — se sincronizan a Supabase con el botón "Sincronizar planes"
 const PLANES_HARDCODED=[
   {id:null,nombre:'Starter',descripcion:'Liga chica — el admin carga todo. Sin usuarios por club.',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
-  {id:null,nombre:'Club',descripcion:'Usuarios por club (delegados), comunicados, multas y playoffs',precio_mensual:-1,max_divisiones:8,max_equipos:24,max_jugadores:25,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:false,comunicados:true,multas:true,playoffs:true,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
-  {id:null,nombre:'Pro',descripcion:'Todo incluido: árbitros, historial, modo TV e inscripción online',precio_mensual:-1,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#1a2150',orden:3,activo:true},
+  {id:null,nombre:'Pro',descripcion:'Usuarios por club (delegados), comunicados, multas y playoffs',precio_mensual:-1,max_divisiones:8,max_equipos:24,max_jugadores:25,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:false,comunicados:true,multas:true,playoffs:true,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
+  {id:null,nombre:'Premium',descripcion:'Todo incluido: árbitros, historial, modo TV e inscripción online',precio_mensual:-1,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#1a2150',orden:3,activo:true},
 ];
 // Normaliza planes para MOSTRAR: PLANES_HARDCODED manda sobre lo guardado en Supabase.
 // Oculta Demo y cualquier plan desconocido. Mantiene id/plan_vencimiento del registro real.
 function planesParaMostrar(planes){
   const hcByName=Object.fromEntries(PLANES_HARDCODED.map(h=>[h.nombre,h]));
   const out=[];
-  for(const nombre of ['Starter','Club','Pro']){
+  for(const nombre of ['Starter','Pro','Premium']){
     const hc=hcByName[nombre];if(!hc)continue;
     const real=(planes||[]).find(p=>p.nombre===nombre);
     out.push({...hc,id:real?.id??null,plan_vencimiento:real?.plan_vencimiento??null});
