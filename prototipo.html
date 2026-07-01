@@ -3094,14 +3094,17 @@ let currentLigaPlan=null;
 let editPlanId=null;
 let asignarPlanLigaId=null;
 
-// Planes hardcodeados — fallback cuando Supabase no responde / Demo no insertado aún
+// Planes predeterminados — se sincronizan a Supabase con el botón "Sincronizar planes"
 const PLANES_HARDCODED=[
-  {id:null,nombre:'Demo',descripcion:'Explorá la plataforma completa — solo lectura',precio_mensual:0,max_divisiones:2,max_equipos:5,max_jugadores:15,features:{delegados:false,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:true},color:'#8b5cf6',orden:0,activo:true},
-  {id:null,nombre:'Gratis',descripcion:'Liga chica — el admin carga todo',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
-  {id:null,nombre:'Starter',descripcion:'Con delegados y comunicados',precio_mensual:2990,max_divisiones:6,max_equipos:20,max_jugadores:25,features:{delegados:true,arbitros:false,comunicados:true,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
-  {id:null,nombre:'Pro',descripcion:'Árbitros, playoffs y sanciones',precio_mensual:5990,max_divisiones:12,max_equipos:28,max_jugadores:30,features:{delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a2150',orden:3,activo:true},
-  {id:null,nombre:'Premium',descripcion:'Sin límites, todo habilitado',precio_mensual:12990,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#d4af37',orden:4,activo:true},
+  {id:null,nombre:'Demo',descripcion:'Explorá la plataforma completa en modo solo lectura',precio_mensual:0,max_divisiones:2,max_equipos:5,max_jugadores:15,features:{delegados:false,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:true},color:'#8b5cf6',orden:0,activo:true},
+  {id:null,nombre:'Starter',descripcion:'Liga chica — el admin carga todo. Sin usuarios por club.',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
+  {id:null,nombre:'Club',descripcion:'Usuarios por club (delegados), comunicados, multas y playoffs',precio_mensual:-1,max_divisiones:8,max_equipos:24,max_jugadores:25,features:{delegados:true,arbitros:false,comunicados:true,multas:true,playoffs:true,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
+  {id:null,nombre:'Pro',descripcion:'Todo incluido: árbitros, historial, modo TV e inscripción online',precio_mensual:-1,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#1a2150',orden:3,activo:true},
 ];
+function precioLabel(precio_mensual){
+  if(precio_mensual==null||Number(precio_mensual)<0)return 'Próximamente';
+  return Number(precio_mensual)>0?'$'+Number(precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS';
+}
 
 function formatFecha(str){
   if(!str)return '';
@@ -3201,7 +3204,7 @@ function renderSAPlanes(){
   el.innerHTML=saPlanes.map(p=>{
     const features=p.features||{};
     const enabledCount=Object.values(features).filter(Boolean).length;
-    const precio=p.precio_mensual>0?`$${Number(p.precio_mensual).toLocaleString('es-AR')}/mes`:'GRATIS';
+    const precio=precioLabel(p.precio_mensual);
     return `<div style="background:var(--card);border:2px solid ${p.color||'var(--border)'};border-radius:16px;padding:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div>
@@ -3223,7 +3226,26 @@ function renderSAPlanes(){
         <span>✓ ${enabledCount}/${Object.keys(FEATURE_LABELS).length} features</span>
       </div>
     </div>`;
-  }).join('')+'<button class="btn btn-primary" onclick="openNuevoPlan()" style="width:100%">+ Agregar plan</button>';
+  }).join('')+`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="openNuevoPlan()" style="flex:1">+ Agregar plan</button><button id="btn-sincronizar-planes" class="btn btn-secondary" onclick="sincronizarPlanes()" style="flex:1">↺ Sincronizar predeterminados</button></div>`;
+}
+async function sincronizarPlanes(){
+  const btn=document.getElementById('btn-sincronizar-planes');
+  if(btn){btn.disabled=true;btn.textContent='Sincronizando…';}
+  try{
+    const{data:existing}=await supa.from('planes').select('nombre');
+    const existingNames=new Set((existing||[]).map(p=>p.nombre));
+    let creados=0,omitidos=0;
+    for(const plan of PLANES_HARDCODED){
+      if(existingNames.has(plan.nombre)){omitidos++;continue;}
+      const row={nombre:plan.nombre,descripcion:plan.descripcion,precio_mensual:plan.precio_mensual<0?-1:plan.precio_mensual,max_divisiones:plan.max_divisiones,max_equipos:plan.max_equipos,max_jugadores:plan.max_jugadores,features:plan.features,color:plan.color,orden:plan.orden,activo:plan.activo};
+      const{error}=await supa.from('planes').insert(row);
+      if(!error)creados++;
+    }
+    showToast(`Planes: ${creados} creados, ${omitidos} ya existían`,'success');
+    saPlanes=[];
+    await loadSAPlanes();
+  }catch(e){showToast('Error al sincronizar: '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent='↺ Sincronizar predeterminados';}}
 }
 async function deletePlan(planId,planNombre){
   if(!confirm('¿Estás seguro de que querés eliminar el plan "'+planNombre+'"?\nEsta acción no se puede deshacer.'))return;
@@ -3318,10 +3340,11 @@ function openAsignarPlan(ligaId,ligaNombre,currentPlanId){
   document.getElementById('ap-vencimiento').value='';
   document.getElementById('ap-error').style.display='none';
   const sel=document.getElementById('ap-plan-sel');
-  sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(p=>`<option value="${p.id}" ${p.id==currentPlanId?'selected':''}>${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+  const planOptHtml=p=>`<option value="${p.id}" ${p.id==currentPlanId?'selected':''}>${escHtml(p.nombre)} — ${precioLabel(p.precio_mensual)}</option>`;
+  sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(planOptHtml).join('');
   if(!saPlanes.length){
     loadSAPlanes().then(()=>{
-      sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(p=>`<option value="${p.id}" ${p.id==currentPlanId?'selected':''}>${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+      sel.innerHTML='<option value="">Sin plan</option>'+saPlanes.map(planOptHtml).join('');
     });
   }
   document.getElementById('asignarPlanModal').classList.add('open');
@@ -3367,7 +3390,7 @@ async function loadVerPlanesPublic(){
   }
   el.innerHTML=planes.map(p=>{
     const features=p.features||{};
-    const precio=p.precio_mensual>0?`$${Number(p.precio_mensual).toLocaleString('es-AR')}/mes`:'GRATIS';
+    const precio=precioLabel(p.precio_mensual);
     const isDemo=features.modo_demo;
     return `<div style="background:var(--card);border:2px solid ${p.color||'var(--border)'};border-radius:16px;padding:16px;position:relative">
       ${isDemo?`<div style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;background:#8b5cf6;color:#fff">SOLO VISTA</div>`:''}
@@ -3411,7 +3434,7 @@ async function loadVerPlanes(){
     el.innerHTML=planes.map(p=>{
       const isCurrent=currentLigaPlan&&currentLigaPlan.id===p.id;
       const features=p.features||{};
-      const precio=p.precio_mensual>0?`$${Number(p.precio_mensual).toLocaleString('es-AR')}/mes`:'GRATIS';
+      const precio=precioLabel(p.precio_mensual);
       return `<div style="background:var(--card);border:2px solid ${isCurrent?p.color||'var(--accent)':'var(--border)'};border-radius:16px;padding:16px;position:relative">
         ${isCurrent?`<div style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;background:${p.color||'var(--accent)'};color:#fff">TU PLAN</div>`:''}
         <div style="font-size:18px;font-weight:900;margin-bottom:2px">${escHtml(p.nombre)}</div>
@@ -3856,7 +3879,7 @@ function openNuevaLiga(){
   // Populate plan selector (load from Supabase if not yet loaded)
   const sel=document.getElementById('nl-plan-sel');
   const fillNlPlans=()=>{
-    sel.innerHTML='<option value="">Sin plan asignado</option>'+(saPlanes||[]).map(p=>`<option value="${p.id}">${escHtml(p.nombre)} — ${p.precio_mensual>0?'$'+Number(p.precio_mensual).toLocaleString('es-AR')+'/mes':'GRATIS'}</option>`).join('');
+    sel.innerHTML='<option value="">Sin plan asignado</option>'+(saPlanes||[]).map(p=>`<option value="${p.id}">${escHtml(p.nombre)} — ${precioLabel(p.precio_mensual)}</option>`).join('');
   };
   if(saPlanes.length){fillNlPlans();}
   else{loadSAPlanes().then(fillNlPlans);}
