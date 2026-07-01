@@ -3569,14 +3569,16 @@ async function loadAdminDashStats(ligaId){
       ['equipos','jugadores','partidos','goles'].forEach(k=>document.getElementById('dash-stat-'+k).textContent='0');
       return;
     }
-    const[{count:cEq},{count:cPart}]=await Promise.all([
-      supa.from('equipos').select('id',{count:'exact',head:true}).in('division_id',divIds),
+    const[{data:eqRows},{count:cPart}]=await Promise.all([
+      supa.from('equipos').select('id,club_id').in('division_id',divIds),
       supa.from('partidos').select('id',{count:'exact',head:true}).in('division_id',divIds),
     ]);
-    document.getElementById('dash-stat-equipos').textContent=cEq??0;
+    // Clubes únicos: un club inscripto en varias divisiones cuenta una sola vez
+    const cEq=new Set((eqRows||[]).map(e=>e.club_id??('eq'+e.id))).size;
+    document.getElementById('dash-stat-equipos').textContent=cEq;
     document.getElementById('dash-stat-partidos').textContent=cPart??0;
     // jugadores
-    const eqIds=divIds.length?(await supa.from('equipos').select('id').in('division_id',divIds)).data?.map(e=>e.id)||[]:[];
+    const eqIds=(eqRows||[]).map(e=>e.id);
     const {count:cJug}=eqIds.length?await supa.from('jugadores').select('id',{count:'exact',head:true}).in('equipo_id',eqIds):{count:0};
     document.getElementById('dash-stat-jugadores').textContent=cJug??0;
     // goles: sum of goles_local + goles_visita on partidos finalizados
