@@ -608,6 +608,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .ld-b-eyebrow{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
 .ld-b-title{font-size:21px;font-weight:900;line-height:1.25;margin-bottom:16px;}
 .ld-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ld-grid .ld-card:last-child{grid-column:1/-1;} /* 9 cards en 2 col: la última a lo ancho */
 .ld-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;}
 .ld-card-ico{font-size:20px;margin-bottom:6px;}
 .ld-card-t{font-size:13px;font-weight:800;margin-bottom:3px;}
@@ -656,6 +657,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
   .ld-b-eyebrow{text-align:center;}
   .ld-b-title{text-align:center;font-size:30px;margin-bottom:28px;}
   .ld-grid{grid-template-columns:repeat(3,1fr);gap:16px;}
+  .ld-grid .ld-card:last-child{grid-column:auto;} /* 3x3 en desktop */
   .ld-card{padding:22px;border-radius:18px;}
   .ld-card-ico{font-size:26px;margin-bottom:10px;}
   .ld-card-t{font-size:15px;margin-bottom:5px;}
@@ -937,7 +939,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 
   <div class="ld-benefits">
     <div class="ld-b-eyebrow">¿Organizás una liga?</div>
-    <div class="ld-b-title">Todo lo que tu torneo necesita, en un solo lugar</div>
+    <div class="ld-b-title">Todo lo que tu liga o torneo necesita, en un solo lugar</div>
     <div class="ld-grid">
       <div class="ld-card"><div class="ld-card-ico">⚡</div><div class="ld-card-t">Fixture automático</div><div class="ld-card-d">Generá el calendario completo en segundos, o cargalo a mano</div></div>
       <div class="ld-card"><div class="ld-card-ico">📊</div><div class="ld-card-t">Tablas en tiempo real</div><div class="ld-card-d">Posiciones y resultados al instante, visibles para todos</div></div>
@@ -945,10 +947,13 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div class="ld-card"><div class="ld-card-ico">🖼️</div><div class="ld-card-t">Imágenes para compartir</div><div class="ld-card-d">Tablas y fixtures listos para WhatsApp e Instagram</div></div>
       <div class="ld-card"><div class="ld-card-ico">👥</div><div class="ld-card-t">Usuarios por club</div><div class="ld-card-d">Cada delegado carga su plantel y sigue sus partidos</div></div>
       <div class="ld-card"><div class="ld-card-ico">🎽</div><div class="ld-card-t">Fichas de jugadores</div><div class="ld-card-d">Foto, DNI y credencial digital de cada jugador</div></div>
+      <div class="ld-card"><div class="ld-card-ico">📈</div><div class="ld-card-t">Hacé crecer tu liga</div><div class="ld-card-d">Más visibilidad para tus torneos, tus clubes y tus sponsors</div></div>
+      <div class="ld-card"><div class="ld-card-ico">💰</div><div class="ld-card-t">Monetizá tu liga</div><div class="ld-card-d">Inscripciones online y gestión de multas y pagos</div></div>
+      <div class="ld-card"><div class="ld-card-ico">📢</div><div class="ld-card-t">Comunicados oficiales</div><div class="ld-card-d">Avisos de la liga directo a todos los clubes</div></div>
     </div>
     <div class="ld-actions">
       <button onclick="openVerPlanesPublic()" class="btn btn-primary">Ver planes</button>
-      <button onclick="solicitarUpgrade('Consulta desde el inicio')" class="btn btn-secondary">Contactar</button>
+      <button onclick="openContacto('Landing')" class="btn btn-secondary">Contactar</button>
     </div>
   </div>
 
@@ -1182,6 +1187,38 @@ header .subtitle{font-size:12px;color:var(--text2);}
       </div>
     </div>
     <div id="saPlanesPanelSA" style="display:none"></div>
+    <!-- CONSULTAS RECIBIDAS -->
+    <div style="padding:12px 16px;margin-top:4px;border-top:1px solid var(--border)">
+      <div onclick="toggleSAConsultas()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">📥 Consultas recibidas</div>
+        <span id="sa-consultas-chevron" style="font-size:18px;color:var(--text3);transition:transform .2s">›</span>
+      </div>
+    </div>
+    <div id="saConsultasPanel" style="display:none;padding:0 16px 32px"></div>
+  </div>
+</div>
+
+<!-- MODAL: CONTACTO / QUIERO MI LIGA -->
+<div class="modal-overlay" id="contactoModal" onclick="closeContacto(event)">
+  <div class="modal-sheet" style="padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Contacto</div>
+      <div style="font-size:16px;font-weight:900;margin-top:2px">Quiero mi liga en Sporvix</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">Dejanos tus datos y te contactamos a la brevedad</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Tu nombre *</label><input class="form-input" id="ct-nombre" type="text" placeholder="Ej: Juan García"></div>
+      <div><label class="form-label">Teléfono / WhatsApp *</label><input class="form-input" id="ct-telefono" type="tel" placeholder="Ej: 11 5555 5555"></div>
+      <div><label class="form-label">Email</label><input class="form-input" id="ct-email" type="email" placeholder="tu@email.com"></div>
+      <div><label class="form-label">Nombre de tu liga o torneo *</label><input class="form-input" id="ct-liga" type="text" placeholder="Ej: Liga Metropolitana"></div>
+      <div><label class="form-label">Mensaje (opcional)</label><textarea class="form-input" id="ct-mensaje" rows="2" style="resize:none" placeholder="Contanos de tu liga: deporte, cantidad de equipos…"></textarea></div>
+      <div id="ct-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeContacto(null,true)">Cancelar</button>
+        <button class="btn btn-primary" id="ct-save-btn" style="flex:1" onclick="enviarConsulta()">Enviar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2863,6 +2900,16 @@ CREATE TABLE IF NOT EXISTS planes (
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
 ALTER TABLE jugadores ADD COLUMN IF NOT EXISTS dni TEXT;
+CREATE TABLE IF NOT EXISTS consultas (
+  id SERIAL PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  email TEXT,
+  liga TEXT,
+  mensaje TEXT,
+  atendida BOOLEAN NOT NULL DEFAULT false,
+  creada TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 INSERT INTO planes (nombre,descripcion,precio_mensual,max_divisiones,max_equipos,max_jugadores,features,color,orden) VALUES
 ('Demo','Explorá la plataforma completa — solo lectura',0,2,5,15,'{"delegados":false,"arbitros":true,"comunicados":true,"multas":true,"playoffs":true,"historial":true,"tv_mode":true,"inscripcion_online":true,"modo_demo":true}','#8b5cf6',0),
 ('Gratis','Liga chica — el admin carga todo',0,4,16,20,'{"delegados":false,"arbitros":false,"comunicados":false,"multas":false,"playoffs":false,"historial":false,"tv_mode":false,"inscripcion_online":false}','#4b5563',1),
@@ -3061,7 +3108,7 @@ let asignarPlanLigaId=null;
 
 // Planes predeterminados — se sincronizan a Supabase con el botón "Sincronizar planes"
 const PLANES_HARDCODED=[
-  {id:null,nombre:'Starter',descripcion:'Liga chica — el admin carga todo. Sin usuarios por club.',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
+  {id:null,nombre:'Starter',descripcion:'Ideal para empezar: la organización gestiona todo el torneo',precio_mensual:0,max_divisiones:4,max_equipos:16,max_jugadores:20,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:false,arbitros:false,comunicados:false,multas:false,playoffs:false,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#4b5563',orden:1,activo:true},
   {id:null,nombre:'Pro',descripcion:'Usuarios por club (delegados), comunicados, multas y playoffs',precio_mensual:-1,max_divisiones:8,max_equipos:24,max_jugadores:25,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:false,comunicados:true,multas:true,playoffs:true,historial:false,tv_mode:false,inscripcion_online:false,modo_demo:false},color:'#1a6ef5',orden:2,activo:true},
   {id:null,nombre:'Premium',descripcion:'Todo incluido: árbitros, historial, modo TV e inscripción online',precio_mensual:-1,max_divisiones:-1,max_equipos:-1,max_jugadores:-1,features:{fixture:true,jugadores:true,goles_tarjetas:true,canchas_horarios:true,delegados:true,arbitros:true,comunicados:true,multas:true,playoffs:true,historial:true,tv_mode:true,inscripcion_online:true,modo_demo:false},color:'#1a2150',orden:3,activo:true},
 ];
@@ -3434,8 +3481,88 @@ async function loadVerPlanes(){
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:16px">Error al cargar planes</div>';}
 }
 function solicitarUpgrade(planNombre){
-  showToast('Solicitud enviada al administrador de Sporvix 📧','success');
   closeVerPlanes(null,true);
+  openContacto(planNombre?'Interés en plan '+planNombre:'');
+}
+// ═══ CONTACTO / CONSULTAS ═══
+let _contactoOrigen='';
+function openContacto(origen){
+  _contactoOrigen=origen||'';
+  ['ct-nombre','ct-telefono','ct-email','ct-liga','ct-mensaje'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('ct-error').style.display='none';
+  const btn=document.getElementById('ct-save-btn');btn.disabled=false;btn.textContent='Enviar';
+  document.getElementById('contactoModal').classList.add('open');
+  setTimeout(()=>document.getElementById('ct-nombre').focus(),300);
+}
+function closeContacto(e,force){
+  if(force||e?.target===document.getElementById('contactoModal'))
+    document.getElementById('contactoModal').classList.remove('open');
+}
+async function enviarConsulta(){
+  const nombre=document.getElementById('ct-nombre').value.trim();
+  const telefono=document.getElementById('ct-telefono').value.trim();
+  const email=document.getElementById('ct-email').value.trim();
+  const liga=document.getElementById('ct-liga').value.trim();
+  const mensaje=document.getElementById('ct-mensaje').value.trim();
+  const errEl=document.getElementById('ct-error');
+  if(!nombre||!telefono||!liga){errEl.textContent='Completá nombre, teléfono y liga/torneo';errEl.style.display='';return;}
+  const btn=document.getElementById('ct-save-btn');
+  btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    const {error}=await supa.from('consultas').insert({
+      nombre,telefono,email:email||null,liga,
+      mensaje:(_contactoOrigen?'['+_contactoOrigen+'] ':'')+(mensaje||'')||null
+    });
+    if(error)throw error;
+    closeContacto(null,true);
+    showToast('¡Gracias! Te contactamos a la brevedad 📞','success');
+  }catch(e){
+    errEl.textContent='No se pudo enviar. Probá de nuevo en un momento.';
+    errEl.style.display='';btn.disabled=false;btn.textContent='Enviar';
+    console.warn('enviarConsulta',e);
+  }
+}
+// Panel de consultas en el superadmin
+function toggleSAConsultas(){
+  const panel=document.getElementById('saConsultasPanel');
+  const chevron=document.getElementById('sa-consultas-chevron');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'':'none';
+  chevron.style.transform=open?'rotate(90deg)':'';
+  if(open)loadSAConsultas();
+}
+async function loadSAConsultas(){
+  const el=document.getElementById('saConsultasPanel');
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">⏳ Cargando...</div>';
+  try{
+    const {data,error}=await supa.from('consultas').select('*').order('id',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Sin consultas todavía.</div>';return;}
+    el.innerHTML=data.map(c=>`
+      <div style="background:var(--card);border:1px solid ${c.atendida?'var(--border)':'rgba(79,140,255,0.45)'};border-radius:12px;padding:12px 14px;margin-bottom:8px;${c.atendida?'opacity:.65':''}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:14px;font-weight:800;flex:1">${escHtml(c.nombre)}</span>
+          ${c.atendida?'<span style="font-size:10px;font-weight:700;color:var(--green)">✓ ATENDIDA</span>':'<span style="font-size:10px;font-weight:800;color:var(--accent)">● NUEVA</span>'}
+        </div>
+        <div style="font-size:12px;color:var(--text2)">🏆 ${escHtml(c.liga||'—')}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">📱 <a href="https://wa.me/${(c.telefono||'').replace(/\D/g,'')}" target="_blank" rel="noopener" style="color:var(--accent)">${escHtml(c.telefono||'—')}</a>${c.email?' · ✉️ '+escHtml(c.email):''}</div>
+        ${c.mensaje?`<div style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.4">${escHtml(c.mensaje)}</div>`:''}
+        ${c.creada?`<div style="font-size:10px;color:var(--text3);margin-top:4px">${new Date(c.creada).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>`:''}
+        <div style="display:flex;gap:8px;margin-top:8px">
+          ${!c.atendida?`<button class="btn btn-sm" style="flex:1;background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3)" onclick="marcarConsulta(${c.id},true)">✓ Marcar atendida</button>`:`<button class="btn btn-sm btn-secondary" style="flex:1" onclick="marcarConsulta(${c.id},false)">↩ Marcar nueva</button>`}
+          <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="eliminarConsulta(${c.id})">✕</button>
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">No se pudieron cargar. ¿Corriste la migración de la tabla consultas?</div>';}
+}
+async function marcarConsulta(id,atendida){
+  try{await supa.from('consultas').update({atendida}).eq('id',id);await loadSAConsultas();}
+  catch(e){showToast('Error: '+e.message,'error');}
+}
+async function eliminarConsulta(id){
+  if(!confirm('¿Eliminar esta consulta?'))return;
+  try{await supa.from('consultas').delete().eq('id',id);await loadSAConsultas();}
+  catch(e){showToast('Error: '+e.message,'error');}
 }
 
 async function openLeague(id){
