@@ -4473,7 +4473,7 @@ function _generarImagenTabla(divId,tipo){
   m.id='_fmtPickerModal';
   m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   const cards=_SHARE_FMTS.map(f=>`
-    <button onclick="document.getElementById('_fmtPickerModal').remove();_renderImgConFormato(${divId},'${tipo}','${f.id}')"
+    <button onclick="document.getElementById('_fmtPickerModal').remove();_renderImgConFormato(${divId},'${tipo}','${f.id}').catch(e=>{console.warn('canvas share',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})"
       style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:inherit;width:100%;transition:border-color .15s,background .15s"
       onmouseover="this.style.borderColor='#1a6ef5';this.style.background='rgba(26,110,245,.14)'"
       onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.04)'">
@@ -4586,7 +4586,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     border:'#1b2130',green:'#2ed573',red:'#ff4757',isLight:false
   };
 
-  const RETINA=3,CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
+  const CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
   const sT=fmt.safeTop||0,sB=fmt.safeBot||0;
   const PAD=Math.round(CW*0.04);
 
@@ -4605,6 +4605,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     CARD_GAP_TOP=Math.round(av*0.028); CARD_GAP_BOT=Math.round(av*0.022);
     ROW_H=Math.floor((av-BRAND_H-COL_H-FTR_H-CARD_GAP_TOP-CARD_GAP_BOT)/nRows);
   }
+
+  // Escala retina limitada a lo que el dispositivo soporta: iOS Safari falla
+  // en silencio con canvas de más de ~4096px de lado o ~16M píxeles
+  // (p.ej. Historia 1080x1920 a 3x = 3240x5760 → toBlob devuelve null).
+  let RETINA=3;
+  while(RETINA>1&&(CW*RETINA>4096||CH*RETINA>4096||CW*RETINA*CH*RETINA>16000000))RETINA--;
 
   const canvas=document.createElement('canvas');
   canvas.width=CW*RETINA; canvas.height=CH*RETINA;
@@ -5085,7 +5091,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // ── COMPARTIR ────────────────────────────────────────────────────
   showToast('Generando imagen…','');
-  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+  const blob=await new Promise(r=>{
+    let done=false;const fin=b=>{if(!done){done=true;r(b);}};
+    try{canvas.toBlob(fin,'image/png');}catch(e){fin(null);}
+    setTimeout(()=>fin(null),10000); // por si el callback nunca llega
+  });
+  if(!blob){showToast('No se pudo generar la imagen en este dispositivo. Probá con otro formato.','error');return;}
   const fname=(esProxima?'proxima-fecha':esGoles?'goleadores':'tabla-posiciones')+'-sporvix.png';
   const file=new File([blob],fname,{type:'image/png'});
   const titulo=(esProxima?'📅 Próxima Fecha':esGoles?'⚽ Goleadores':'📊 Posiciones')+' — '+ligaName;
