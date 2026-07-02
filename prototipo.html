@@ -1605,6 +1605,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div style="font-size:13px;font-weight:700">—</div>
       </div>
       <button class="btn btn-primary" id="fixture-gen-btn" onclick="generarFixture()">⚡ Generar Fixture Automático</button>
+      <div id="fixture-nuevos-box" style="display:none;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:14px">
+        <div style="font-size:12px;font-weight:800;color:#d4af37;margin-bottom:4px">➕ Clubes fuera del fixture</div>
+        <div id="fixture-nuevos-list" style="font-size:13px;font-weight:700;margin-bottom:10px"></div>
+        <button class="btn btn-secondary" id="fixture-completar-btn" style="width:100%" onclick="completarFixture()">Completar fixture con los nuevos clubes</button>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4">Los partidos jugados no se tocan: el club nuevo ocupa los huecos de fechas futuras (equipos libres) y el resto se programa al final del calendario.</div>
+      </div>
     </div>
   </div>
   <!-- CLUBES LIST -->
@@ -7354,7 +7360,89 @@ async function openFixtureScreen(){
     } else if(n<2){
       preview.innerHTML='<div style="font-size:13px;color:var(--text3)">Necesitás al menos 2 clubes en la división.</div>';
     }
+    // Fixture ya generado + clubes sin partidos → ofrecer completarlo
+    const box=document.getElementById('fixture-nuevos-box');
+    if(box){
+      box.style.display='none';
+      const {data:ps}=await supa.from('partidos').select('equipo_local_id,equipo_visita_id').eq('division_id',currentAdminDivisionId);
+      if(ps&&ps.length){
+        const sched=new Set();ps.forEach(p=>{sched.add(p.equipo_local_id);sched.add(p.equipo_visita_id);});
+        const nuevos=adminDivEquipos.filter(e=>!sched.has(e.id));
+        if(nuevos.length){
+          document.getElementById('fixture-nuevos-list').textContent=nuevos.map(e=>e.nombre).join(', ');
+          box.style.display='';
+        }
+      }
+    }
   }catch(e){if(resumen)resumen.textContent='Error cargando config';}
+}
+// ── Sumar clubes a un torneo EN CURSO sin tocar lo jugado ──
+// Para cada club sin partidos: primero ocupa jornadas futuras donde haya un
+// rival libre (el hueco del que descansaba); los cruces que no entren se
+// programan como jornadas nuevas al final del calendario.
+async function completarFixture(){
+  if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
+  const btn=document.getElementById('fixture-completar-btn');
+  try{
+    if(btn){btn.disabled=true;btn.textContent='Armando partidos…';}
+    if(!adminDivEquipos.length)await loadAdminEquipos();
+    const divId=currentAdminDivisionId;
+    const {data:ps,error}=await supa.from('partidos').select('jornada,fecha,hora,equipo_local_id,equipo_visita_id,estado,fase').eq('division_id',divId);
+    if(error)throw error;
+    if(!ps||!ps.length){showToast('Todavía no hay fixture: usá Generar Fixture','');return;}
+    const sched=new Set();ps.forEach(p=>{sched.add(p.equipo_local_id);sched.add(p.equipo_visita_id);});
+    const nuevos=adminDivEquipos.filter(e=>!sched.has(e.id));
+    if(!nuevos.length){showToast('No hay clubes fuera del fixture','');return;}
+    const {data:t}=await supa.from('torneos').select('dias_semana,hora_default').eq('id',currentAdminTorneoId).single();
+    const hora=t?.hora_default||'16:00';
+    const dias=(t?.dias_semana&&t.dias_semana.length)?t.dias_semana.map(Number):[6];
+    const hoy=new Date().toISOString().split('T')[0];
+    const regulares=ps.filter(p=>!p.fase||p.fase==='regular');
+    const pairKey=(a,b)=>Math.min(a,b)+'-'+Math.max(a,b);
+    const cruces=new Set(regulares.map(p=>pairKey(p.equipo_local_id,p.equipo_visita_id)));
+    const rows=[];
+    for(const nuevo of nuevos){
+      const pendSet=new Set(adminDivEquipos.filter(e=>e.id!==nuevo.id&&!cruces.has(pairKey(nuevo.id,e.id))).map(e=>e.id));
+      // 1) huecos en jornadas futuras (incluye filas ya armadas para otros nuevos)
+      const byJ={};
+      regulares.forEach(p=>{const j=p.jornada||0;(byJ[j]=byJ[j]||[]).push(p);});
+      rows.forEach(r=>{const j=r.jornada||0;(byJ[j]=byJ[j]||[]).push(r);});
+      const futuras=Object.entries(byJ)
+        .filter(([j,pp])=>pp.some(p=>(p.fecha||'')>=hoy&&p.estado==='programado'))
+        .sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+      for(const [j,pp] of futuras){
+        if(!pendSet.size)break;
+        const busy=new Set();pp.forEach(p=>{busy.add(p.equipo_local_id);busy.add(p.equipo_visita_id);});
+        if(busy.has(nuevo.id))continue;
+        const libre=[...pendSet].find(rid=>!busy.has(rid));
+        if(libre==null)continue;
+        const ref=pp.find(p=>p.fecha)||pp[0];
+        const esLocal=rows.length%2===0;
+        rows.push({division_id:divId,equipo_local_id:esLocal?nuevo.id:libre,equipo_visita_id:esLocal?libre:nuevo.id,
+          jornada:parseInt(j),fecha:ref.fecha||null,hora:ref.hora||hora,cancha:null,estado:'programado',goles_local:null,goles_visita:null});
+        pendSet.delete(libre);cruces.add(pairKey(nuevo.id,libre));
+      }
+      // 2) cruces restantes → jornadas nuevas al final
+      let lastJ=Math.max(0,...regulares.map(p=>p.jornada||0),...rows.map(r=>r.jornada||0));
+      let lastFecha=[...regulares.map(p=>p.fecha),...rows.map(r=>r.fecha)].filter(Boolean).sort().pop()||hoy;
+      let f=advanceToNextMatchDay(new Date(lastFecha+'T12:00:00'),dias);
+      for(const rid of pendSet){
+        lastJ++;
+        const esLocal=rows.length%2===0;
+        rows.push({division_id:divId,equipo_local_id:esLocal?nuevo.id:rid,equipo_visita_id:esLocal?rid:nuevo.id,
+          jornada:lastJ,fecha:f.toISOString().split('T')[0],hora,cancha:null,estado:'programado',goles_local:null,goles_visita:null});
+        cruces.add(pairKey(nuevo.id,rid));
+        f=advanceToNextMatchDay(f,dias);
+      }
+    }
+    if(!rows.length){showToast('Los clubes nuevos ya tienen todos sus cruces','');return;}
+    if(!confirm(`Se van a crear ${rows.length} partidos para: ${nuevos.map(n=>n.nombre).join(', ')}.\n\nLos partidos ya jugados y programados NO se modifican. ¿Continuar?`))return;
+    const {error:insErr}=await supa.from('partidos').insert(rows);
+    if(insErr)throw insErr;
+    showToast(`Fixture completado: ${rows.length} partidos nuevos ✓`,'success');
+    openFixtureScreen();
+  }catch(e){showToast('Error: '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent='Completar fixture con los nuevos clubes';}}
 }
 async function generarFixture(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
@@ -7365,10 +7453,18 @@ async function generarFixture(){
   if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 clubes','error');return;}
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   try{
-    // Verificar si ya existen partidos — evitar duplicados
-    const {count}=await supa.from('partidos').select('id',{count:'exact',head:true}).eq('division_id',currentAdminDivisionId);
-    if(count>0){
-      if(!confirm(`Ya hay ${count} partido${count===1?'':'s'} en esta división.\n¿Eliminarlos y generar el fixture de nuevo?`)){return;}
+    // Verificar si ya existen partidos — evitar duplicados y proteger resultados
+    const {data:existing}=await supa.from('partidos').select('id,estado').eq('division_id',currentAdminDivisionId);
+    const total=(existing||[]).length;
+    if(total>0){
+      const jugados=(existing||[]).filter(p=>p.estado==='finalizado'||p.estado==='en_curso').length;
+      if(jugados>0){
+        // Torneo en curso: doble confirmación explícita antes de destruir resultados
+        if(!confirm(`⚠️ ATENCIÓN: esta división tiene ${jugados} partido${jugados===1?'':'s'} JUGADO${jugados===1?'':'S'} con resultados cargados.\n\nRegenerar el fixture BORRA TODOS los partidos (jugados incluidos) y la tabla de posiciones vuelve a cero. Esta acción no se puede deshacer.\n\n¿Continuar igual?`))return;
+        if(!confirm(`Última confirmación: se eliminarán ${total} partidos, incluidos los ${jugados} ya jugados y sus resultados.\n\nSi lo que necesitás es sumar un club nuevo al torneo en curso, usá "Completar fixture" en su lugar.\n\n¿Borrar todo y regenerar?`))return;
+      }else{
+        if(!confirm(`Ya hay ${total} partido${total===1?'':'s'} programado${total===1?'':'s'} (sin resultados aún).\n¿Eliminarlos y generar el fixture de nuevo?`))return;
+      }
       const {error:delErr}=await supa.from('partidos').delete().eq('division_id',currentAdminDivisionId);
       if(delErr)throw delErr;
     }
