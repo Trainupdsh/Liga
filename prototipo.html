@@ -8944,7 +8944,7 @@ function _dtClickClub(id){
     const res=m.status!=='done'?'':''+( myScore>oppScore?'G':myScore===oppScore?'E':'P');
     const resColor=res==='G'?'var(--green)':res==='P'?'var(--red)':'var(--text3)';
     return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="width:16px;height:16px;background:${opp?.color||'#333'};color:${opp?.text||'#fff'};border-radius:4px;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${opp?.short||'?'}</div>
+      <div style="width:16px;height:16px;background:${opp?.logoUrl?'transparent':(opp?.color||'#333')};color:${opp?.text||'#fff'};border-radius:4px;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${opp?.logoUrl?`<img src="${opp.logoUrl}" style="width:100%;height:100%;object-fit:cover" alt="">`:(opp?.short||'?')}</div>
       <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(opp?.name||'?')}</span>
       <span style="font-size:11px;font-weight:700">${ms}</span>
       ${res?`<span style="font-size:9px;font-weight:800;color:${resColor};width:12px">${res}</span>`:''}
@@ -8952,7 +8952,7 @@ function _dtClickClub(id){
   };
 
   const scorerRow=p=>`<div onclick="_dtClickPlayer(${p.id})" ondblclick="_dtDblClickPlayer(${p.id})" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer">
-    <div style="width:20px;height:20px;background:${t.color};color:${t.text};border-radius:5px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${p.jersey}</div>
+    <div style="width:20px;height:20px;background:${p.fotoUrl?'transparent':t.color};color:${t.text};border-radius:5px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${p.fotoUrl?`<img src="${p.fotoUrl}" style="width:100%;height:100%;object-fit:cover" alt="">`:p.jersey}</div>
     <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</span>
     <span style="font-size:11px;font-weight:700;color:var(--accent)">⚽ ${p.goals}</span>
   </div>`;
@@ -9020,7 +9020,7 @@ function _dtDblClickClub(id){
     const resColor=res==='G'?'var(--green)':res==='P'?'var(--red)':'var(--text3)';
     const statusColor=m.status==='live'?'var(--green)':m.status==='done'?'var(--text3)':'var(--accent)';
     return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="width:32px;height:32px;background:${opp?.color||'#333'};color:${opp?.text||'#fff'};border-radius:8px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${opp?.short||'?'}</div>
+      <div style="width:32px;height:32px;background:${opp?.logoUrl?'transparent':(opp?.color||'#333')};color:${opp?.text||'#fff'};border-radius:8px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${opp?.logoUrl?`<img src="${opp.logoUrl}" style="width:100%;height:100%;object-fit:cover" alt="">`:(opp?.short||'?')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(opp?.name||'Rival')}</div>
         <div style="font-size:10px;color:var(--text3)">${isHome?'Local':'Visitante'} · ${escHtml(div?.name||'')} · F${m.round}</div>
@@ -9033,8 +9033,8 @@ function _dtDblClickClub(id){
   };
 
   const playerRow=p=>`<div onclick="_dtClickPlayer(${p.id})" ondblclick="_dtDblClickPlayer(${p.id})" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
-    <div style="width:28px;height:28px;background:${t.color};color:${t.text};border-radius:7px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">#${p.jersey}</div>
-    <div style="flex:1;font-size:12px;font-weight:600">${escHtml(p.name)}</div>
+    <div style="width:28px;height:28px;background:${p.fotoUrl?'transparent':t.color};color:${t.text};border-radius:7px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${p.fotoUrl?`<img src="${p.fotoUrl}" style="width:100%;height:100%;object-fit:cover" alt="">`:'#'+p.jersey}</div>
+    <div style="flex:1;font-size:12px;font-weight:600">${escHtml(p.name)}${p.fotoUrl?` <span style="font-size:10px;color:var(--text3)">#${p.jersey}</span>`:''}</div>
     <div style="display:flex;gap:10px;font-size:11px">
       <span title="Goles">⚽ ${p.goals}</span>
       <span title="Amarillas">🟡 ${p.yellows}</span>
