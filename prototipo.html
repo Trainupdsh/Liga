@@ -9284,10 +9284,12 @@ function _mtRenderDays(){
     const d=new Date(today);d.setDate(today.getDate()+i+_mtDayOffset);
     const rel=i+_mtDayOffset;
     const label=rel===-1?'AYER':rel===0?'HOY':rel===1?'MAN':_DIAS[d.getDay()].toUpperCase();
+    const hasMs=matches.some(m=>m.dayOff===rel);
     h+=`<button class="mt-day${i===0?' active':''}" onclick="_mtSetDay(${i+_mtDayOffset})">
       <span class="mt-day-name">${label}</span>
       <span class="mt-day-num">${d.getDate()}</span>
       <span class="mt-day-month">${_MESES[d.getMonth()]}</span>
+      <span style="width:4px;height:4px;border-radius:50%;margin:2px auto 0;display:block;background:${hasMs?'var(--accent)':'transparent'}"></span>
     </button>`;
   }
   el.innerHTML=h;
@@ -9321,7 +9323,26 @@ function _mtRenderGroups(){
   if(_mtFilterCur==='live')ms=ms.filter(m=>m.status==='live');
   else if(_mtFilterCur==='done')ms=ms.filter(m=>m.status==='done');
   else if(_mtFilterCur==='upcoming')ms=ms.filter(m=>m.status==='upcoming');
-  if(!ms.length){el.innerHTML='<div class="dt-empty" style="padding-top:40px">Sin partidos para este día</div>';return;}
+  if(!ms.length){
+    // Día sin partidos → mostrar la fecha con partidos más cercana (futura primero)
+    const days=[...new Set(matches.filter(m=>m.dayOff!=null).map(m=>m.dayOff))];
+    const future=days.filter(d=>d>_mtDayOffset).sort((a,b)=>a-b);
+    const past=days.filter(d=>d<_mtDayOffset).sort((a,b)=>b-a);
+    const target=future.length?future[0]:(past.length?past[0]:null);
+    if(target==null){el.innerHTML='<div class="dt-empty" style="padding-top:40px">Sin partidos para este día</div>';return;}
+    const tMs=matches.filter(m=>m.dayOff===target);
+    const td=new Date();td.setDate(td.getDate()+target);
+    const tdStr=td.toISOString().split('T')[0];
+    el.innerHTML=`<div class="dt-empty" style="padding:28px 0 4px">Sin partidos para este día</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 2px">
+        <span style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">${future.length?'Próximos partidos':'Últimos partidos'} — ${formatFecha(tdStr)}</span>
+        <button onclick="_mtSetDay(${target})" style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:14px;font-size:10px;font-weight:800;padding:4px 12px;cursor:pointer">IR AL DÍA ›</button>
+      </div>`+_mtGroupsHtml(tMs);
+    return;
+  }
+  el.innerHTML=_mtGroupsHtml(ms);
+}
+function _mtGroupsHtml(ms){
   const byDiv={};
   ms.forEach(m=>{(byDiv[m.divId]=byDiv[m.divId]||[]).push(m);});
   let h='';
@@ -9350,7 +9371,7 @@ function _mtRenderGroups(){
       ${dMs.map(m=>_mtMatchRow(m)).join('')}
     </div>`;
   });
-  el.innerHTML=h;
+  return h;
 }
 // ── HOY y calendario ──
 function _mtGoToday(){
