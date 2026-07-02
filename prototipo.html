@@ -4835,7 +4835,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   const titulo=(esProxima?'📅 Próxima Fecha':esGoles?'⚽ Goleadores':'📊 Posiciones')+' — '+ligaName;
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:titulo});return;}
-    catch(e){if(e.name==='AbortError')return;}
+    catch(e){
+      if(e.name==='AbortError')return;
+      // NotAllowedError: el gesto del usuario expiró durante la generación
+      // (típico en iOS con canvas lentos) → mostramos el modal, que tiene
+      // su propio botón Compartir con gesto fresco.
+    }
   }
   const previewUrl=canvas.toDataURL('image/webp',0.92)||canvas.toDataURL('image/png');
   _showImageShareModal(previewUrl,blob,fname,titulo);
@@ -4857,15 +4862,26 @@ function _showImageShareModal(previewUrl,blob,fname,titulo){
     <div style="padding:12px 12px 0;background:#0b1120;max-height:55vh;overflow-y:auto">
       <img src="${previewUrl}" style="width:100%;border-radius:8px;display:block" alt="Tabla">
     </div>
-    <div style="display:flex;gap:10px;padding:14px 16px">
-      <a href="${dlUrl}" download="${fname}" style="flex:1;background:#1a6ef5;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">⬇ Descargar PNG</a>
-      <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="flex:1;background:#25d366;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">💬 WhatsApp</a>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px">
+      <button id="_imgShareNative" style="display:none;width:100%;background:linear-gradient(135deg,#4f8cff,#8b5cf6);color:#fff;border:none;border-radius:10px;padding:13px 8px;text-align:center;font-weight:800;font-size:14px;cursor:pointer">📤 Compartir imagen…</button>
+      <div style="display:flex;gap:10px">
+        <a href="${dlUrl}" download="${fname}" style="flex:1;background:#1a6ef5;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">⬇ Descargar PNG</a>
+        <a href="https://wa.me/?text=${waText}" target="_blank" rel="noopener" style="flex:1;background:#25d366;color:#fff;border-radius:10px;padding:12px 8px;text-align:center;text-decoration:none;font-weight:700;font-size:13px">💬 WhatsApp</a>
+      </div>
     </div>
   </div>`;
   const cleanup=()=>{URL.revokeObjectURL(dlUrl);m.remove();};
   m.onclick=e=>{if(e.target===m)cleanup();};
   document.body.appendChild(m);
   document.getElementById('_imgShareClose').onclick=cleanup;
+  // Botón de compartir nativo: se llama con un toque directo del usuario,
+  // así iOS siempre abre el menú de apps (WhatsApp, Instagram, etc.)
+  const natBtn=document.getElementById('_imgShareNative');
+  const shareFile=new File([blob],fname,{type:'image/png'});
+  if(natBtn&&navigator.canShare&&navigator.canShare({files:[shareFile]})){
+    natBtn.style.display='';
+    natBtn.onclick=()=>{navigator.share({files:[shareFile],title:titulo}).catch(()=>{});};
+  }
 }
 
 let st2;
