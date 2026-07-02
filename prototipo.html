@@ -5948,7 +5948,7 @@ async function loadAdminTorneos(){
         ${logoEl}
         <div style="flex:1;cursor:pointer" onclick="openTorneoDetail(${t.id},'${escHtml(t.nombre)}','${t.estado}','${t.temporada||''}')">
           <div style="font-size:14px;font-weight:800">${escHtml(t.nombre)}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.temporada||''}  ·  ${t.divisiones?t.divisiones.length:0} división${t.divisiones&&t.divisiones.length!==1?'es':''}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.temporada||''}  ·  ${t.divisiones?t.divisiones.length:0} ${t.divisiones&&t.divisiones.length===1?'división':'divisiones'}</div>
         </div>
         <span class="tag ${estadoClass[t.estado]||'tag-teams'}">${estadoBadge[t.estado]||t.estado}</span>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
@@ -6991,7 +6991,7 @@ async function saveNuevaDivision(){
       if(maxDiv!=null&&maxDiv!==-1){
         const {count}=await supa.from('divisiones').select('id',{count:'exact',head:true}).eq('torneo_id',currentAdminTorneoId);
         if(count>=maxDiv){
-          errEl.textContent=`Límite del plan: máx. ${maxDiv} división${maxDiv===1?'':'es'}. Actualizá tu plan.`;
+          errEl.textContent=`Límite del plan: máx. ${maxDiv} ${maxDiv===1?'división':'divisiones'}. Actualizá tu plan.`;
           errEl.style.display='';btn.disabled=false;btn.textContent='Crear División';return;
         }
       }
@@ -8868,18 +8868,46 @@ function _clubVisits30d(id){
     return all.filter(v=>v.id===id&&v.ts>cutoff).length;
   }catch{return 0;}
 }
+// Mismo jugador cargado en varias divisiones → una sola fila, stats sumadas
+function _clubDedupePlayers(list){
+  const m={};
+  list.forEach(p=>{
+    const k=(p.name||'').trim().toLowerCase();
+    if(!m[k])m[k]={...p};
+    else{m[k].goals+=p.goals||0;m[k].yellows+=p.yellows||0;m[k].reds+=p.reds||0;if(!m[k].fotoUrl&&p.fotoUrl)m[k].fotoUrl=p.fotoUrl;}
+  });
+  return Object.values(m);
+}
+// Todos los equipos (inscripciones por división) que pertenecen al mismo club
+// que el equipo dado. Sin club vinculado, el equipo es su propio grupo.
+function _clubSiblings(id){
+  const t=teamsData.find(x=>x.id===id);
+  if(!t)return[id];
+  if(!t.clubId)return[t.id];
+  return teamsData.filter(x=>x.clubId===t.clubId).map(x=>x.id);
+}
+// Divisiones donde participa un grupo de equipos (por standings o _DIV_TEAMS demo)
+function _clubDivIds(eqIds){
+  const ids=new Set(standings.filter(s=>eqIds.includes(s.teamId)).map(s=>s.divId));
+  Object.entries(window._DIV_TEAMS||{}).forEach(([d,tms])=>{if(tms.some(x=>eqIds.includes(x)))ids.add(parseInt(d));});
+  return[...ids];
+}
 function _clubesRender(q){
   const el=document.getElementById('clubes-list');if(!el)return;
   const src=teamsData.filter(t=>t.id>=100);
+  // Una card por CLUB: los equipos de distintas divisiones se agrupan
+  const byClub={};
+  src.forEach(t=>{const k=t.clubId?'c'+t.clubId:'t'+t.id;(byClub[k]=byClub[k]||[]).push(t);});
+  let clubs=Object.values(byClub).map(g=>({...g[0],_eqIds:g.map(x=>x.id)}));
   // sort by visits in last 30 days desc, then by name
-  src.sort((a,b)=>_clubVisits30d(b.id)-_clubVisits30d(a.id)||a.name.localeCompare(b.name));
-  const list=q?src.filter(t=>t.name.toLowerCase().includes(q.toLowerCase())):src;
+  clubs.sort((a,b)=>_clubVisits30d(b.id)-_clubVisits30d(a.id)||a.name.localeCompare(b.name));
+  const list=q?clubs.filter(t=>t.name.toLowerCase().includes(q.toLowerCase())):clubs;
   if(!list.length){el.innerHTML='<div style="color:var(--text3);padding:32px;grid-column:1/-1;text-align:center">Sin clubes</div>';return;}
   el.innerHTML=list.map(t=>{
-    const divIds=Object.entries(window._DIV_TEAMS||{}).filter(([,tms])=>tms.includes(t.id)).map(([d])=>parseInt(d));
+    const divIds=_clubDivIds(t._eqIds);
     const divNames=divIds.map(id=>divisiones.find(d=>d.id===id)).filter(Boolean);
     const liga=divNames.length?leagues.find(l=>torneos.find(tr=>tr.id===divNames[0].torneoId&&tr.leagueId===l.id)):null;
-    const goles=players.filter(p=>p.team===t.id).reduce((s,p)=>s+p.goals,0);
+    const goles=players.filter(p=>t._eqIds.includes(p.team)).reduce((s,p)=>s+p.goals,0);
     const visits=_clubVisits30d(t.id);
     const sel=_clubesSel===t.id;
     return`<div id="club-card-${t.id}" style="background:${sel?'var(--accent-dim)':'var(--card)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:12px;padding:14px;cursor:pointer;transition:all .15s"
@@ -8895,7 +8923,7 @@ function _clubesRender(q){
         ${visits>0?`<span style="font-size:9px;color:var(--accent);font-weight:700;background:var(--accent-dim);padding:2px 6px;border-radius:6px;flex-shrink:0">👁 ${visits}</span>`:''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${divNames.slice(0,2).map(d=>`<span style="font-size:9px;font-weight:700;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:4px">${escHtml(d.name)}</span>`).join('')}
+        ${divNames.slice(0,3).map(d=>`<span style="font-size:9px;font-weight:700;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:4px">${escHtml(d.grupo?d.grupo+' · '+d.name:d.name)}</span>`).join('')}
         <span style="font-size:9px;color:var(--text3);margin-left:auto">⚽ ${goles}</span>
       </div>
     </div>`;
@@ -8918,26 +8946,28 @@ function _dtClickClub(id){
   const el=document.getElementById('dt-rc');if(!el)return;
   document.getElementById('dt-right').style.display='flex';
 
-  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(id)).map(([d])=>parseInt(d));
+  // Agregado por CLUB: todas las divisiones donde participa
+  const sib=_clubSiblings(id);
+  const divIds=_clubDivIds(sib);
   const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
   const myLiga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
 
   // Aggregate stats
   let pj=0,pg=0,pe=0,pp=0,gf=0,gc=0;
-  standings.filter(s=>s.teamId===id).forEach(s=>{pj+=s.pj;pg+=s.pg;pe+=s.pe;pp+=s.pp;gf+=s.gf;gc+=s.gc;});
+  standings.filter(s=>sib.includes(s.teamId)).forEach(s=>{pj+=s.pj;pg+=s.pg;pe+=s.pe;pp+=s.pp;gf+=s.gf;gc+=s.gc;});
   const pts=pg*3+pe;
 
   // Recent matches (last 5 done/live)
-  const myMs=matches.filter(m=>(m.home===id||m.away===id)&&(m.status==='done'||m.status==='live'))
+  const myMs=matches.filter(m=>(sib.includes(m.home)||sib.includes(m.away))&&(m.status==='done'||m.status==='live'))
     .sort((a,b)=>b.id-a.id).slice(0,5);
 
-  // Top scorers
-  const topScorers=players.filter(p=>p.team===id).sort((a,b)=>b.goals-a.goals).slice(0,5);
+  // Top scorers (mismo jugador en varias divisiones cuenta una vez, goles sumados)
+  const topScorers=_clubDedupePlayers(players.filter(p=>sib.includes(p.team))).sort((a,b)=>b.goals-a.goals).slice(0,5);
 
   const stat=(label,val)=>`<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--text)">${val}</div><div style="font-size:9px;color:var(--text3);font-weight:700">${label}</div></div>`;
 
   const matchRow=m=>{
-    const isHome=m.home===id;
+    const isHome=sib.includes(m.home);
     const opp=teamsData.find(x=>x.id===(isHome?m.away:m.home));
     const ms=m.homeScore!==null?(isHome?`${m.homeScore}-${m.awayScore}`:`${m.awayScore}-${m.homeScore}`):'–';
     const myScore=isHome?m.homeScore:m.awayScore, oppScore=isHome?m.awayScore:m.homeScore;
@@ -8985,21 +9015,23 @@ function _dtClickClub(id){
 function _dtDblClickClub(id){
   _clubVisit(id);
   const t=teamsData.find(x=>x.id===id);if(!t)return;
-  const divIds=Object.entries(_DIV_TEAMS).filter(([,tms])=>tms.includes(id)).map(([d])=>parseInt(d));
+  // Agregado por CLUB: todas las divisiones donde participa
+  const sib=_clubSiblings(id);
+  const divIds=_clubDivIds(sib);
   const myDivs=divIds.map(d=>divisiones.find(x=>x.id===d)).filter(Boolean);
   const myLiga=myDivs.length?leagues.find(l=>torneos.find(tr=>tr.id===myDivs[0].torneoId&&tr.leagueId===l.id)):null;
 
   // Stats per division
-  const myStandings=standings.filter(s=>s.teamId===id);
+  const myStandings=standings.filter(s=>sib.includes(s.teamId));
   let tpj=0,tpg=0,tpe=0,tpp=0,tgf=0,tgc=0;
   myStandings.forEach(s=>{tpj+=s.pj;tpg+=s.pg;tpe+=s.pe;tpp+=s.pp;tgf+=s.gf;tgc+=s.gc;});
   const tpts=tpg*3+tpe;
 
-  // All players
-  const myPlayers=players.filter(p=>p.team===id).sort((a,b)=>b.goals-a.goals);
+  // All players (una fila por persona, aunque juegue en varias divisiones)
+  const myPlayers=_clubDedupePlayers(players.filter(p=>sib.includes(p.team))).sort((a,b)=>b.goals-a.goals);
 
   // All matches
-  const myMs=matches.filter(m=>m.home===id||m.away===id).sort((a,b)=>b.id-a.id);
+  const myMs=matches.filter(m=>sib.includes(m.home)||sib.includes(m.away)).sort((a,b)=>b.id-a.id);
   const doneMs=myMs.filter(m=>m.status==='done');
   const upcomingMs=myMs.filter(m=>m.status==='upcoming');
   const liveMs=myMs.filter(m=>m.status==='live');
@@ -9011,7 +9043,7 @@ function _dtDblClickClub(id){
   </div>`;
 
   const matchRow2=m=>{
-    const isHome=m.home===id;
+    const isHome=sib.includes(m.home);
     const opp=teamsData.find(x=>x.id===(isHome?m.away:m.home));
     const div=divisiones.find(d=>d.id===m.divId);
     const ms=m.homeScore!==null?(isHome?`${m.homeScore}–${m.awayScore}`:`${m.awayScore}–${m.homeScore}`):'–';
@@ -9063,7 +9095,7 @@ function _dtDblClickClub(id){
       <div class="shield" style="width:44px;height:44px;font-size:16px;background:${t.logoUrl?'transparent':t.color};color:${t.text};border-radius:12px;flex-shrink:0;overflow:hidden">${_teamShieldInner(t,'12px')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</div>
-        <div style="font-size:11px;color:var(--text3)">${myLiga?escHtml(myLiga.name):''} · ${myDivs.length} división${myDivs.length!==1?'es':''}</div>
+        <div style="font-size:11px;color:var(--text3)">${myLiga?escHtml(myLiga.name):''} · ${myDivs.length} ${myDivs.length===1?'división':'divisiones'}</div>
       </div>
     </div>
 
@@ -9644,14 +9676,14 @@ async function _dtEnsureTorneos(ligaId){
     if(!divIds.length)return;
     // Participating teams + finished matches for every division at once
     const [{data:eqs},{data:ps}]=await Promise.all([
-      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id,club:club_id(logo_url)').in('division_id',divIds),
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id,club_id,club:club_id(logo_url)').in('division_id',divIds),
       supa.from('partidos').select('division_id,equipo_local_id,equipo_visita_id,goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado')
     ]);
     (eqs||[]).forEach(e=>{
       const eid=e.id+RID;
       if(teamsData.some(x=>x.id===eid))return;
       const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
-      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null});
+      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null,clubId:e.club_id||null});
     });
     // Players of every team (so club/player cards show the real plantel)
     const realEqIds=(eqs||[]).map(e=>e.id);
