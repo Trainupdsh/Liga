@@ -2929,6 +2929,14 @@ CREATE TABLE IF NOT EXISTS planes (
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES planes(id);
 ALTER TABLE ligas ADD COLUMN IF NOT EXISTS plan_vencimiento DATE;
 ALTER TABLE jugadores ADD COLUMN IF NOT EXISTS dni TEXT;
+CREATE TABLE IF NOT EXISTS votos_partido (
+  id SERIAL PRIMARY KEY,
+  partido_id INTEGER NOT NULL REFERENCES partidos(id) ON DELETE CASCADE,
+  voto TEXT NOT NULL CHECK (voto IN ('home','draw','away')),
+  device TEXT NOT NULL,
+  creada TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(partido_id, device)
+);
 CREATE TABLE IF NOT EXISTS consultas (
   id SERIAL PRIMARY KEY,
   nombre TEXT NOT NULL,
@@ -9448,20 +9456,51 @@ function _mtMatchRow(m){
     </div>
   </div>`;
 }
-// ── Votes stored in localStorage: { [matchId]: {home:N,draw:N,away:N,mine:null|'home'|'draw'|'away'} }
+// ── Votos de partidos ──────────────────────────────────────────────
+// Los totales viven en Supabase (tabla votos_partido) y suman los votos de
+// todos los usuarios; localStorage guarda el voto propio y sirve de caché
+// y fallback sin conexión. Un voto por dispositivo por partido (se puede
+// cambiar, no duplicar).
+function _deviceId(){
+  try{
+    let d=localStorage.getItem('sporvix_device');
+    if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('sporvix_device',d);}
+    return d;
+  }catch(e){return 'anon';}
+}
 function _mtGetVotes(id){
   try{const v=JSON.parse(localStorage.getItem('mt_votes')||'{}');return v[id]||{home:0,draw:0,away:0,mine:null};}catch{return{home:0,draw:0,away:0,mine:null};}
 }
 function _mtSaveVotes(id,v){
   try{const all=JSON.parse(localStorage.getItem('mt_votes')||'{}');all[id]=v;localStorage.setItem('mt_votes',JSON.stringify(all));}catch{}
 }
-function _mtVote(id,choice){
+async function _mtFetchVotes(id){
+  const local=_mtGetVotes(id);
+  if(!supa)return local;
+  const realId=id>=RID?id-RID:id;
+  try{
+    const {data,error}=await supa.from('votos_partido').select('voto,device').eq('partido_id',realId);
+    if(error||!data)return local;
+    const v={home:0,draw:0,away:0,mine:local.mine};
+    const dev=_deviceId();
+    data.forEach(r=>{if(v[r.voto]!=null)v[r.voto]++;if(r.device===dev)v.mine=r.voto;});
+    _mtSaveVotes(id,v);
+    return v;
+  }catch(e){return local;}
+}
+async function _mtVote(id,choice){
   const v=_mtGetVotes(id);
   if(v.mine===choice)return; // ya votó igual
-  if(v.mine)v[v.mine]=Math.max(0,v[v.mine]-1); // quitar voto anterior
-  v[choice]++;v.mine=choice;
+  // actualización local inmediata (y fallback sin conexión)
+  if(v.mine)v[v.mine]=Math.max(0,v[v.mine]-1);
+  v[choice]=(v[choice]||0)+1;v.mine=choice;
   _mtSaveVotes(id,v);
-  _mtRenderPredict(id); // re-render panel
+  if(supa){
+    const realId=id>=RID?id-RID:id;
+    try{await supa.from('votos_partido').upsert({partido_id:realId,voto:choice,device:_deviceId()},{onConflict:'partido_id,device'});}
+    catch(e){console.warn('voto no guardado',e);}
+  }
+  _mtRenderPredict(id); // re-render con los totales reales
 }
 
 function _mtWinProb(teamId){
@@ -9475,7 +9514,7 @@ function _mtWinProb(teamId){
   return{win:pg/pj,draw:pe/pj,loss:(pj-pg-pe)/pj};
 }
 
-function _mtRenderPredict(id){
+async function _mtRenderPredict(id){
   const el=document.getElementById('mt-predict');if(!el)return;
   const m=matches.find(x=>x.id===id);if(!m){el.innerHTML='<div class="prd-empty"><span style="font-size:28px">🏆</span>Tocá un partido para ver predicciones</div>';return;}
   const home=getTeam(m.home),away=getTeam(m.away);if(!home||!away)return;
@@ -9486,8 +9525,8 @@ function _mtRenderPredict(id){
   const div=divisiones.find(d=>d.id===m.divId);
   const torneo=div?torneos.find(t=>t.id===div.torneoId):null;
 
-  // Votes
-  const v=_mtGetVotes(id);
+  // Votes (totales de todos los usuarios desde Supabase)
+  const v=await _mtFetchVotes(id);
   const total=v.home+v.draw+v.away;
   const pct=(n)=>total?Math.round(n/total*100):0;
   const hPct=pct(v.home),dPct=pct(v.draw),aPct=pct(v.away);
