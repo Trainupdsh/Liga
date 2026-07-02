@@ -4124,7 +4124,7 @@ async function renderScorers(){
       .order('goles',{ascending:false}).limit(30);
     const list=(jugadores||[]).filter(j=>(j.goles||0)>0);
     if(!list.length){renderScorersLocal();return;}
-    _cachedScorers=list.map((j,i)=>{const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:j.nombre,short:(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',teamName:t.nombre,logoUrl:null,goals:j.goles||0};});
+    _cachedScorers=list.map((j,i)=>{const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};return{pos:i+1,name:j.nombre,short:(j.nombre||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color_principal||'#1a2150',text:t.color_texto||'#fff',teamName:t.nombre,logoUrl:j.foto_url||null,goals:j.goles||0};});
     const medals=['🥇','🥈','🥉'];
     document.getElementById('scorersList').innerHTML=list.map((j,i)=>{
       const t=equipoMap[j.equipo_id]||{nombre:'?',abreviacion:'?',color_principal:'#1a2150',color_texto:'#fff'};
@@ -4141,7 +4141,7 @@ function renderScorersLocal(){
   const divTeamIds=new Set(standings.filter(s=>s.divId===currentDivisionId).map(s=>s.teamId));
   const divPlayers=divTeamIds.size>0?players.filter(p=>divTeamIds.has(p.team)):players;
   const sorted=[...divPlayers].sort((a,b)=>b.goals-a.goals).filter(p=>p.goals>0).slice(0,30),medals=['🥇','🥈','🥉'];
-  _cachedScorers=sorted.map((p,i)=>{const t=getTeam(p.team)||{name:'?',short:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:p.name||'?',short:(p.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color,text:t.text,teamName:t.name,logoUrl:t.logoUrl||null,goals:p.goals||0};});
+  _cachedScorers=sorted.map((p,i)=>{const t=getTeam(p.team)||{name:'?',short:'?',color:'#1a2150',text:'#fff',logoUrl:null};return{pos:i+1,name:p.name||'?',short:(p.name||'?').split(' ').map(n=>n[0]).join('').slice(0,2),color:t.color,text:t.text,teamName:t.name,logoUrl:p.fotoUrl||null,goals:p.goals||0};});
   document.getElementById('scorersList').innerHTML=sorted.map((p,i)=>{
     const t=getTeam(p.team)||{emoji:'?',name:'?',jersey:0},initials=p.name.split(' ').map(n=>n[0]).join('').slice(0,2);
     return `<div class="scorer-card" style="cursor:pointer" onclick="_dtDblClickPlayer(${p.id})"><div class="scorer-rank">${i<3?medals[i]:'<span style="font-size:12px;font-weight:800;color:var(--text2)">'+(i+1)+'</span>'}</div><div class="scorer-avatar">${initials}</div><div class="scorer-info"><div class="scorer-name">${p.name}</div><div class="scorer-team">${t.emoji} ${t.name} · #${p.jersey}</div></div><div class="scorer-goals"><div class="goals-num">${p.goals}</div><div class="goals-label">goles</div></div></div>`;
