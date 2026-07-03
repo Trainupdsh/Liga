@@ -7086,20 +7086,25 @@ async function _generarImagenCuadro(divId){
   if(!cuadro){showToast('Sin datos para compartir','');return;}
   const {fases,porFaseCompleto,tercerPuesto}=cuadro;
 
-  let ligaName='Liga',torNombre='',divNombre='';
+  let ligaName='Liga',torNombre='',divNombre='',hdrUrl=null;
   try{
-    const {data:d}=await supa.from('divisiones').select('nombre,categoria,torneo:torneos(nombre,liga:ligas(nombre))').eq('id',divId).single();
-    if(d){divNombre=d.categoria?d.categoria+' · '+d.nombre:d.nombre;torNombre=d.torneo?.nombre||'';ligaName=d.torneo?.liga?.nombre||'Liga';}
+    const {data:d}=await supa.from('divisiones').select('nombre,categoria,torneo:torneos(nombre,logo_url,liga:ligas(nombre,logo_url))').eq('id',divId).single();
+    if(d){
+      divNombre=d.categoria?d.categoria+' · '+d.nombre:d.nombre;
+      torNombre=d.torneo?.nombre||'';
+      ligaName=d.torneo?.liga?.nombre||'Liga';
+      hdrUrl=d.torneo?.logo_url||d.torneo?.liga?.logo_url||null;
+    }
   }catch(e){}
 
   const isLight=document.documentElement.getAttribute('data-theme')==='light';
-  const C=isLight?{bg:'#edf2ff',card:'#ffffff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
-    :{bg:'#0c1017',card:'#151b26',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
+  const C=isLight?{bg:'#edf2ff',card:'#ffffff',card2:'#f3f6ff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
+    :{bg:'#0c1017',card:'#151b26',card2:'#1c2434',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
 
   const MH=112,GAP=28,UNIT=MH+GAP,COLW=300,COLGAP=64,TITLE_H=48;
   const matchesEnRonda=fases.map(f=>porFaseCompleto[f].length);
   const alturaBracket=UNIT*matchesEnRonda[0];
-  const PADX=40,HDR_H=110,FTR_H=56,PADY_TOP=28,PADY_BOT=28;
+  const PADX=40,HDR_H=132,FTR_H=56,PADY_TOP=28,PADY_BOT=28;
   const CW=PADX*2+fases.length*COLW+(fases.length-1)*COLGAP;
   const bracketH=TITLE_H+alturaBracket;
   const CH=HDR_H+PADY_TOP+bracketH+PADY_BOT+(tercerPuesto?150:0)+FTR_H;
@@ -7117,17 +7122,67 @@ async function _generarImagenCuadro(divId){
   const imgCache={};
   const _loadImg=async url=>_safeLoadImg(url,imgCache);
   const todos=[...fases.flatMap(f=>porFaseCompleto[f]),tercerPuesto].filter(Boolean);
-  await Promise.all(todos.flatMap(p=>[_loadImg(p.local?.club?.logo_url),_loadImg(p.visita?.club?.logo_url)]));
+  let hdrLogo=null,sporvixLogo=null;
+  await Promise.all([
+    ...todos.flatMap(p=>[_loadImg(p.local?.club?.logo_url),_loadImg(p.visita?.club?.logo_url)]),
+    hdrUrl?(async()=>{
+      try{const img=new Image();img.crossOrigin='anonymous';
+        await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=hdrUrl;});
+        hdrLogo=img;}catch{}
+    })():Promise.resolve(),
+    (async()=>{try{const img=new Image();await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,4000);img.src='/sporvix-logo.png';});sporvixLogo=img;}catch{}})(),
+  ]);
 
   showToast('Generando imagen…','');
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,CW,CH);
 
-  // header
+  // ── branding (logo + SPORVIX + liga/torneo), igual al resto de canvas compartibles ──
+  const logoR=Math.round(HDR_H*0.28);
+  const logoX=PADX+logoR, logoY=Math.round(HDR_H*0.5);
+  if(!isLight){
+    ctx.save();ctx.shadowColor='rgba(79,140,255,0.35)';ctx.shadowBlur=22;
+    ctx.beginPath();ctx.arc(logoX,logoY,logoR+2,0,Math.PI*2);ctx.strokeStyle='transparent';ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle=C.card2;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=isLight?'rgba(37,99,235,0.30)':'rgba(255,255,255,0.12)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
+  if(hdrLogo){
+    ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
+    _drawImgCover(ctx,hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);
+    ctx.restore();
+  } else if(sporvixLogo){
+    const pad=logoR*0.12;
+    ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
+    _drawImgCover(ctx,sporvixLogo,logoX-logoR+pad,logoY-logoR+pad,logoR*2-pad*2,logoR*2-pad*2);
+    ctx.restore();
+  } else {
+    const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
+    lgG.addColorStop(0,C.accent);lgG.addColorStop(1,'#8b5cf6');
+    ctx.font=`900 ${Math.round(logoR*1.1)}px system-ui,sans-serif`;
+    ctx.fillStyle=lgG;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('S',logoX,logoY);ctx.textBaseline='alphabetic';
+  }
+
+  const tX=logoX+logoR+Math.round(CW*0.018);
+  const s1=Math.round(Math.min(CW*0.036,HDR_H*0.26));
+  const s2=Math.round(Math.min(CW*0.026,HDR_H*0.19));
+  const s3=Math.round(Math.min(CW*0.020,HDR_H*0.15));
+  const s4=Math.round(Math.min(CW*0.017,HDR_H*0.125));
+  const brandLines=[
+    {t:'SPORVIX',s:s1,c:C.text,w:900},
+    {t:ligaName,s:s2,c:C.accent,w:700},
+    ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
+    {t:divNombre||'Cuadro de eliminatoria',s:s4,c:C.text3,w:400},
+  ].filter(l=>l.t);
+  const totalBH=brandLines.reduce((a,l)=>a+l.s*1.28,0);
+  let ly=(HDR_H-totalBH)/2+brandLines[0].s;
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
-  ctx.fillStyle=C.text;ctx.font='800 30px system-ui,sans-serif';
-  ctx.fillText('🏆 '+_tTxt(ctx,divNombre||'Cuadro de eliminatoria',CW-PADX*2),PADX,58);
-  ctx.fillStyle=C.text3;ctx.font='600 16px system-ui,sans-serif';
-  ctx.fillText(_tTxt(ctx,[torNombre,ligaName].filter(Boolean).join(' · '),CW-PADX*2),PADX,84);
+  for(const l of brandLines){
+    ctx.font=`${l.w} ${l.s}px system-ui,sans-serif`;ctx.fillStyle=l.c;
+    ctx.fillText(_tTxt(ctx,l.t,CW-tX-PADX),tX,ly);ly+=l.s*1.28;
+  }
   ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,HDR_H);ctx.lineTo(CW,HDR_H);ctx.stroke();
 
   const shield=(p_,x,y,d)=>{
