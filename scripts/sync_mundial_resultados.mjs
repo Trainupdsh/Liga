@@ -1,7 +1,11 @@
 // Sincroniza la Copa Mundial 2026 real (football-data.org) con la liga
 // "Copa Mundial 2026" cargada en Sporvix:
 //   1) Actualiza el marcador/estado de los partidos ya cargados (fase de grupos
-//      y eliminatoria) mientras se juegan.
+//      y eliminatoria) mientras se juegan, y corrige la fecha/hora al horario
+//      real del partido (convertido a hora Argentina) tanto en grupos como en
+//      eliminatoria — el fixture de grupos se genera con una fecha/hora
+//      provisoria al cargar el Mundial, y este script la reemplaza por la real
+//      apenas football-data.org confirma el partido.
 //   2) Crea automáticamente los partidos de la fase eliminatoria (16avos, octavos,
 //      cuartos, semis, 3er puesto, final) a medida que football-data.org confirma
 //      los cruces — no hace falta cargarlos a mano.
@@ -219,12 +223,14 @@ async function main() {
       if (p.estado !== estado) updates.estado = estado;
       if (p.goles_local !== goles_local) updates.goles_local = goles_local;
       if (p.goles_visita !== goles_visita) updates.goles_visita = goles_visita;
-      // La fecha/hora de los partidos de grupos la define el propio torneo
-      // (fixture round-robin armado por Sporvix) — solo se corrige la de los
-      // partidos de eliminatoria, que sí vienen del horario real del partido.
-      if (p.fase && p.fase !== 'regular' && m.utcDate) {
+      // Fecha/hora real del partido (grupos y eliminatoria), convertida a
+      // hora Argentina. Postgres devuelve la columna "hora" como HH:MM:SS —
+      // se recorta a HH:MM antes de comparar para no reescribir en cada
+      // corrida un valor que ya está correcto.
+      if (m.utcDate) {
         const { fecha, hora } = toArgentinaFechaHora(m.utcDate);
-        if (fecha && (p.fecha !== fecha || p.hora !== hora)) { updates.fecha = fecha; updates.hora = hora; }
+        const horaActual = (p.hora || '').slice(0, 5);
+        if (fecha && (p.fecha !== fecha || horaActual !== hora)) { updates.fecha = fecha; updates.hora = hora; }
       }
       if (!Object.keys(updates).length) continue;
       await supaPatch(`/partidos?id=eq.${p.id}`, updates);
