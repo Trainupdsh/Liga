@@ -10259,7 +10259,7 @@ function _dtDivStandingsCard(div){
 
 // Tab switcher for the division center panel
 function _dtDivSwitchTab(tab){
-  ['posiciones','partidos','goleadores'].forEach(t=>{
+  ['posiciones','partidos','goleadores','cuadro'].forEach(t=>{
     const panel=document.getElementById('dt-divtab-'+t);
     const btn=document.getElementById('dt-divtab-btn-'+t);
     if(panel)panel.style.display=t===tab?'block':'none';
@@ -10269,6 +10269,16 @@ function _dtDivSwitchTab(tab){
       btn.style.fontWeight=t===tab?'800':'600';
     }
   });
+  if(tab==='cuadro')_dtCargarCuadro(_dtSelDiv);
+}
+async function _dtCargarCuadro(divId){
+  const div=divisiones.find(d=>d.id===divId);if(!div)return;
+  const el=document.getElementById('dt-cuadro-wrap');if(!el)return;
+  el.innerHTML='<div class="dt-empty">Cargando...</div>';
+  try{
+    const partidos=await _fetchFaseEliminatoria(div._rid??divId);
+    _renderCuadroArbol(el,partidos);
+  }catch(e){el.innerHTML='<div class="dt-empty">Error al cargar el cuadro.</div>';}
 }
 
 // Renders matches list for a division (for the PARTIDOS tab)
@@ -10370,6 +10380,7 @@ async function _dtShowDivisionCenter(divId){
 
   const _tabBtn=(id,label,active)=>`<button id="dt-divtab-btn-${id}" onclick="_dtDivSwitchTab('${id}')"
     style="flex:1;border:none;background:none;cursor:pointer;padding:10px 4px 8px;font-size:11px;font-weight:${active?800:600};color:${active?'var(--accent)':'var(--text3)'};border-bottom:2px solid ${active?'var(--accent)':'transparent'};letter-spacing:.3px;transition:color .15s,border-color .15s">${label}</button>`;
+  const tieneCuadro=await _tieneFaseEliminatoria(div._rid??divId);
 
   let html=`<div style="padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)">
     <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px">
@@ -10383,6 +10394,7 @@ async function _dtShowDivisionCenter(divId){
       ${_tabBtn('posiciones','POSICIONES',true)}
       ${_tabBtn('partidos','PARTIDOS',false)}
       ${_tabBtn('goleadores','GOLEADORES',false)}
+      ${tieneCuadro?_tabBtn('cuadro','CUADRO',false):''}
     </div>
   </div>`;
 
@@ -10400,6 +10412,13 @@ async function _dtShowDivisionCenter(divId){
   html+=_dtDivScorersHtml(divId);
   html+='<div style="height:32px"></div>';
   html+=`</div>`;
+
+  if(tieneCuadro){
+    html+=`<div id="dt-divtab-cuadro" style="display:none;padding:0 16px">
+      <div id="dt-cuadro-wrap" class="cuadro-wrap"></div>
+      <div style="height:32px"></div>
+    </div>`;
+  }
 
   document.getElementById('vtd-content').innerHTML=html;
   showView('view-torneo-detail');
