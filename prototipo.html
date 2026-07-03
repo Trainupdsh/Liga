@@ -7091,11 +7091,33 @@ function _renderCuadroArbol(el,partidos){
 }
 
 // — Compartir el cuadro como imagen —
-async function compartirCuadro(divId){
-  try{await _generarImagenCuadro(divId);}
-  catch(e){console.warn('canvas cuadro',e);showToast('Error al generar la imagen. Probá de nuevo.','error');}
+function compartirCuadro(divId){
+  const old=document.getElementById('_cuadroPalModal');if(old)old.remove();
+  _shareChosenPalette='clasico';
+  const m=document.createElement('div');
+  m.id='_cuadroPalModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const swatches=_SHARE_PALETTES.map((p,i)=>`
+    <button class="pal-sw" data-pal="${p.id}" title="${p.name}" onclick="_pickPaletteSwatch('${p.id}')"
+      style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;outline:${i===0?'3px solid #fff':'3px solid transparent'};outline-offset:2px;background:linear-gradient(135deg,${p.hex1},${p.hex2})"></button>`).join('');
+  m.innerHTML=`
+    <div style="background:#131d3b;border-radius:18px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.85)">
+      <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="color:#f1f5f9;font-weight:800;font-size:15px">Elegí el color</div>
+        <div style="color:#64748b;font-size:12px;margin-top:3px">Se aplica a la imagen del cuadro que vas a compartir</div>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">${swatches}</div>
+      </div>
+      <div style="display:flex;gap:10px;padding:0 20px 18px">
+        <button onclick="document.getElementById('_cuadroPalModal').remove()" style="flex:1;padding:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">Cancelar</button>
+        <button onclick="document.getElementById('_cuadroPalModal').remove();_generarImagenCuadro(${divId},_shareChosenPalette).catch(e=>{console.warn('canvas cuadro',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})" style="flex:1;padding:11px;background:#1a6ef5;border:none;border-radius:10px;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Compartir</button>
+      </div>
+    </div>`;
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  document.body.appendChild(m);
 }
-async function _generarImagenCuadro(divId){
+async function _generarImagenCuadro(divId,paletteId){
   const partidos=await _fetchFaseEliminatoria(divId);
   const cuadro=_construirCuadroCompleto(partidos);
   if(!cuadro){showToast('Sin datos para compartir','');return;}
@@ -7115,6 +7137,9 @@ async function _generarImagenCuadro(divId){
   const isLight=document.documentElement.getAttribute('data-theme')==='light';
   const C=isLight?{bg:'#edf2ff',card:'#ffffff',card2:'#f3f6ff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
     :{bg:'#0c1017',card:'#151b26',card2:'#1c2434',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
+  // paleta elegida por quien comparte — sobrepinta el acento azul por defecto
+  const PAL=_SHARE_PALETTES.find(p=>p.id===paletteId)||_SHARE_PALETTES[0];
+  C.accent=isLight?_hexBlend(PAL.hex1,'#000000',0.18):PAL.hex1;
 
   const MH=112,GAP=28,UNIT=MH+GAP,COLW=300,COLGAP=64,TITLE_H=48;
   const matchesEnRonda=fases.map(f=>porFaseCompleto[f].length);
@@ -7155,13 +7180,13 @@ async function _generarImagenCuadro(divId){
   const logoR=Math.round(HDR_H*0.28);
   const logoX=PADX+logoR, logoY=Math.round(HDR_H*0.5);
   if(!isLight){
-    ctx.save();ctx.shadowColor='rgba(79,140,255,0.35)';ctx.shadowBlur=22;
+    ctx.save();ctx.shadowColor=`rgba(${_hexRgb(PAL.hex1)},0.35)`;ctx.shadowBlur=22;
     ctx.beginPath();ctx.arc(logoX,logoY,logoR+2,0,Math.PI*2);ctx.strokeStyle='transparent';ctx.stroke();
     ctx.restore();
   }
   ctx.fillStyle=C.card2;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=isLight?'rgba(37,99,235,0.30)':'rgba(255,255,255,0.12)';ctx.lineWidth=1.5;
+  ctx.strokeStyle=isLight?`rgba(${_hexDarkRgb(PAL.hex1,42)},0.30)`:'rgba(255,255,255,0.12)';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
   if(hdrLogo){
     ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
@@ -7174,7 +7199,7 @@ async function _generarImagenCuadro(divId){
     ctx.restore();
   } else {
     const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
-    lgG.addColorStop(0,C.accent);lgG.addColorStop(1,'#8b5cf6');
+    lgG.addColorStop(0,C.accent);lgG.addColorStop(1,PAL.hex2);
     ctx.font=`900 ${Math.round(logoR*1.1)}px system-ui,sans-serif`;
     ctx.fillStyle=lgG;ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('S',logoX,logoY);ctx.textBaseline='alphabetic';
