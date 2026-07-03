@@ -523,6 +523,23 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .bracket-team:last-child{border-bottom:none;}
 .bracket-team.winner{background:rgba(34,197,94,.07);color:var(--green);}
 .bracket-score{margin-left:auto;font-size:15px;font-weight:900;}
+/* CUADRO DE ELIMINATORIA (árbol) */
+.cuadro-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:12px 4px 24px}
+.cuadro-tree{display:flex;gap:36px;position:relative;min-height:120px}
+.cuadro-round{display:flex;flex-direction:column;flex-shrink:0;width:168px;position:relative}
+.cuadro-round-title{font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:10px}
+.cuadro-box{position:absolute;left:0;width:168px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cuadro-row{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11.5px;font-weight:700;border-bottom:1px solid var(--border)}
+.cuadro-row:last-child{border-bottom:none}
+.cuadro-row.win{background:rgba(34,197,94,.08);color:var(--green)}
+.cuadro-flag{width:18px;height:18px;border-radius:50%;flex-shrink:0;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#fff}
+.cuadro-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cuadro-score{font-size:12px;font-weight:900;color:var(--text2)}
+.cuadro-row.win .cuadro-score{color:var(--green)}
+.cuadro-vs{font-size:9px;color:var(--text3);text-align:center;padding:3px 0}
+.cuadro-live{font-size:9px;color:var(--red);font-weight:800;text-align:center;padding:3px 0;background:rgba(239,68,68,.08)}
+.cuadro-svg{flex-shrink:0;overflow:visible;pointer-events:none}
+.cuadro-tercer{margin-top:18px;padding:10px;background:var(--card2);border:1px dashed var(--border);border-radius:10px;font-size:11px}
 /* CANCHA DISPONIBILIDAD */
 .cancha-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
 .cancha-slot{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);margin-bottom:4px;}
@@ -1154,11 +1171,16 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="empty-state">Escribí un nombre para buscar jugadores</div>
       </div>
     </div>
+    <div class="screen" id="screen-cuadro">
+      <div class="section-title-sm" style="margin:0 4px 6px">CUADRO DE ELIMINATORIA</div>
+      <div id="cuadroPublicoWrap" class="cuadro-wrap"><div class="empty-state">Cargando...</div></div>
+    </div>
   </div>
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span class="nav-label">PARTIDOS</span></div>
     <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span><span class="nav-label">TABLA</span></div>
     <div class="nav-item" onclick="switchTab('goles',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.6V3.6M14.1 14.1l2.7 2.1M9.9 14.1l-2.7 2.1"/></svg></span><span class="nav-label">GOLES</span></div>
+    <div class="nav-item" id="nav-item-cuadro" style="display:none" onclick="switchTab('cuadro',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V4M12 13v7M9 20h6"/></svg></span><span class="nav-label">CUADRO</span></div>
     <div class="nav-item" onclick="switchTab('buscar',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><span class="nav-label">BUSCAR</span></div>
   </nav>
 </div>
@@ -1692,6 +1714,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div id="admin-div-partidos" style="display:none">
       <div style="padding:12px 16px 8px;display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-secondary btn-sm" onclick="openFixtureScreen()">🔄 Fixture</button>
+        <button class="btn btn-secondary btn-sm" id="btn-ver-cuadro" style="display:none" onclick="abrirCuadroAdmin()">🌳 Cuadro</button>
         <button class="btn btn-secondary btn-sm" id="btn-gen-playoffs" style="display:none" onclick="openPlayoffsModal()">🏆 Playoffs</button>
         <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Partido</button>
       </div>
@@ -1726,6 +1749,18 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div id="playoffs-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <button class="btn btn-primary" id="playoffs-gen-btn" onclick="generarPlayoffs()" style="display:none">🏆 Generar primera ronda</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: CUADRO DE ELIMINATORIA (admin) -->
+<div class="modal-overlay" id="cuadroAdminModal" onclick="closeCuadroAdmin(event)">
+  <div class="modal-sheet" style="padding-bottom:20px;max-width:100%">
+    <div class="modal-handle"></div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:900">🌳 Cuadro de eliminatoria</div>
+      <button class="btn btn-secondary btn-sm" onclick="closeCuadroAdmin(null,true)">Cerrar</button>
+    </div>
+    <div id="cuadroAdminWrap" class="cuadro-wrap" style="max-height:75vh"><div class="empty-state">Cargando...</div></div>
   </div>
 </div>
 
@@ -3730,7 +3765,7 @@ async function openDivision(divId){
   }
   switchTab('partidos',document.querySelector('#view-division .nav-item'));
   _divShift=0;currentFilter='todos';
-  buildDateStrip();renderMatches();renderStandings();renderScorers();
+  buildDateStrip();renderMatches();renderStandings();renderScorers();_checkCuadroTab(divId);
 }
 function goBackToLeague(){showView('view-league');}
 
@@ -4133,6 +4168,7 @@ function switchTab(tab,el){
   el.classList.add('active');
   if(tab==='goles')renderScorers();
   if(tab==='tabla')renderStandings();
+  if(tab==='cuadro')cargarCuadroPublico();
 }
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const _MON=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -6646,6 +6682,8 @@ async function loadAdminPartidos(){
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   const playoffBtn=document.getElementById('btn-gen-playoffs');
   if(playoffBtn)playoffBtn.style.display='none';
+  const cuadroBtnReset=document.getElementById('btn-ver-cuadro');
+  if(cuadroBtnReset)cuadroBtnReset.style.display='none';
   if(!ligaArbitros.length){
     try{const {data}=await supa.from('arbitros').select('id,nombre,email').eq('liga_id',currentAdminLeagueId).order('nombre');ligaArbitros=data||[];}catch(e){}
   }
@@ -6658,6 +6696,8 @@ async function loadAdminPartidos(){
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
     const regulares=data.filter(p=>!p.fase||p.fase==='regular');
     const playoffs=data.filter(p=>p.fase&&p.fase!=='regular');
+    const cuadroBtn=document.getElementById('btn-ver-cuadro');
+    if(cuadroBtn)cuadroBtn.style.display=playoffs.length?'':'none';
     const faseOrder={dieciseisavos:0,octavos:0.7,cuartos:1,semis:2,final:3,tercer_puesto:2.5};
     playoffs.sort((a,b)=>(faseOrder[a.fase]||9)-(faseOrder[b.fase]||9));
     // Mostrar botón playoffs si toda la fase regular terminó
@@ -6860,6 +6900,130 @@ async function generarSiguienteRonda(faseActual, partidosFase){
     showToast(faseLabel+' generadas ✓','success');
     await loadAdminPartidos();
   }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ═══ CUADRO DE ELIMINATORIA (árbol visual) ═══
+// Formato genérico: sirve para cualquier división con partidos de fase eliminatoria
+// (dieciseisavos/octavos/cuartos/semis/final), sin importar en qué ronda arranca el
+// cuadro — se adapta solo a las fases que efectivamente tengan partidos cargados.
+const _CUADRO_FASE_ORDEN=['dieciseisavos','octavos','cuartos','semis','final'];
+const _CUADRO_FASE_LABEL={dieciseisavos:'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semifinal',final:'Final'};
+
+async function _fetchFaseEliminatoria(divisionId){
+  const {data,error}=await supa.from('partidos')
+    .select('id,fase,estado,goles_local,goles_visita,equipo_local_id,equipo_visita_id,'+
+      'local:equipo_local_id(nombre,abreviacion,color_principal,club:club_id(logo_url)),'+
+      'visita:equipo_visita_id(nombre,abreviacion,color_principal,club:club_id(logo_url))')
+    .eq('division_id',divisionId).not('fase','is',null).neq('fase','regular');
+  if(error)throw error;
+  return data||[];
+}
+async function _tieneFaseEliminatoria(divisionId){
+  try{
+    const {count}=await supa.from('partidos').select('id',{count:'exact',head:true})
+      .eq('division_id',divisionId).not('fase','is',null).neq('fase','regular');
+    return (count||0)>0;
+  }catch(e){return false;}
+}
+function _cuadroShieldHTML(equipo){
+  if(equipo?.club?.logo_url)return `<div class="cuadro-flag" style="background-image:url('${equipo.club.logo_url}')"></div>`;
+  const ab=escHtml(equipo?.abreviacion||equipo?.nombre?.slice(0,2).toUpperCase()||'?');
+  return `<div class="cuadro-flag" style="background:${equipo?.color_principal||'#1a2150'}">${ab}</div>`;
+}
+function _renderCuadroArbol(el,partidos){
+  if(!partidos.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+  const porFase={};
+  partidos.forEach(p=>{if(!porFase[p.fase])porFase[p.fase]=[];porFase[p.fase].push(p);});
+  const tercerPuesto=(porFase.tercer_puesto||[])[0]||null;
+  delete porFase.tercer_puesto;
+  const fases=_CUADRO_FASE_ORDEN.filter(f=>porFase[f]&&porFase[f].length);
+  // Fases no reconocidas (por si algún día se agrega otra etiqueta): se agregan al final, en orden de aparición.
+  Object.keys(porFase).forEach(f=>{if(!fases.includes(f))fases.push(f);});
+  if(!fases.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+
+  const MH=56,GAP=20,UNIT=MH+GAP,COLW=168,COLGAP=36,TITLE_H=30;
+  const matchesEnRonda=fases.map(f=>porFase[f].length);
+  const alturaBracket=UNIT*matchesEnRonda[0];
+  const alturaTotal=alturaBracket+TITLE_H;
+  const centerY=(r,j)=>UNIT*Math.pow(2,r)*(j+0.5)-UNIT/2+MH/2;
+
+  let html=`<div class="cuadro-tree" style="height:${alturaTotal}px">`;
+  fases.forEach((fase,r)=>{
+    html+=`<div class="cuadro-round" style="height:${alturaTotal}px">
+      <div class="cuadro-round-title">${_CUADRO_FASE_LABEL[fase]||fase}</div>`;
+    porFase[fase].forEach((p,j)=>{
+      const top=centerY(r,j)-MH/2+TITLE_H;
+      const gl=p.goles_local,gv=p.goles_visita;
+      const lWin=p.estado==='finalizado'&&(gl??0)>(gv??0);
+      const vWin=p.estado==='finalizado'&&(gv??0)>(gl??0);
+      const marcador=p.estado==='programado'?'':`<span class="cuadro-score">${gl??'-'}</span>`;
+      const marcadorV=p.estado==='programado'?'':`<span class="cuadro-score">${gv??'-'}</span>`;
+      html+=`<div class="cuadro-box" style="top:${top}px">
+        ${p.estado==='en_curso'?'<div class="cuadro-live">🔴 EN VIVO</div>':''}
+        <div class="cuadro-row${lWin?' win':''}">${_cuadroShieldHTML(p.local)}<span class="cuadro-name">${escHtml(p.local?.nombre||'Por definir')}</span>${marcador}</div>
+        <div class="cuadro-row${vWin?' win':''}">${_cuadroShieldHTML(p.visita)}<span class="cuadro-name">${escHtml(p.visita?.nombre||'Por definir')}</span>${marcadorV}</div>
+      </div>`;
+    });
+    html+='</div>';
+    // Conectores SVG hacia la siguiente ronda (solo si la cantidad de partidos calza en potencia de 2)
+    if(r<fases.length-1){
+      const matchesSig=matchesEnRonda[r+1];
+      if(matchesEnRonda[r]===matchesSig*2){
+        let paths='';
+        for(let k=0;k<matchesSig;k++){
+          const y1=centerY(r,2*k)+TITLE_H,y2=centerY(r,2*k+1)+TITLE_H,ym=(y1+y2)/2,half=COLGAP/2;
+          paths+=`M0,${y1} H${half} V${ym} M0,${y2} H${half} V${ym} M${half},${ym} H${COLGAP}`;
+        }
+        html+=`<svg class="cuadro-svg" width="${COLGAP}" height="${alturaTotal}">
+          <path d="${paths}" stroke="var(--text3)" stroke-width="2" fill="none"/>
+        </svg>`;
+      } else {
+        html+=`<div style="width:${COLGAP}px"></div>`;
+      }
+    }
+  });
+  html+='</div>';
+  if(tercerPuesto){
+    const gl=tercerPuesto.goles_local,gv=tercerPuesto.goles_visita;
+    const lWin=tercerPuesto.estado==='finalizado'&&(gl??0)>(gv??0);
+    const vWin=tercerPuesto.estado==='finalizado'&&(gv??0)>(gl??0);
+    html+=`<div class="cuadro-tercer">
+      <div style="font-weight:800;color:var(--text2);margin-bottom:6px">🥉 Tercer puesto</div>
+      <div class="cuadro-row${lWin?' win':''}">${_cuadroShieldHTML(tercerPuesto.local)}<span class="cuadro-name">${escHtml(tercerPuesto.local?.nombre||'Por definir')}</span><span class="cuadro-score">${tercerPuesto.estado==='programado'?'':gl??'-'}</span></div>
+      <div class="cuadro-row${vWin?' win':''}">${_cuadroShieldHTML(tercerPuesto.visita)}<span class="cuadro-name">${escHtml(tercerPuesto.visita?.nombre||'Por definir')}</span><span class="cuadro-score">${tercerPuesto.estado==='programado'?'':gv??'-'}</span></div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+// — Público —
+async function cargarCuadroPublico(){
+  const el=document.getElementById('cuadroPublicoWrap');
+  el.innerHTML='<div class="empty-state">Cargando...</div>';
+  try{
+    const partidos=await _fetchFaseEliminatoria(currentDivisionId);
+    _renderCuadroArbol(el,partidos);
+  }catch(e){el.innerHTML='<div class="empty-state">Error al cargar el cuadro.</div>';}
+}
+async function _checkCuadroTab(divId){
+  const navItem=document.getElementById('nav-item-cuadro');
+  if(!navItem)return;
+  const tiene=await _tieneFaseEliminatoria(divId);
+  navItem.style.display=tiene?'':'none';
+}
+
+// — Admin —
+function abrirCuadroAdmin(){
+  document.getElementById('cuadroAdminModal').classList.add('open');
+  const el=document.getElementById('cuadroAdminWrap');
+  el.innerHTML='<div class="empty-state">Cargando...</div>';
+  _fetchFaseEliminatoria(currentAdminDivisionId)
+    .then(partidos=>_renderCuadroArbol(el,partidos))
+    .catch(()=>{el.innerHTML='<div class="empty-state">Error al cargar el cuadro.</div>';});
+}
+function closeCuadroAdmin(e,force){
+  if(force||e?.target===document.getElementById('cuadroAdminModal'))
+    document.getElementById('cuadroAdminModal').classList.remove('open');
 }
 
 function openNuevoPartido(){
