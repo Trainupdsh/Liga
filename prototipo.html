@@ -6601,7 +6601,7 @@ async function confirmarEliminarJugador(id,nombre){
 // — PARTIDOS —
 function renderPartidoCard(p){
   const estadoLabel={programado:'⏳',en_curso:'🟢 EN VIVO',finalizado:'✓'};
-  const faseLabelMap={cuartos:'Cuartos de final',semis:'Semifinal',final:'Final',tercer_puesto:'3er. puesto'};
+  const faseLabelMap={dieciseisavos:'16avos de final',octavos:'Octavos de final',cuartos:'Cuartos de final',semis:'Semifinal',final:'Final',tercer_puesto:'3er. puesto'};
   const faseTag=p.fase&&p.fase!=='regular'?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(212,175,55,0.15);color:#d4af37;border:1px solid rgba(212,175,55,0.3)">${faseLabelMap[p.fase]||p.fase}</span> `:'';
   return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -6658,7 +6658,7 @@ async function loadAdminPartidos(){
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
     const regulares=data.filter(p=>!p.fase||p.fase==='regular');
     const playoffs=data.filter(p=>p.fase&&p.fase!=='regular');
-    const faseOrder={cuartos:1,semis:2,final:3,tercer_puesto:2.5};
+    const faseOrder={dieciseisavos:0,octavos:0.7,cuartos:1,semis:2,final:3,tercer_puesto:2.5};
     playoffs.sort((a,b)=>(faseOrder[a.fase]||9)-(faseOrder[b.fase]||9));
     // Mostrar botón playoffs si toda la fase regular terminó
     const regularTerminada=regulares.length>0&&regulares.every(p=>p.estado==='finalizado');
@@ -6686,7 +6686,7 @@ async function loadAdminPartidos(){
     if(playoffs.length){
       const fasesSorted=[...new Set(playoffs.map(p=>p.fase))].sort((a,b)=>(faseOrder[a]||9)-(faseOrder[b]||9));
       fasesSorted.forEach(fase=>{
-        const faseLabelMap={cuartos:'Cuartos de final',semis:'Semifinales',final:'Final',tercer_puesto:'Tercer puesto'};
+        const faseLabelMap={dieciseisavos:'16avos de final',octavos:'Octavos de final',cuartos:'Cuartos de final',semis:'Semifinales',final:'Final',tercer_puesto:'Tercer puesto'};
         html+=`<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 8px">🏆 ${faseLabelMap[fase]||fase}</div>`;
         html+=playoffs.filter(p=>p.fase===fase).map(renderPartidoCard).join('');
       });
