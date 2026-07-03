@@ -89,6 +89,16 @@ async function supaPost(path, body) {
   return res.json();
 }
 
+// football-data.org da la fecha/hora en UTC. Argentina es UTC-3 todo el año
+// (sin horario de verano), así que restar 3 horas y leer el resultado como si
+// fuera UTC da directamente la fecha/hora "de pared" en Argentina.
+function toArgentinaFechaHora(utcDateStr) {
+  if (!utcDateStr) return { fecha: null, hora: null };
+  const arg = new Date(new Date(utcDateStr).getTime() - 3 * 60 * 60 * 1000);
+  const iso = arg.toISOString();
+  return { fecha: iso.split('T')[0], hora: iso.split('T')[1].slice(0, 5) };
+}
+
 function scoreOf(m) {
   return {
     home: m.score?.fullTime?.home ?? m.score?.halfTime?.home ?? null,
@@ -154,7 +164,7 @@ async function main() {
   console.log('Leyendo partidos ya cargados en Sporvix (grupos + eliminatoria)...');
   const allDivIds = divisiones.map(d => d.id);
   const partidos = allDivIds.length
-    ? await supaGet(`/partidos?division_id=in.(${allDivIds.join(',')})&select=id,division_id,estado,fase,goles_local,goles_visita,equipo_local_id,equipo_visita_id,equipo_local:equipo_local_id(nombre),equipo_visita:equipo_visita_id(nombre)`)
+    ? await supaGet(`/partidos?division_id=in.(${allDivIds.join(',')})&select=id,division_id,estado,fase,fecha,hora,goles_local,goles_visita,equipo_local_id,equipo_visita_id,equipo_local:equipo_local_id(nombre),equipo_visita:equipo_visita_id(nombre)`)
     : [];
 
   // Migración: si una corrida anterior del script dejó partidos de "Fase Final"
@@ -205,11 +215,21 @@ async function main() {
       const goles_local = hit.swapped ? golesVisitaDef : golesLocalDef;
       const goles_visita = hit.swapped ? golesLocalDef : golesVisitaDef;
       const { p } = hit;
-      const sinCambios = p.estado === estado && p.goles_local === goles_local && p.goles_visita === goles_visita;
-      if (sinCambios) continue;
-      await supaPatch(`/partidos?id=eq.${p.id}`, { estado, goles_local, goles_visita });
+      const updates = {};
+      if (p.estado !== estado) updates.estado = estado;
+      if (p.goles_local !== goles_local) updates.goles_local = goles_local;
+      if (p.goles_visita !== goles_visita) updates.goles_visita = goles_visita;
+      // La fecha/hora de los partidos de grupos la define el propio torneo
+      // (fixture round-robin armado por Sporvix) — solo se corrige la de los
+      // partidos de eliminatoria, que sí vienen del horario real del partido.
+      if (p.fase && p.fase !== 'regular' && m.utcDate) {
+        const { fecha, hora } = toArgentinaFechaHora(m.utcDate);
+        if (fecha && (p.fecha !== fecha || p.hora !== hora)) { updates.fecha = fecha; updates.hora = hora; }
+      }
+      if (!Object.keys(updates).length) continue;
+      await supaPatch(`/partidos?id=eq.${p.id}`, updates);
       actualizados++;
-      console.log(`  ✓ actualizado: ${homeName} ${scoreHome ?? '-'} - ${scoreAway ?? '-'} ${awayName} (id=${p.id}, ${estado})`);
+      console.log(`  ✓ actualizado: ${homeName} ${scoreHome ?? '-'} - ${scoreAway ?? '-'} ${awayName} (id=${p.id}, ${estado}${updates.hora ? ', hora ' + updates.fecha + ' ' + updates.hora + ' ART' : ''})`);
       continue;
     }
 
@@ -220,9 +240,7 @@ async function main() {
     const visitaId = await getOrCreateFaseFinalEquipoId(awayName);
     if (!localId || !visitaId) { sinEquipo++; console.log(`  ⚠ No se encontró en Sporvix a "${homeName}" o "${awayName}" (${m.stage}) — se omite por ahora.`); continue; }
 
-    const fechaHora = m.utcDate ? new Date(m.utcDate) : null;
-    const fecha = fechaHora ? fechaHora.toISOString().split('T')[0] : null;
-    const hora = fechaHora ? fechaHora.toISOString().split('T')[1].slice(0, 5) : null;
+    const { fecha, hora } = toArgentinaFechaHora(m.utcDate);
     const [nuevoPartido] = await supaPost('/partidos', {
       division_id: faseFinalDiv.id, equipo_local_id: localId, equipo_visita_id: visitaId,
       fase: info.fase, jornada: info.orden, fecha, hora, cancha: null, estado,
