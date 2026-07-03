@@ -3170,7 +3170,8 @@ function _mcRerender(){renderLeagues(_mcLastList||leagues);}
 async function _mcToggleLiga(id){
   if(_dtExpLigas.has(id)){_dtExpLigas.delete(id);_mcRerender();return;}
   _dtExpLigas.add(id);_mcRerender();
-  await _dtEnsureTorneos(id); // load real torneos/divisiones if needed
+  showGlobalLoading();
+  try{await _dtEnsureTorneos(id);}finally{hideGlobalLoading();} // load real torneos/divisiones if needed
   _mcRerender();
 }
 function _mcToggleTorneo(id){
@@ -10319,20 +10320,21 @@ async function _dtEnsureTorneos(ligaId){
   if(!liga||!liga._real||_dtLoadedLigas.has(ligaId)||!supa)return;
   _dtLoadedLigas.add(ligaId);
   try{
-    const {data:ts,error}=await supa.from('torneos').select('*').eq('liga_id',ligaId).order('id');
+    // torneos + sus divisiones en un solo viaje de red (antes eran 2
+    // consultas secuenciales) — reduce la espera al expandir ligas grandes.
+    const {data:ts,error}=await supa.from('torneos').select('*, divisiones(*)').eq('liga_id',ligaId).order('id');
     if(error)throw error;
+    const realDivs=[];
     (ts||[]).forEach(t=>{
       const tid=t.id+RID;
-      if(torneos.some(x=>x.id===tid))return;
-      torneos.push({id:tid,_rid:t.id,leagueId:t.liga_id,name:t.nombre,
-        status:t.estado==='finalizado'?'done':'active',
-        start:t.temporada||'',divsCount:0,logoUrl:t.logo_url||null});
+      if(!torneos.some(x=>x.id===tid)){
+        torneos.push({id:tid,_rid:t.id,leagueId:t.liga_id,name:t.nombre,
+          status:t.estado==='finalizado'?'done':'active',
+          start:t.temporada||'',divsCount:0,logoUrl:t.logo_url||null});
+      }
+      (t.divisiones||[]).forEach(d=>realDivs.push(d));
     });
-    const tIds=(ts||[]).map(t=>t.id);
-    if(!tIds.length)return;
-    const {data:ds,error:de}=await supa.from('divisiones').select('*').in('torneo_id',tIds);
-    if(de)throw de;
-    const realDivs=ds||[];
+    if(!(ts||[]).length)return;
     realDivs.forEach(d=>{
       const did=d.id+RID;
       if(divisiones.some(x=>x.id===did))return;
@@ -10342,29 +10344,27 @@ async function _dtEnsureTorneos(ligaId){
     });
     const divIds=realDivs.map(d=>d.id);
     if(!divIds.length)return;
-    // Participating teams + finished matches for every division at once
+    // Equipos (+ club + jugadores embebidos) y partidos finalizados, en
+    // paralelo — antes los jugadores eran una 3ra consulta secuencial aparte.
     const [{data:eqs},{data:ps}]=await Promise.all([
-      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id,club_id,club:club_id(logo_url)').in('division_id',divIds),
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal,color_texto,division_id,club_id,club:club_id(logo_url),jugadores(id,nombre,numero,posicion,goles,foto_url,amarillas_acumuladas,rojas_acumuladas,suspendido,equipo_id)').in('division_id',divIds),
       supa.from('partidos').select('division_id,equipo_local_id,equipo_visita_id,goles_local,goles_visita').in('division_id',divIds).eq('estado','finalizado')
     ]);
     (eqs||[]).forEach(e=>{
       const eid=e.id+RID;
-      if(teamsData.some(x=>x.id===eid))return;
-      const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
-      teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null,clubId:e.club_id||null});
-    });
-    // Players of every team (so club/player cards show the real plantel)
-    const realEqIds=(eqs||[]).map(e=>e.id);
-    if(realEqIds.length){
-      const {data:jug}=await supa.from('jugadores').select('id,nombre,numero,posicion,goles,foto_url,amarillas_acumuladas,rojas_acumuladas,suspendido,equipo_id').in('equipo_id',realEqIds);
-      (jug||[]).forEach(j=>{
+      if(!teamsData.some(x=>x.id===eid)){
+        const short=(e.abreviacion||e.nombre||'?').slice(0,3).toUpperCase();
+        teamsData.push({id:eid,name:e.nombre,short,color:e.color_principal||'#1a2150',text:e.color_texto||'#fff',logoUrl:e.club?.logo_url||null,clubId:e.club_id||null});
+      }
+      // Players of every team (so club/player cards show the real plantel)
+      (e.jugadores||[]).forEach(j=>{
         const pid=j.id+RID;
         if(players.some(x=>x.id===pid))return;
         players.push({id:pid,name:j.nombre,jersey:j.numero||0,team:j.equipo_id+RID,
           goals:j.goles||0,yellows:j.amarillas_acumuladas||0,reds:j.rojas_acumuladas||0,
           fotoUrl:j.foto_url||null,pos:j.posicion||null,suspended:!!j.suspendido});
       });
-    }
+    });
     // Zero baseline for every team, then fold in finished results
     const acc={}; // divId(offset) -> teamId(offset) -> row
     (eqs||[]).forEach(e=>{
@@ -10428,7 +10428,9 @@ async function _dtToggleLiga(id){
     _dtExpLigas.delete(id);
   }else{
     _dtExpLigas.add(id);
-    await _dtEnsureTorneos(id); // pull real torneos from Supabase if needed
+    _renderDtLeft(); // mostrar el estado expandido (aunque todavía vacío) de inmediato
+    showGlobalLoading();
+    try{await _dtEnsureTorneos(id);}finally{hideGlobalLoading();} // pull real torneos from Supabase if needed
     // On desktop show standings of active torneo immediately (skip view-league)
     const activeTorneo=torneos.find(t=>t.leagueId===id&&t.status==='active')||torneos.find(t=>t.leagueId===id);
     if(activeTorneo){_dtExpTorneos.add(activeTorneo.id);_dtShowTorneoCenter(activeTorneo.id);}
