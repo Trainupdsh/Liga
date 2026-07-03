@@ -4212,7 +4212,7 @@ async function renderMatches(){
   document.getElementById('matchesList').innerHTML='<div class="empty-state">⏳ Cargando partidos...</div>';
   try{
     const {data,error}=await supa.from('partidos')
-      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,equipo_local_id,equipo_visita_id,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
+      .select('id,jornada,fase,fecha,hora,estado,goles_local,goles_visita,cancha,equipo_local_id,equipo_visita_id,local:equipo_local_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(id,nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
       .eq('division_id',currentDivisionId)
       .order('jornada',{ascending:false})
       .order('fecha',{ascending:false});
@@ -4226,15 +4226,28 @@ async function renderMatches(){
     });
     if(!filtered.length){document.getElementById('matchesList').innerHTML='<div class="empty-state">Sin partidos con este filtro</div>';return;}
     const hoyStr=new Date().toISOString().split('T')[0];
-    const byJornada={};
-    filtered.forEach(p=>{const j=p.jornada||1;if(!byJornada[j])byJornada[j]=[];byJornada[j].push(p);});
+    // Se agrupa por fase cuando el partido es de eliminatoria (16avos/octavos/etc.)
+    // en vez de por jornada: los partidos de playoffs generados desde "Generar
+    // Playoffs" guardan jornada=null, así que agrupar por jornada los mezclaría
+    // a todos (y con la fecha 1 del campeonato regular) en un solo cajón.
+    const byGrupo={};
+    filtered.forEach(p=>{
+      const esFase=p.fase&&p.fase!=='regular';
+      const key=esFase?'F:'+p.fase:'J:'+(p.jornada||1);
+      if(!byGrupo[key])byGrupo[key]=[];
+      byGrupo[key].push(p);
+    });
+    const _ordenGrupo=k=>k.startsWith('F:')?10000+(_CUADRO_FASE_ORDEN.indexOf(k.slice(2))>=0?_CUADRO_FASE_ORDEN.indexOf(k.slice(2)):99):Number(k.slice(2));
     let html='';
     const divName=document.getElementById('division-header-name').textContent||'División';
     // Programados: la fecha más próxima primero. Finalizados/Todos: la más reciente primero.
     const jornadaAsc=currentFilter==='upcoming';
-    Object.entries(byJornada).sort((a,b)=>jornadaAsc?a[0]-b[0]:b[0]-a[0]).forEach(([jornada,ps])=>{
+    Object.keys(byGrupo).sort((a,b)=>jornadaAsc?_ordenGrupo(a)-_ordenGrupo(b):_ordenGrupo(b)-_ordenGrupo(a)).forEach(key=>{
+      const ps=byGrupo[key];
       ps.sort((a,b)=>((a.fecha||'')+(a.hora||'')).localeCompare((b.fecha||'')+(b.hora||'')));
-      html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">⚽</span><span class="tournament-name">${divName.toUpperCase()}</span><span class="round-badge">FECHA ${jornada}</span></div>`;
+      const esFase=key.startsWith('F:');
+      const badgeLabel=esFase?(_CUADRO_FASE_LABEL[key.slice(2)]||key.slice(2)).toUpperCase():'FECHA '+key.slice(2);
+      html+=`<div class="match-group"><div class="group-header"><span class="sport-icon">⚽</span><span class="tournament-name">${divName.toUpperCase()}</span><span class="round-badge">${badgeLabel}</span></div>`;
       ps.forEach(p=>{
         const local=p.local,visita=p.visita;
         const isDone=p.estado==='finalizado',isLive=p.estado==='en_curso';
@@ -4628,6 +4641,26 @@ function _lhx(hex,a){
   catch{return hex||'#2a3a6a';}
 }
 
+// Carga una imagen para dibujarla en un <canvas> que después se va a exportar
+// (toBlob/toDataURL). Si el host no manda las cabeceras CORS correctas, el
+// <img crossOrigin="anonymous"> puede terminar "ensuciando" el canvas: la
+// imagen se ve bien en pantalla pero exportar el canvas entero después falla
+// (o devuelve una imagen vacía/incompleta) — eso incluye TODO lo dibujado
+// después del escudo, como la marca de agua de Sporvix. Por eso, antes de
+// aceptar la imagen para el canvas real, se prueba en un canvas descartable:
+// si exportarlo tira error, se descarta esa imagen puntual (el llamador cae
+// al color + abreviación) en vez de arruinar la exportación entera.
+async function _safeLoadImg(url,imgCache){
+  if(!url||imgCache[url])return;
+  try{
+    const img=new Image();img.crossOrigin='anonymous';
+    await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=url;});
+    const test=document.createElement('canvas');test.width=test.height=2;
+    test.getContext('2d').drawImage(img,0,0,2,2);
+    test.toDataURL();
+    imgCache[url]=img;
+  }catch{}
+}
 // Dibuja una imagen llenando el destino SIN deformar: escala manteniendo la
 // proporción y centra, recortando el excedente (equivalente a object-fit:cover;
 // el clip circular del llamador se encarga del recorte).
@@ -4747,7 +4780,7 @@ async function _renderImgConFormato(divId,tipo,fmtId,paletteId){
   const imgCache={};
   let hdrLogo=null,sporvixLogo=null;
   const hdrUrl=torneo?.logoUrl||liga?.logoUrl||null;
-  const _loadImg=async url=>{if(!url||imgCache[url])return;try{const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=url;});imgCache[url]=img;}catch{}};
+  const _loadImg=async url=>_safeLoadImg(url,imgCache);
   await Promise.all([
     ...filas.map(async r=>{
       if(esProxima){await _loadImg(r.homeTeam?.logoUrl);await _loadImg(r.awayTeam?.logoUrl);}
@@ -6919,7 +6952,7 @@ async function generarSiguienteRonda(faseActual, partidosFase){
 // (dieciseisavos/octavos/cuartos/semis/final), sin importar en qué ronda arranca el
 // cuadro — se adapta solo a las fases que efectivamente tengan partidos cargados.
 const _CUADRO_FASE_ORDEN=['dieciseisavos','octavos','cuartos','semis','final'];
-const _CUADRO_FASE_LABEL={dieciseisavos:'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semifinal',final:'Final'};
+const _CUADRO_FASE_LABEL={dieciseisavos:'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semifinal',final:'Final',tercer_puesto:'3er Puesto'};
 
 async function _fetchFaseEliminatoria(divisionId){
   const {data,error}=await supa.from('partidos')
@@ -7082,7 +7115,7 @@ async function _generarImagenCuadro(divId){
 
   // precargar escudos (si el host no manda CORS, se omite y usamos color+abreviación)
   const imgCache={};
-  const _loadImg=async url=>{if(!url||imgCache[url])return;try{const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=url;});imgCache[url]=img;}catch{}};
+  const _loadImg=async url=>_safeLoadImg(url,imgCache);
   const todos=[...fases.flatMap(f=>porFaseCompleto[f]),tercerPuesto].filter(Boolean);
   await Promise.all(todos.flatMap(p=>[_loadImg(p.local?.club?.logo_url),_loadImg(p.visita?.club?.logo_url)]));
 
@@ -10285,7 +10318,7 @@ async function _mtLoadRealMatches(){
     const realDivIds=divisiones.filter(d=>d._rid!=null).map(d=>d._rid);
     if(!realDivIds.length){_mtRealLoaded=true;return;}
     const {data:ps,error}=await supa.from('partidos')
-      .select('id,division_id,equipo_local_id,equipo_visita_id,jornada,fecha,hora,cancha,estado,goles_local,goles_visita')
+      .select('id,division_id,equipo_local_id,equipo_visita_id,jornada,fase,fecha,hora,cancha,estado,goles_local,goles_visita')
       .in('division_id',realDivIds);
     if(error||!ps)return; // no marca como cargado: permite reintentar en la próxima llamada
     const today=new Date();today.setHours(0,0,0,0);
@@ -10296,7 +10329,7 @@ async function _mtLoadRealMatches(){
       let dayOff=0;
       if(p.fecha){const d=new Date(p.fecha+'T00:00:00');dayOff=Math.round((d-today)/86400000);}
       matches.push({id:mid,home:p.equipo_local_id+RID,away:p.equipo_visita_id+RID,
-        round:p.jornada,homeScore:p.goles_local,awayScore:p.goles_visita,
+        round:p.jornada,fase:p.fase,homeScore:p.goles_local,awayScore:p.goles_visita,
         status,time:status==='live'?'VIVO':(p.hora?p.hora.slice(0,5):'—'),
         venue:p.cancha||'',divId:p.division_id+RID,dayOff,fecha:p.fecha||null});
     });
@@ -10436,12 +10469,23 @@ function _dtDivMatchesHtml(divId){
   const shareBtn=`<div style="display:flex;justify-content:flex-end;padding:12px 16px 0">
     <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="_compartirProximaFechaDiv(${divId})"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir fecha</button>
   </div>`;
+  // Igual que en la vista mobile: agrupar por fase cuando es un partido de
+  // eliminatoria (jornada/round suele venir null y mezclaría todas las
+  // rondas de playoffs entre sí, o con la fecha 1 del campeonato regular).
   const byRound={};
-  divMs.forEach(m=>{const r=m.round||0;if(!byRound[r])byRound[r]=[];byRound[r].push(m);});
+  divMs.forEach(m=>{
+    const esFase=m.fase&&m.fase!=='regular';
+    const key=esFase?'F:'+m.fase:'J:'+(m.round||0);
+    if(!byRound[key])byRound[key]=[];
+    byRound[key].push(m);
+  });
+  const _ordenGrupoDt=k=>k.startsWith('F:')?10000+(_CUADRO_FASE_ORDEN.indexOf(k.slice(2))>=0?_CUADRO_FASE_ORDEN.indexOf(k.slice(2)):99):Number(k.slice(2));
   let html=shareBtn+'<div style="padding:12px 16px 0">';
-  Object.keys(byRound).sort((a,b)=>Number(b)-Number(a)).forEach(r=>{
-    html+=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:2px">Fecha ${r}</div>`;
-    byRound[r].forEach(m=>{
+  Object.keys(byRound).sort((a,b)=>_ordenGrupoDt(b)-_ordenGrupoDt(a)).forEach(key=>{
+    const esFase=key.startsWith('F:');
+    const labelRonda=esFase?(_CUADRO_FASE_LABEL[key.slice(2)]||key.slice(2)).toUpperCase():'Fecha '+key.slice(2);
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:2px">${labelRonda}</div>`;
+    byRound[key].forEach(m=>{
       const ht=teamsData.find(t=>t.id===m.home)||{name:'?',color:'#333',text:'#fff',logoUrl:null};
       const at=teamsData.find(t=>t.id===m.away)||{name:'?',color:'#333',text:'#fff',logoUrl:null};
       const isDone=m.status==='done',isLive=m.status==='live';
@@ -10546,7 +10590,14 @@ async function _dtShowDivisionCenter(divId){
   </div>`;
 
   html+=`<div id="dt-divtab-posiciones">`;
-  html+= tieneCuadro ? `<div id="dt-cuadro-wrap" class="cuadro-wrap" style="padding:0 16px"></div>` : _dtDivStandingsCard(div);
+  if(tieneCuadro){
+    html+=`<div style="display:flex;justify-content:flex-end;padding:12px 16px 0">
+      <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="compartirCuadro(${div._rid??divId})"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+    </div>`;
+    html+=`<div id="dt-cuadro-wrap" class="cuadro-wrap" style="padding:0 16px"></div>`;
+  } else {
+    html+=_dtDivStandingsCard(div);
+  }
   html+='<div style="height:32px"></div>';
   html+=`</div>`;
 
