@@ -1,0 +1,21 @@
+name: Sincronizar resultados en vivo del Mundial
+
+on:
+  schedule:
+    # Cada 5 minutos. GitHub no garantiza exactitud al minuto en el plan gratuito,
+    # puede haber demoras de unos minutos en horas pico.
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Sincronizar resultados
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+        run: node scripts/sync_mundial_resultados.mjs
