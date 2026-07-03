@@ -4801,11 +4801,10 @@ async function _renderImgConFormato(divId,tipo,fmtId,paletteId){
       if(esProxima){await _loadImg(r.homeTeam?.logoUrl);await _loadImg(r.awayTeam?.logoUrl);}
       else await _loadImg(r.logoUrl);
     }),
-    hdrUrl?(async()=>{
-      try{const img=new Image();img.crossOrigin='anonymous';
-        await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=hdrUrl;});
-        hdrLogo=img;}catch{}
-    })():Promise.resolve(),
+    // El logo de liga/torneo pasa por el mismo chequeo anti-taint que los
+    // escudos: si el host no manda CORS, se descarta esa imagen puntual en
+    // vez de arruinar la exportación del canvas entero.
+    (async()=>{await _loadImg(hdrUrl);hdrLogo=hdrUrl?imgCache[hdrUrl]||null:null;})(),
     (async()=>{try{const img=new Image();await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,4000);img.src='/sporvix-logo.png';});sporvixLogo=img;}catch{}})(),
   ]);
 
@@ -6177,7 +6176,10 @@ async function loadAdminDivisiones(){
   }
 }
 
-function escHtml(s){return (s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+// Escapa TODO lo peligroso para interpolar en HTML: & primero (para no
+// doble-escapar), después < > (sin esto, un nombre de club/jugador con
+// "<img onerror=...>" sería XSS almacenado) y las comillas (atributos).
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
 
 // ─── CLUBES (ADMIN) ───
 let adminLigaClubes=[];
@@ -6193,7 +6195,7 @@ async function loadAdminClubes(){
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">Sin clubes aún.<br>Tocá + Nuevo para agregar.</div>';
       return;
     }
-    el.innerHTML=adminLigaClubes.map(c=>`
+    el.innerHTML=adminLigaClubes.map((c,i)=>`
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
         <div style="width:44px;height:44px;border-radius:12px;background:${c.color_principal||'#1a2150'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden">${c.logo_url?`<img src="${c.logo_url}" style="width:100%;height:100%;object-fit:cover" alt="${escHtml(c.abreviacion||'CL')}">`:escHtml(c.abreviacion||'CL')}</div>
         <div style="flex:1">
@@ -6201,10 +6203,10 @@ async function loadAdminClubes(){
             <span style="font-size:14px;font-weight:800">${escHtml(c.nombre)}</span>
             ${renderCompletenessRing(calcClubCompleteness(c))}
           </div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.delegado_email||'Sin delegado asignado'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${escHtml(c.delegado_email||'Sin delegado asignado')}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-sm" style="font-size:12px" onclick='openAdminEditClub(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✏️</button>
+          <button class="btn btn-sm" style="font-size:12px" onclick="openAdminEditClub(adminLigaClubes[${i}])">✏️</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarClub(${c.id},'${escHtml(c.nombre)}')">✕</button>
         </div>
       </div>`).join('');
@@ -7181,11 +7183,8 @@ async function _generarImagenCuadro(divId,paletteId,fmtId){
   let hdrLogo=null,sporvixLogo=null;
   await Promise.all([
     ...todos.flatMap(p=>[_loadImg(p.local?.club?.logo_url),_loadImg(p.visita?.club?.logo_url)]),
-    hdrUrl?(async()=>{
-      try{const img=new Image();img.crossOrigin='anonymous';
-        await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=hdrUrl;});
-        hdrLogo=img;}catch{}
-    })():Promise.resolve(),
+    // Mismo chequeo anti-taint que los escudos para el logo de liga/torneo.
+    (async()=>{await _loadImg(hdrUrl);hdrLogo=hdrUrl?imgCache[hdrUrl]||null:null;})(),
     (async()=>{try{const img=new Image();await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,4000);img.src='/sporvix-logo.png';});sporvixLogo=img;}catch{}})(),
   ]);
 
@@ -8699,7 +8698,7 @@ async function loadAdminArbitros(){
       el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin árbitros registrados.<br>Tocá + Nuevo árbitro.</div>';
       return;
     }
-    el.innerHTML=ligaArbitros.map(a=>{
+    el.innerHTML=ligaArbitros.map((a,i)=>{
       const foto=a.foto_url?`<img src="${a.foto_url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0" alt="foto">`
         :`<div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0">${escHtml((a.nombre||'?')[0].toUpperCase())}</div>`;
       return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
@@ -8710,7 +8709,7 @@ async function loadAdminArbitros(){
           ${a.telefono?`<div style="font-size:11px;color:var(--text3)">${escHtml(a.telefono)}</div>`:''}
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-sm" style="background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3);padding:4px 10px" onclick='openEditArbitro(${JSON.stringify(a)})'>✏️</button>
+          <button class="btn btn-sm" style="background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3);padding:4px 10px" onclick="openEditArbitro(ligaArbitros[${i}])">✏️</button>
           <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);padding:4px 10px" onclick="confirmarEliminarArbitro(${a.id},'${escHtml(a.nombre)}')">✕</button>
         </div>
       </div>`;
@@ -9292,13 +9291,15 @@ async function loadSAUsuarios(){
   renderSARows(saAllRows,'');
 }
 
+let _saRowsShown=[];
 function renderSARows(rows,q){
   const el=document.getElementById('saUsuariosList');
   if(!rows.length){
     el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">${q?'Sin resultados para "'+escHtml(q)+'"':'Sin usuarios'}</div>`;
     return;
   }
-  el.innerHTML=rows.map(r=>`
+  _saRowsShown=rows;
+  el.innerHTML=rows.map((r,i)=>`
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="display:flex;align-items:flex-start;gap:10px">
         <div style="flex:1;min-width:0">
@@ -9311,9 +9312,9 @@ function renderSARows(rows,q){
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px" onclick='openEditPass(${JSON.stringify(r)})'>✏️ Cambiar</button>
-          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3)" onclick='blanquearPass(${JSON.stringify(r)})'>↺ Blanquear</button>
-          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)" onclick='deleteUser(${JSON.stringify(r)})'>🗑️ Borrar</button>
+          <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 10px" onclick="openEditPass(_saRowsShown[${i}])">✏️ Cambiar</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(91,110,245,0.12);color:var(--accent);border:1px solid rgba(91,110,245,0.3)" onclick="blanquearPass(_saRowsShown[${i}])">↺ Blanquear</button>
+          <button class="btn btn-sm" style="font-size:11px;padding:4px 10px;background:rgba(220,38,38,.12);color:#dc2626;border:1px solid rgba(220,38,38,.3)" onclick="deleteUser(_saRowsShown[${i}])">🗑️ Borrar</button>
         </div>
       </div>
     </div>`).join('');
