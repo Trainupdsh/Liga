@@ -1430,6 +1430,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <input class="form-input" id="nl-pass" type="text" placeholder="Ej: miliga2025" style="width:100%">
         <div style="font-size:11px;color:var(--text3);margin-top:4px">El admin va a usar este email y contraseña para ingresar</div>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="nl-oculta" style="width:16px;height:16px;flex-shrink:0">
+        Liga de prueba — no mostrar en el listado público
+      </label>
       <div id="nl-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <div style="display:flex;gap:10px;margin-top:4px">
         <button class="btn btn-secondary" onclick="closeNuevaLiga(null,true)">Cancelar</button>
@@ -3082,6 +3086,10 @@ function _teamShieldInner(t,imgRadius){
 const _dtExpLigas=new Set(),_dtExpTorneos=new Set(),_dtExpGrupos=new Set();
 // Mobile leagues view: hierarchical cascade (liga → torneo → categoría)
 let _mcLastList=null;
+// Ligas marcadas activa:false son "de prueba" — el admin las gestiona igual
+// (login y panel de superadmin usan `leagues` sin filtrar), pero no aparecen
+// en el listado público ni en la búsqueda.
+function _publicLeagues(){ return leagues.filter(l=>l.active!==false); }
 function renderLeagues(list){
   _mcLastList=list;
   const wrap=document.getElementById('leaguesList');if(!wrap)return;
@@ -3137,7 +3145,7 @@ function _mcOpenDiv(id){
   openDivision(d&&d._rid?d._rid:id); // real divisions use their Supabase id
 }
 function filterLeagues(q){
-  renderLeagues(leagues.filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase())));
+  renderLeagues(_publicLeagues().filter(l=>l.name.toLowerCase().includes(q.toLowerCase())||l.sport.toLowerCase().includes(q.toLowerCase())));
 }
 
 let currentLeagueId=1,currentDivisionId=1;
@@ -3930,9 +3938,21 @@ function renderSuperLeagues(){
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="btn btn-primary btn-sm" onclick="openLeagueAsAdmin(${l.id})">Gestionar</button>
         <button class="btn btn-secondary btn-sm" onclick="openAsignarPlan(${l.id},'${escHtml(l.name)}',${l.planId||'null'})">📋 Plan</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleLigaVisibility(${l.id},${!!l.active})">${l.active?'🙈 Ocultar':'👁 Mostrar'}</button>
         <button class="btn btn-sm" style="background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="confirmarEliminarLiga(${l.id},'${escHtml(l.name)}')">Eliminar</button>
       </div>
     </div>`).join('');
+}
+async function toggleLigaVisibility(id,isActive){
+  const nueva=!isActive;
+  try{
+    const {error}=await supa.from('ligas').update({activa:nueva}).eq('id',id);
+    if(error)throw error;
+    const liga=leagues.find(l=>l.id===id);
+    if(liga)liga.active=nueva;
+    showToast(nueva?'Liga visible para el público ✓':'Liga oculta del público ✓','success');
+    renderSuperLeagues();
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 function openLeagueAsAdmin(id){
   _saImpersonating=true;
@@ -3945,7 +3965,7 @@ async function confirmarEliminarLiga(id,nombre){
     if(error)throw error;
     showToast('Liga eliminada','error');
     await loadSuperLeagues();
-    renderLeagues(leagues);
+    renderLeagues(_publicLeagues());
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 async function confirmarEliminarTorneo(id,nombre){
@@ -4033,6 +4053,7 @@ function openNuevaLiga(){
   document.getElementById('nl-email').value='';
   document.getElementById('nl-pass').value='';
   document.getElementById('nl-deporte').value='Fútbol';
+  document.getElementById('nl-oculta').checked=false;
   document.getElementById('nl-error').style.display='none';
   document.getElementById('nl-preview-name').textContent='Sin nombre';
   document.getElementById('nl-preview-icon').textContent='⚽';
@@ -4079,6 +4100,7 @@ async function saveNuevaLiga(){
   const deporte=document.getElementById('nl-deporte').value;
   const email=document.getElementById('nl-email').value.trim();
   const pass=document.getElementById('nl-pass').value.trim();
+  const esOculta=document.getElementById('nl-oculta').checked;
   const errEl=document.getElementById('nl-error');
   if(!nombre){errEl.textContent='El nombre es obligatorio';errEl.style.display='';return;}
   const btn=document.getElementById('nl-save-btn');
@@ -4087,16 +4109,16 @@ async function saveNuevaLiga(){
     const planId=document.getElementById('nl-plan-sel').value||null;
     const {data,error}=await supa.from('ligas').insert({
       nombre,deporte,icon:nlIconSel,color:nlColorSel,
-      color_texto:'#ffffff',activa:true,
+      color_texto:'#ffffff',activa:!esOculta,
       admin_email:email||null,
       admin_pass:pass||null,
       plan_id:planId?parseInt(planId):null
     }).select().single();
     if(error)throw error;
     closeNuevaLiga(null,true);
-    showToast('Liga "'+nombre+'" creada ✓','success');
+    showToast('Liga "'+nombre+'"'+(esOculta?' creada (oculta del público) ✓':' creada ✓'),'success');
     await loadSuperLeagues();
-    renderLeagues(leagues);
+    renderLeagues(_publicLeagues());
   }catch(e){
     errEl.textContent='Error al guardar: '+e.message;
     errEl.style.display='';
@@ -7687,16 +7709,16 @@ const _ligasReadyPromise=new Promise(res=>{_resolveLigasReady=res;});
         _real:true
       }));
       leagues=[...supaLeagues,...DEMO_LEAGUES]; // ligas reales + demo
-      renderLeagues(leagues);
+      renderLeagues(_publicLeagues());
       console.log('✓ Ligas cargadas:',supaLeagues.length,'reales +',DEMO_LEAGUES.length,'demo');
     }else{
       leagues=[...DEMO_LEAGUES];
-      renderLeagues(leagues);
+      renderLeagues(_publicLeagues());
     }
   }catch(e){
     console.warn('Sin conexión a Supabase, usando datos demo',e);
     leagues=[...DEMO_LEAGUES];
-    renderLeagues(leagues);
+    renderLeagues(_publicLeagues());
   }
   _resolveLigasReady();
   // Restore an active session (refresh / back) — only cleared on Salir or tab close
@@ -9801,7 +9823,8 @@ function _dtDivNode(d,noGroup){
 function _renderDtLeft(){
   const el=document.getElementById('dt-ll');if(!el)return;
   const q=(document.getElementById('dt-srch')?.value||'').toLowerCase();
-  const list=q?leagues.filter(l=>l.name.toLowerCase().includes(q)||l.sport.toLowerCase().includes(q)):leagues;
+  const pubLeagues=_publicLeagues();
+  const list=q?pubLeagues.filter(l=>l.name.toLowerCase().includes(q)||l.sport.toLowerCase().includes(q)):pubLeagues;
   if(!list.length){el.innerHTML='<div class="dt-empty">Sin ligas</div>';return;}
   el.innerHTML=list.map(l=>{
     const expL=_dtExpLigas.has(l.id);
