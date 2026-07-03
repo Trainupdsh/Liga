@@ -529,6 +529,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .cuadro-round{display:flex;flex-direction:column;flex-shrink:0;width:168px;position:relative}
 .cuadro-round-title{font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:10px}
 .cuadro-box{position:absolute;left:0;width:168px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cuadro-box.vacio{background:transparent;border-style:dashed;box-shadow:none;opacity:.55}
 .cuadro-row{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11.5px;font-weight:700;border-bottom:1px solid var(--border)}
 .cuadro-row:last-child{border-bottom:none}
 .cuadro-row.win{background:rgba(34,197,94,.08);color:var(--green)}
@@ -1141,17 +1142,18 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div id="matchesList"></div>
     </div>
     <div class="screen" id="screen-tabla">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
+      <div id="tabla-posiciones-header" style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
         <div class="section-title-sm" style="margin:0">TABLA DE POSICIONES</div>
         <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="compartirTabla('posiciones')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
       </div>
-      <div class="standings-card">
+      <div class="standings-card" id="tabla-posiciones-card">
         <div class="standings-header">
           <span class="col-pos">#</span><span class="col-team">CLUB</span>
           <span class="col-stat">PJ</span><span class="col-stat">PG</span><span class="col-stat">PE</span><span class="col-stat">PP</span><span class="col-stat">DIF</span><span class="col-pts">PTS</span>
         </div>
         <div id="standingsList"></div>
       </div>
+      <div id="tabla-cuadro-wrap" class="cuadro-wrap" style="display:none"></div>
     </div>
     <div class="screen" id="screen-goles">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px">
@@ -1171,16 +1173,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
         <div class="empty-state">Escribí un nombre para buscar jugadores</div>
       </div>
     </div>
-    <div class="screen" id="screen-cuadro">
-      <div class="section-title-sm" style="margin:0 4px 6px">CUADRO DE ELIMINATORIA</div>
-      <div id="cuadroPublicoWrap" class="cuadro-wrap"><div class="empty-state">Cargando...</div></div>
-    </div>
   </div>
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('partidos',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span class="nav-label">PARTIDOS</span></div>
     <div class="nav-item" onclick="switchTab('tabla',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></span><span class="nav-label">TABLA</span></div>
     <div class="nav-item" onclick="switchTab('goles',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.6V3.6M14.1 14.1l2.7 2.1M9.9 14.1l-2.7 2.1"/></svg></span><span class="nav-label">GOLES</span></div>
-    <div class="nav-item" id="nav-item-cuadro" style="display:none" onclick="switchTab('cuadro',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V4M12 13v7M9 20h6"/></svg></span><span class="nav-label">CUADRO</span></div>
     <div class="nav-item" onclick="switchTab('buscar',this)"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><span class="nav-label">BUSCAR</span></div>
   </nav>
 </div>
@@ -1714,7 +1711,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
     <div id="admin-div-partidos" style="display:none">
       <div style="padding:12px 16px 8px;display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-secondary btn-sm" onclick="openFixtureScreen()">🔄 Fixture</button>
-        <button class="btn btn-secondary btn-sm" id="btn-ver-cuadro" style="display:none" onclick="abrirCuadroAdmin()">🌳 Cuadro</button>
         <button class="btn btn-secondary btn-sm" id="btn-gen-playoffs" style="display:none" onclick="openPlayoffsModal()">🏆 Playoffs</button>
         <button class="btn btn-primary btn-sm" onclick="openNuevoPartido()">+ Partido</button>
       </div>
@@ -1749,18 +1745,6 @@ header .subtitle{font-size:12px;color:var(--text2);}
       <div id="playoffs-error" style="color:var(--red);font-size:13px;display:none;text-align:center"></div>
       <button class="btn btn-primary" id="playoffs-gen-btn" onclick="generarPlayoffs()" style="display:none">🏆 Generar primera ronda</button>
     </div>
-  </div>
-</div>
-
-<!-- MODAL: CUADRO DE ELIMINATORIA (admin) -->
-<div class="modal-overlay" id="cuadroAdminModal" onclick="closeCuadroAdmin(event)">
-  <div class="modal-sheet" style="padding-bottom:20px;max-width:100%">
-    <div class="modal-handle"></div>
-    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:900">🌳 Cuadro de eliminatoria</div>
-      <button class="btn btn-secondary btn-sm" onclick="closeCuadroAdmin(null,true)">Cerrar</button>
-    </div>
-    <div id="cuadroAdminWrap" class="cuadro-wrap" style="max-height:75vh"><div class="empty-state">Cargando...</div></div>
   </div>
 </div>
 
@@ -3765,7 +3749,7 @@ async function openDivision(divId){
   }
   switchTab('partidos',document.querySelector('#view-division .nav-item'));
   _divShift=0;currentFilter='todos';
-  buildDateStrip();renderMatches();renderStandings();renderScorers();_checkCuadroTab(divId);
+  buildDateStrip();renderMatches();renderStandings();renderScorers();
 }
 function goBackToLeague(){showView('view-league');}
 
@@ -4168,7 +4152,6 @@ function switchTab(tab,el){
   el.classList.add('active');
   if(tab==='goles')renderScorers();
   if(tab==='tabla')renderStandings();
-  if(tab==='cuadro')cargarCuadroPublico();
 }
 const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const _MON=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -4386,6 +4369,20 @@ function switchModalTab(tab,el){
 }
 
 async function renderStandings(){
+  const headerEl=document.getElementById('tabla-posiciones-header'),cardEl=document.getElementById('tabla-posiciones-card'),cuadroEl=document.getElementById('tabla-cuadro-wrap');
+  try{
+    if(await _tieneFaseEliminatoria(currentDivisionId)){
+      if(headerEl)headerEl.style.display='none';
+      if(cardEl)cardEl.style.display='none';
+      if(cuadroEl){cuadroEl.style.display='';cuadroEl.innerHTML='<div class="empty-state">Cargando...</div>';}
+      const partidos=await _fetchFaseEliminatoria(currentDivisionId);
+      if(cuadroEl)_renderCuadroArbol(cuadroEl,partidos);
+      return;
+    }
+  }catch(e){/* si falla la detección, seguimos con la tabla normal */}
+  if(headerEl)headerEl.style.display='';
+  if(cardEl)cardEl.style.display='';
+  if(cuadroEl)cuadroEl.style.display='none';
   document.getElementById('standingsList').innerHTML='<div style="padding:16px;text-align:center;color:var(--text3)">⏳ Cargando...</div>';
   try{
     // Base: todos los equipos de la división arrancan en cero — la tabla
@@ -6682,8 +6679,6 @@ async function loadAdminPartidos(){
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   const playoffBtn=document.getElementById('btn-gen-playoffs');
   if(playoffBtn)playoffBtn.style.display='none';
-  const cuadroBtnReset=document.getElementById('btn-ver-cuadro');
-  if(cuadroBtnReset)cuadroBtnReset.style.display='none';
   if(!ligaArbitros.length){
     try{const {data}=await supa.from('arbitros').select('id,nombre,email').eq('liga_id',currentAdminLeagueId).order('nombre');ligaArbitros=data||[];}catch(e){}
   }
@@ -6696,8 +6691,6 @@ async function loadAdminPartidos(){
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:14px">Sin partidos programados.</div>';return;}
     const regulares=data.filter(p=>!p.fase||p.fase==='regular');
     const playoffs=data.filter(p=>p.fase&&p.fase!=='regular');
-    const cuadroBtn=document.getElementById('btn-ver-cuadro');
-    if(cuadroBtn)cuadroBtn.style.display=playoffs.length?'':'none';
     const faseOrder={dieciseisavos:0,octavos:0.7,cuartos:1,semis:2,final:3,tercer_puesto:2.5};
     playoffs.sort((a,b)=>(faseOrder[a.fase]||9)-(faseOrder[b.fase]||9));
     // Mostrar botón playoffs si toda la fase regular terminó
@@ -6783,6 +6776,13 @@ async function loadAdminTabla(){
   const el=document.getElementById('adminTablaContent');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
+    if(await _tieneFaseEliminatoria(currentAdminDivisionId)){
+      const partidos=await _fetchFaseEliminatoria(currentAdminDivisionId);
+      el.className='cuadro-wrap';
+      _renderCuadroArbol(el,partidos);
+      return;
+    }
+    el.className='';
     if(!adminDivEquipos.length)await loadAdminEquipos();
     const {data,error}=await supa.from('partidos').select('*').eq('division_id',currentAdminDivisionId);
     if(error)throw error;
@@ -6936,13 +6936,37 @@ function _renderCuadroArbol(el,partidos){
   partidos.forEach(p=>{if(!porFase[p.fase])porFase[p.fase]=[];porFase[p.fase].push(p);});
   const tercerPuesto=(porFase.tercer_puesto||[])[0]||null;
   delete porFase.tercer_puesto;
-  const fases=_CUADRO_FASE_ORDEN.filter(f=>porFase[f]&&porFase[f].length);
+  let fasesPresentes=_CUADRO_FASE_ORDEN.filter(f=>porFase[f]&&porFase[f].length);
   // Fases no reconocidas (por si algún día se agrega otra etiqueta): se agregan al final, en orden de aparición.
-  Object.keys(porFase).forEach(f=>{if(!fases.includes(f))fases.push(f);});
-  if(!fases.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+  Object.keys(porFase).forEach(f=>{if(!fasesPresentes.includes(f))fasesPresentes.push(f);});
+  if(!fasesPresentes.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+
+  // Completa el cuadro con casilleros "Por definir" para los cruces que todavía
+  // no se jugaron/asignaron, partiendo del tamaño de la primera ronda presente
+  // (ej. 16 dieciseisavos ⇒ 8 octavos, 4 cuartos, 2 semis, 1 final), así las
+  // rondas siempre tienen la mitad de casilleros que la anterior y las líneas
+  // conectoras se pueden dibujar siempre.
+  const primeraFase=fasesPresentes[0];
+  const n0=porFase[primeraFase].length;
+  const esPotenciaDe2=n0>0&&(n0&(n0-1))===0;
+  let fases=fasesPresentes,porFaseCompleto=porFase;
+  if(esPotenciaDe2){
+    const idxInicio=_CUADRO_FASE_ORDEN.indexOf(primeraFase);
+    const totalRondas=Math.log2(n0)+1;
+    fases=[];porFaseCompleto={};
+    for(let i=0;i<totalRondas;i++){
+      const fase=(idxInicio>=0?_CUADRO_FASE_ORDEN[idxInicio+i]:null)||fasesPresentes[i]||`ronda_${i}`;
+      const esperados=n0/Math.pow(2,i);
+      const reales=(porFase[fase]||[]).slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')||(a.hora||'').localeCompare(b.hora||'')||(a.id||0)-(b.id||0));
+      const faltan=Math.max(0,esperados-reales.length);
+      const vacios=Array.from({length:faltan},()=>({id:null,fase,estado:'pendiente',goles_local:null,goles_visita:null,local:null,visita:null}));
+      porFaseCompleto[fase]=[...reales,...vacios];
+      fases.push(fase);
+    }
+  }
 
   const MH=56,GAP=20,UNIT=MH+GAP,COLW=168,COLGAP=36,TITLE_H=30;
-  const matchesEnRonda=fases.map(f=>porFase[f].length);
+  const matchesEnRonda=fases.map(f=>porFaseCompleto[f].length);
   const alturaBracket=UNIT*matchesEnRonda[0];
   const alturaTotal=alturaBracket+TITLE_H;
   const centerY=(r,j)=>UNIT*Math.pow(2,r)*(j+0.5)-UNIT/2+MH/2;
@@ -6951,21 +6975,23 @@ function _renderCuadroArbol(el,partidos){
   fases.forEach((fase,r)=>{
     html+=`<div class="cuadro-round" style="height:${alturaTotal}px">
       <div class="cuadro-round-title">${_CUADRO_FASE_LABEL[fase]||fase}</div>`;
-    porFase[fase].forEach((p,j)=>{
+    porFaseCompleto[fase].forEach((p,j)=>{
       const top=centerY(r,j)-MH/2+TITLE_H;
       const gl=p.goles_local,gv=p.goles_visita;
       const lWin=p.estado==='finalizado'&&(gl??0)>(gv??0);
       const vWin=p.estado==='finalizado'&&(gv??0)>(gl??0);
-      const marcador=p.estado==='programado'?'':`<span class="cuadro-score">${gl??'-'}</span>`;
-      const marcadorV=p.estado==='programado'?'':`<span class="cuadro-score">${gv??'-'}</span>`;
-      html+=`<div class="cuadro-box" style="top:${top}px">
+      const marcador=(p.estado==='programado'||p.estado==='pendiente')?'':`<span class="cuadro-score">${gl??'-'}</span>`;
+      const marcadorV=(p.estado==='programado'||p.estado==='pendiente')?'':`<span class="cuadro-score">${gv??'-'}</span>`;
+      html+=`<div class="cuadro-box${p.id==null?' vacio':''}" style="top:${top}px">
         ${p.estado==='en_curso'?'<div class="cuadro-live">🔴 EN VIVO</div>':''}
         <div class="cuadro-row${lWin?' win':''}">${_cuadroShieldHTML(p.local)}<span class="cuadro-name">${escHtml(p.local?.nombre||'Por definir')}</span>${marcador}</div>
         <div class="cuadro-row${vWin?' win':''}">${_cuadroShieldHTML(p.visita)}<span class="cuadro-name">${escHtml(p.visita?.nombre||'Por definir')}</span>${marcadorV}</div>
       </div>`;
     });
     html+='</div>';
-    // Conectores SVG hacia la siguiente ronda (solo si la cantidad de partidos calza en potencia de 2)
+    // Conectores SVG hacia la siguiente ronda (siempre calzan en potencia de 2
+    // gracias a los casilleros vacíos de relleno; si algo raro pasa con los
+    // datos, se omite el conector en vez de romper el layout).
     if(r<fases.length-1){
       const matchesSig=matchesEnRonda[r+1];
       if(matchesEnRonda[r]===matchesSig*2){
@@ -6975,7 +7001,7 @@ function _renderCuadroArbol(el,partidos){
           paths+=`M0,${y1} H${half} V${ym} M0,${y2} H${half} V${ym} M${half},${ym} H${COLGAP}`;
         }
         html+=`<svg class="cuadro-svg" width="${COLGAP}" height="${alturaTotal}">
-          <path d="${paths}" stroke="var(--text3)" stroke-width="2" fill="none"/>
+          <path d="${paths}" stroke="var(--text3)" stroke-width="2.5" fill="none"/>
         </svg>`;
       } else {
         html+=`<div style="width:${COLGAP}px"></div>`;
@@ -6994,36 +7020,6 @@ function _renderCuadroArbol(el,partidos){
     </div>`;
   }
   el.innerHTML=html;
-}
-
-// — Público —
-async function cargarCuadroPublico(){
-  const el=document.getElementById('cuadroPublicoWrap');
-  el.innerHTML='<div class="empty-state">Cargando...</div>';
-  try{
-    const partidos=await _fetchFaseEliminatoria(currentDivisionId);
-    _renderCuadroArbol(el,partidos);
-  }catch(e){el.innerHTML='<div class="empty-state">Error al cargar el cuadro.</div>';}
-}
-async function _checkCuadroTab(divId){
-  const navItem=document.getElementById('nav-item-cuadro');
-  if(!navItem)return;
-  const tiene=await _tieneFaseEliminatoria(divId);
-  navItem.style.display=tiene?'':'none';
-}
-
-// — Admin —
-function abrirCuadroAdmin(){
-  document.getElementById('cuadroAdminModal').classList.add('open');
-  const el=document.getElementById('cuadroAdminWrap');
-  el.innerHTML='<div class="empty-state">Cargando...</div>';
-  _fetchFaseEliminatoria(currentAdminDivisionId)
-    .then(partidos=>_renderCuadroArbol(el,partidos))
-    .catch(()=>{el.innerHTML='<div class="empty-state">Error al cargar el cuadro.</div>';});
-}
-function closeCuadroAdmin(e,force){
-  if(force||e?.target===document.getElementById('cuadroAdminModal'))
-    document.getElementById('cuadroAdminModal').classList.remove('open');
 }
 
 function openNuevoPartido(){
@@ -10259,7 +10255,7 @@ function _dtDivStandingsCard(div){
 
 // Tab switcher for the division center panel
 function _dtDivSwitchTab(tab){
-  ['posiciones','partidos','goleadores','cuadro'].forEach(t=>{
+  ['posiciones','partidos','goleadores'].forEach(t=>{
     const panel=document.getElementById('dt-divtab-'+t);
     const btn=document.getElementById('dt-divtab-btn-'+t);
     if(panel)panel.style.display=t===tab?'block':'none';
@@ -10269,16 +10265,6 @@ function _dtDivSwitchTab(tab){
       btn.style.fontWeight=t===tab?'800':'600';
     }
   });
-  if(tab==='cuadro')_dtCargarCuadro(_dtSelDiv);
-}
-async function _dtCargarCuadro(divId){
-  const div=divisiones.find(d=>d.id===divId);if(!div)return;
-  const el=document.getElementById('dt-cuadro-wrap');if(!el)return;
-  el.innerHTML='<div class="dt-empty">Cargando...</div>';
-  try{
-    const partidos=await _fetchFaseEliminatoria(div._rid??divId);
-    _renderCuadroArbol(el,partidos);
-  }catch(e){el.innerHTML='<div class="dt-empty">Error al cargar el cuadro.</div>';}
 }
 
 // Renders matches list for a division (for the PARTIDOS tab)
@@ -10394,12 +10380,11 @@ async function _dtShowDivisionCenter(divId){
       ${_tabBtn('posiciones','POSICIONES',true)}
       ${_tabBtn('partidos','PARTIDOS',false)}
       ${_tabBtn('goleadores','GOLEADORES',false)}
-      ${tieneCuadro?_tabBtn('cuadro','CUADRO',false):''}
     </div>
   </div>`;
 
   html+=`<div id="dt-divtab-posiciones">`;
-  html+=_dtDivStandingsCard(div);
+  html+= tieneCuadro ? `<div id="dt-cuadro-wrap" class="cuadro-wrap" style="padding:0 16px"></div>` : _dtDivStandingsCard(div);
   html+='<div style="height:32px"></div>';
   html+=`</div>`;
 
@@ -10413,14 +10398,12 @@ async function _dtShowDivisionCenter(divId){
   html+='<div style="height:32px"></div>';
   html+=`</div>`;
 
-  if(tieneCuadro){
-    html+=`<div id="dt-divtab-cuadro" style="display:none;padding:0 16px">
-      <div id="dt-cuadro-wrap" class="cuadro-wrap"></div>
-      <div style="height:32px"></div>
-    </div>`;
-  }
-
   document.getElementById('vtd-content').innerHTML=html;
+  if(tieneCuadro){
+    const cuadroEl=document.getElementById('dt-cuadro-wrap');
+    _fetchFaseEliminatoria(div._rid??divId).then(partidos=>_renderCuadroArbol(cuadroEl,partidos))
+      .catch(()=>{cuadroEl.innerHTML='<div class="dt-empty">Error al cargar el cuadro.</div>';});
+  }
   showView('view-torneo-detail');
   _renderDtLeft();
   _renderDtRight(divId);
