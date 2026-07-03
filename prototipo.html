@@ -951,9 +951,20 @@ header .subtitle{font-size:12px;color:var(--text2);}
 
 /* Match live glow */
 .status-dot.live{box-shadow:0 0 0 3px rgba(46,213,115,.15) !important;}
+
+/* Overlay de carga global (login, arranque de la app, cambio de liga/torneo) */
+#global-loading{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(6,9,18,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+[data-theme="light"] #global-loading{background:rgba(237,242,255,0.65);}
+#global-loading.show{display:flex;}
+#global-loading img{width:72px;height:72px;object-fit:contain;animation:global-loading-pulse 1.1s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(79,140,255,0.45));}
+@keyframes global-loading-pulse{
+  0%,100%{transform:scale(1);opacity:.85;}
+  50%{transform:scale(1.14);opacity:1;}
+}
 </style>
 </head>
 <body>
+<div id="global-loading"><img src="/sporvix-logo.png" alt=""></div>
 <div id="app">
 
 <!-- LANDING (primera pantalla pública) -->
@@ -3807,39 +3818,42 @@ async function doAdminLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
   document.getElementById('login-error').style.display='none';
-  // Check super admin
-  if(email===SUPERADMIN.email&&pass===SUPERADMIN.pass){
-    showSuperAdminDash();return;
-  }
-  // Check league admin
-  const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
-  if(league){showAdminForLeague(league);return;}
-  // Check extra roles hardcodeados (árbitro, mesa)
-  const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
-  if(xu){
-    if(xu.role==='arbitro')showArbitroView(xu);
-    else if(xu.role==='mesa')showMesaView(xu);
-    return;
-  }
-  // Check delegados desde Supabase
+  showGlobalLoading();
   try{
-    const {data:club}=await supa.from('clubes')
-      .select('*, liga:ligas(nombre,deporte)')
-      .eq('delegado_email',email).eq('delegado_pass',pass).single();
-    if(club){showDelegadoView(club);return;}
-  }catch(e){}
-  // Check árbitros desde Supabase
-  try{
-    const {data:arb}=await supa.from('arbitros')
-      .select('*, liga:liga_id(nombre)')
-      .eq('email',email).eq('password',pass).single();
-    if(arb){
-      showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga?.nombre,foto:arb.foto_url});
+    // Check super admin
+    if(email===SUPERADMIN.email&&pass===SUPERADMIN.pass){
+      showSuperAdminDash();return;
+    }
+    // Check league admin
+    const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
+    if(league){showAdminForLeague(league);return;}
+    // Check extra roles hardcodeados (árbitro, mesa)
+    const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
+    if(xu){
+      if(xu.role==='arbitro')showArbitroView(xu);
+      else if(xu.role==='mesa')showMesaView(xu);
       return;
     }
-  }catch(e){}
-  // Wrong credentials
-  document.getElementById('login-error').style.display='block';
+    // Check delegados desde Supabase
+    try{
+      const {data:club}=await supa.from('clubes')
+        .select('*, liga:ligas(nombre,deporte)')
+        .eq('delegado_email',email).eq('delegado_pass',pass).single();
+      if(club){showDelegadoView(club);return;}
+    }catch(e){}
+    // Check árbitros desde Supabase
+    try{
+      const {data:arb}=await supa.from('arbitros')
+        .select('*, liga:liga_id(nombre)')
+        .eq('email',email).eq('password',pass).single();
+      if(arb){
+        showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga?.nombre,foto:arb.foto_url});
+        return;
+      }
+    }catch(e){}
+    // Wrong credentials
+    document.getElementById('login-error').style.display='block';
+  }finally{hideGlobalLoading();}
 }
 function showAdminForLeague(l){
   if(!_saImpersonating){_saveSession({role:'liga',leagueId:l.id});}
@@ -8081,6 +8095,19 @@ function showToast(msg,type=''){
   t.className='toast'+(type?' '+type:'');t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+
+// Overlay de carga global con el logo latiendo — solo para transiciones
+// grandes (arranque de la app, login). Usa un contador para soportar
+// llamadas anidadas sin que una las oculte antes de tiempo.
+let _globalLoadingCount=0;
+function showGlobalLoading(){
+  _globalLoadingCount++;
+  document.getElementById('global-loading')?.classList.add('show');
+}
+function hideGlobalLoading(){
+  _globalLoadingCount=Math.max(0,_globalLoadingCount-1);
+  if(_globalLoadingCount===0)document.getElementById('global-loading')?.classList.remove('show');
+}
 // Año dinámico en el footer (evita que quede desactualizado)
 (function(){['footer-year','landing-year'].forEach(id=>{const y=document.getElementById(id);if(y)y.textContent=new Date().getFullYear();});})();
 // ═══ LANDING ═══
@@ -8106,6 +8133,10 @@ let _resolveLigasReady;
 const _ligasReadyPromise=new Promise(res=>{_resolveLigasReady=res;});
 // Inicio: cargar ligas desde Supabase + mezclar con demo data
 (async()=>{
+  // Solo mostramos el logo latiendo si ya se pasó la landing (o hay una
+  // sesión activa) — a un visitante nuevo no le tapamos la landing con esto.
+  const _bootShowsLoading=_landingEntered()||!!_getSession();
+  if(_bootShowsLoading)showGlobalLoading();
   try{
     const {data,error}=await supa.from('ligas').select('*, plan:plan_id(nombre,color)').order('id');
     if(error)throw error;
@@ -8133,6 +8164,7 @@ const _ligasReadyPromise=new Promise(res=>{_resolveLigasReady=res;});
   _resolveLigasReady();
   // Restore an active session (refresh / back) — only cleared on Salir or tab close
   try{await _restoreSession();}catch(e){console.warn('restore session',e);}
+  if(_bootShowsLoading)hideGlobalLoading();
 })();
 
 // ═══ IMAGE UPLOAD / RESIZE ═══
