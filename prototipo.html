@@ -7100,24 +7100,40 @@ function compartirCuadro(divId){
   const swatches=_SHARE_PALETTES.map((p,i)=>`
     <button class="pal-sw" data-pal="${p.id}" title="${p.name}" onclick="_pickPaletteSwatch('${p.id}')"
       style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;outline:${i===0?'3px solid #fff':'3px solid transparent'};outline-offset:2px;background:linear-gradient(135deg,${p.hex1},${p.hex2})"></button>`).join('');
+  const cards=_SHARE_FMTS.map(f=>`
+    <button onclick="document.getElementById('_cuadroPalModal').remove();_generarImagenCuadro(${divId},_shareChosenPalette,'${f.id}').catch(e=>{console.warn('canvas cuadro',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})"
+      style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:inherit;width:100%;transition:border-color .15s,background .15s"
+      onmouseover="this.style.borderColor='#1a6ef5';this.style.background='rgba(26,110,245,.14)'"
+      onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.04)'">
+      <div style="position:relative;width:${f.wPv}px;height:${f.hPv}px;background:rgba(26,110,245,.15);border:2px solid #1a6ef5;border-radius:4px;overflow:hidden;flex-shrink:0">
+        <div style="position:absolute;top:20%;left:8%;right:8%;height:2px;background:#1a6ef5;border-radius:1px"></div>
+        <div style="position:absolute;top:40%;left:8%;right:8%;height:1.5px;background:rgba(26,110,245,.55);border-radius:1px"></div>
+        <div style="position:absolute;top:57%;left:8%;right:8%;height:1.5px;background:rgba(26,110,245,.38);border-radius:1px"></div>
+      </div>
+      <div style="color:#f1f5f9;font-weight:700;font-size:12px;text-align:center;line-height:1.3">${f.label}</div>
+      <div style="color:#64748b;font-size:10px;text-align:center;line-height:1.4">${f.sub}</div>
+      <div style="color:#1a6ef5;font-size:10px;font-weight:600">${f.dims}</div>
+    </button>`).join('');
   m.innerHTML=`
-    <div style="background:#131d3b;border-radius:18px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.85)">
+    <div style="background:#131d3b;border-radius:18px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.85)">
       <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
-        <div style="color:#f1f5f9;font-weight:800;font-size:15px">Elegí el color</div>
-        <div style="color:#64748b;font-size:12px;margin-top:3px">Se aplica a la imagen del cuadro que vas a compartir</div>
+        <div style="color:#f1f5f9;font-weight:800;font-size:15px">Elegí el formato</div>
+        <div style="color:#64748b;font-size:12px;margin-top:3px">Dimensiones optimizadas para cada plataforma</div>
       </div>
-      <div style="padding:16px 20px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap">${swatches}</div>
+      <div style="padding:14px 14px 4px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Color de la imagen</div>
+        <div style="display:flex;gap:10px;padding-bottom:14px">${swatches}</div>
       </div>
-      <div style="display:flex;gap:10px;padding:0 20px 18px">
-        <button onclick="document.getElementById('_cuadroPalModal').remove()" style="flex:1;padding:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">Cancelar</button>
-        <button onclick="document.getElementById('_cuadroPalModal').remove();_generarImagenCuadro(${divId},_shareChosenPalette).catch(e=>{console.warn('canvas cuadro',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})" style="flex:1;padding:11px;background:#1a6ef5;border:none;border-radius:10px;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Compartir</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px">${cards}</div>
+      <div style="padding:0 14px 16px">
+        <button onclick="document.getElementById('_cuadroPalModal').remove()" style="width:100%;padding:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">Cancelar</button>
       </div>
     </div>`;
   m.onclick=e=>{if(e.target===m)m.remove();};
   document.body.appendChild(m);
 }
-async function _generarImagenCuadro(divId,paletteId){
+async function _generarImagenCuadro(divId,paletteId,fmtId){
+  const fmt=_SHARE_FMTS.find(f=>f.id===fmtId)||_SHARE_FMTS[0];
   const partidos=await _fetchFaseEliminatoria(divId);
   const cuadro=_construirCuadroCompleto(partidos);
   if(!cuadro){showToast('Sin datos para compartir','');return;}
@@ -7299,7 +7315,32 @@ async function _generarImagenCuadro(divId,paletteId){
   ctx.fillText('www.sporvix.com.ar',CW-PADX,fy);
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
 
-  const blob=await new Promise(r=>{let done=false;const fin=b=>{if(!done){done=true;r(b);}};try{canvas.toBlob(fin,'image/png');}catch(e){fin(null);}setTimeout(()=>fin(null),10000);});
+  // El árbol se dibujó a su ancho/alto natural (crece con la cantidad de
+  // rondas). Para los formatos de tamaño fijo (historia/cuadrado/retrato) hay
+  // que "empaquetarlo" dentro del lienzo del tamaño elegido, en vez de
+  // exportar siempre el ancho natural — si no, la imagen sale con las
+  // proporciones del árbol y no las de una historia/post de Instagram.
+  let finalCanvas=canvas;
+  if(fmt.CH){
+    const FCW=fmt.CW,FCH=fmt.CH,sT=fmt.safeTop||0,sB=fmt.safeBot||0;
+    const pad=Math.round(FCW*0.05);
+    const availW=FCW-pad*2,availH=(FCH-sT-sB)-pad*2;
+    const scale=Math.min(availW/CW,availH/CH);
+    const drawW=CW*scale,drawH=CH*scale;
+    const dx=(FCW-drawW)/2,dy=sT+((FCH-sT-sB)-drawH)/2;
+    let FRETINA=2;
+    while(FRETINA>1&&(FCW*FRETINA>4096||FCH*FRETINA>4096||FCW*FRETINA*FCH*FRETINA>16000000))FRETINA--;
+    const fCanvas=document.createElement('canvas');
+    fCanvas.width=FCW*FRETINA;fCanvas.height=FCH*FRETINA;
+    const fctx=fCanvas.getContext('2d',{alpha:false});
+    fctx.scale(FRETINA,FRETINA);
+    fctx.imageSmoothingEnabled=true;fctx.imageSmoothingQuality='high';
+    fctx.fillStyle=C.bg;fctx.fillRect(0,0,FCW,FCH);
+    fctx.drawImage(canvas,dx,dy,drawW,drawH);
+    finalCanvas=fCanvas;
+  }
+
+  const blob=await new Promise(r=>{let done=false;const fin=b=>{if(!done){done=true;r(b);}};try{finalCanvas.toBlob(fin,'image/png');}catch(e){fin(null);}setTimeout(()=>fin(null),10000);});
   if(!blob){showToast('No se pudo generar la imagen en este dispositivo.','error');return;}
   const fname='cuadro-eliminatoria-sporvix.png';
   const file=new File([blob],fname,{type:'image/png'});
@@ -7308,7 +7349,7 @@ async function _generarImagenCuadro(divId,paletteId){
     try{await navigator.share({files:[file],title:titulo});return;}
     catch(e){if(e.name==='AbortError')return;}
   }
-  const previewUrl=canvas.toDataURL('image/webp',0.92)||canvas.toDataURL('image/png');
+  const previewUrl=finalCanvas.toDataURL('image/webp',0.92)||finalCanvas.toDataURL('image/png');
   _showImageShareModal(previewUrl,blob,fname,titulo);
 }
 
