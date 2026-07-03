@@ -5,6 +5,13 @@
 //   2) Crea automáticamente los partidos de la fase eliminatoria (16avos, octavos,
 //      cuartos, semis, 3er puesto, final) a medida que football-data.org confirma
 //      los cruces — no hace falta cargarlos a mano.
+//   3) Los equipos de la fase eliminatoria se registran en la división "Fase
+//      Final" con su propio ID de equipo (mismo club, mismo escudo) en vez de
+//      reutilizar el ID de equipo del grupo — la vista de escritorio de Sporvix
+//      asocia equipos a una división puntual, y necesita esto para mostrar
+//      nombres, escudos y la lista de partidos correctamente. Si alguna vez se
+//      corrió una versión anterior de este script que sí reutilizaba el ID del
+//      grupo, este script migra esos partidos solo la primera vez que corre.
 //
 // Pensado para correr cada pocos minutos desde un workflow programado de GitHub
 // Actions (.github/workflows/sync-mundial-vivo.yml) — usa fetch nativo de Node,
@@ -101,25 +108,79 @@ async function main() {
   const ligas = await supaGet(`/ligas?nombre=eq.${encodeURIComponent(LIGA_NOMBRE)}&select=id`);
   if (!ligas.length) { console.log(`No existe todavía la liga "${LIGA_NOMBRE}" — corré primero cargar_mundial.mjs.`); return; }
   const ligaId = ligas[0].id;
-  const torneos = await supaGet(`/torneos?liga_id=eq.${ligaId}&select=id`);
-  if (!torneos.length) { console.log('La liga existe pero no tiene torneo todavía.'); return; }
-  const torneoId = torneos[0].id;
+  const torneosRes = await supaGet(`/torneos?liga_id=eq.${ligaId}&select=id`);
+  if (!torneosRes.length) { console.log('La liga existe pero no tiene torneo todavía.'); return; }
+  const torneoId = torneosRes[0].id;
 
   const divisiones = await supaGet(`/divisiones?torneo_id=eq.${torneoId}&select=id,nombre`);
-  let faseFinalDiv = divisiones.find(d => d.nombre === FASE_FINAL_DIVISION_NOMBRE);
-  const divisionIds = divisiones.map(d => d.id);
+  const gruposDivIds = divisiones.filter(d => d.nombre !== FASE_FINAL_DIVISION_NOMBRE).map(d => d.id);
+  let faseFinalDiv = divisiones.find(d => d.nombre === FASE_FINAL_DIVISION_NOMBRE) || null;
 
-  // Todos los equipos de cualquier fase (grupos + fase final) del Mundial, para
-  // poder ubicar por nombre a los clasificados sin tener que volver a crearlos.
-  const equipos = divisionIds.length
-    ? await supaGet(`/equipos?division_id=in.(${divisionIds.join(',')})&select=id,nombre`)
+  // Equipos de los 12 grupos: fuente de verdad de nombre/club/escudo/colores
+  // para poder replicar un equipo "propio" en la división Fase Final.
+  const equiposGrupos = gruposDivIds.length
+    ? await supaGet(`/equipos?division_id=in.(${gruposDivIds.join(',')})&select=id,nombre,club_id,abreviacion,color_principal,color_texto`)
     : [];
-  const equipoIdPorNombre = new Map(equipos.map(e => [e.nombre, e.id]));
+  const grupoInfoPorNombre = new Map(equiposGrupos.map(e => [e.nombre, e]));
+
+  // Equipos que ya existen en "Fase Final" (si la división ya fue creada antes).
+  const equiposFaseFinal = faseFinalDiv
+    ? await supaGet(`/equipos?division_id=eq.${faseFinalDiv.id}&select=id,nombre`)
+    : [];
+  const faseFinalIdPorNombre = new Map(equiposFaseFinal.map(e => [e.nombre, e.id]));
+  const faseFinalIdSet = new Set(equiposFaseFinal.map(e => e.id));
+
+  async function ensureFaseFinalDivision() {
+    if (faseFinalDiv) return faseFinalDiv;
+    console.log(`Creando división "${FASE_FINAL_DIVISION_NOMBRE}"...`);
+    const [nueva] = await supaPost('/divisiones', { torneo_id: torneoId, nombre: FASE_FINAL_DIVISION_NOMBRE, categoria: null, genero: 'Masculino' });
+    faseFinalDiv = nueva;
+    return faseFinalDiv;
+  }
+  async function getOrCreateFaseFinalEquipoId(nombre) {
+    if (faseFinalIdPorNombre.has(nombre)) return faseFinalIdPorNombre.get(nombre);
+    const g = grupoInfoPorNombre.get(nombre);
+    if (!g) return null;
+    await ensureFaseFinalDivision();
+    const [nuevo] = await supaPost('/equipos', {
+      division_id: faseFinalDiv.id, club_id: g.club_id, nombre,
+      abreviacion: g.abreviacion, color_principal: g.color_principal, color_texto: g.color_texto,
+    });
+    faseFinalIdPorNombre.set(nombre, nuevo.id);
+    faseFinalIdSet.add(nuevo.id);
+    return nuevo.id;
+  }
 
   console.log('Leyendo partidos ya cargados en Sporvix (grupos + eliminatoria)...');
-  const partidos = divisionIds.length
-    ? await supaGet(`/partidos?division_id=in.(${divisionIds.join(',')})&select=id,estado,fase,goles_local,goles_visita,equipo_local:equipo_local_id(nombre),equipo_visita:equipo_visita_id(nombre)`)
+  const allDivIds = divisiones.map(d => d.id);
+  const partidos = allDivIds.length
+    ? await supaGet(`/partidos?division_id=in.(${allDivIds.join(',')})&select=id,division_id,estado,fase,goles_local,goles_visita,equipo_local_id,equipo_visita_id,equipo_local:equipo_local_id(nombre),equipo_visita:equipo_visita_id(nombre)`)
     : [];
+
+  // Migración: si una corrida anterior del script dejó partidos de "Fase Final"
+  // apuntando al equipo del grupo original (en vez de al equipo propio de esta
+  // división), los corrige. Sin esto, la vista de escritorio de Sporvix no
+  // encuentra el equipo (queda con "0 equipos"/nombres en blanco) porque busca
+  // los equipos de cada división por su propio division_id.
+  let migrados = 0;
+  if (faseFinalDiv) {
+    for (const p of partidos) {
+      if (p.division_id !== faseFinalDiv.id) continue;
+      const ln = p.equipo_local?.nombre, vn = p.equipo_visita?.nombre;
+      if (!ln || !vn) continue;
+      const localOk = faseFinalIdSet.has(p.equipo_local_id);
+      const visitaOk = faseFinalIdSet.has(p.equipo_visita_id);
+      if (localOk && visitaOk) continue;
+      const nuevoLocalId = localOk ? p.equipo_local_id : await getOrCreateFaseFinalEquipoId(ln);
+      const nuevoVisitaId = visitaOk ? p.equipo_visita_id : await getOrCreateFaseFinalEquipoId(vn);
+      if (!nuevoLocalId || !nuevoVisitaId) continue;
+      await supaPatch(`/partidos?id=eq.${p.id}`, { equipo_local_id: nuevoLocalId, equipo_visita_id: nuevoVisitaId });
+      p.equipo_local_id = nuevoLocalId; p.equipo_visita_id = nuevoVisitaId;
+      migrados++;
+      console.log(`  ↺ migrado a equipo propio de "Fase Final": ${ln} vs ${vn} (partido id=${p.id})`);
+    }
+    if (migrados) console.log(`${migrados} partido(s) migrado(s) a equipos propios de "Fase Final".`);
+  }
 
   const index = new Map();
   for (const p of partidos) {
@@ -155,15 +216,9 @@ async function main() {
     // No existe todavía: si es un partido de eliminatoria confirmado por la API, lo creamos.
     const info = mapFase(m.stage || '');
     if (!info) continue; // fase de grupos que ya debería existir, o etapa no reconocida
-    const localId = equipoIdPorNombre.get(homeName);
-    const visitaId = equipoIdPorNombre.get(awayName);
+    const localId = await getOrCreateFaseFinalEquipoId(homeName);
+    const visitaId = await getOrCreateFaseFinalEquipoId(awayName);
     if (!localId || !visitaId) { sinEquipo++; console.log(`  ⚠ No se encontró en Sporvix a "${homeName}" o "${awayName}" (${m.stage}) — se omite por ahora.`); continue; }
-
-    if (!faseFinalDiv) {
-      console.log(`Creando división "${FASE_FINAL_DIVISION_NOMBRE}"...`);
-      const [nueva] = await supaPost('/divisiones', { torneo_id: torneoId, nombre: FASE_FINAL_DIVISION_NOMBRE, categoria: null, genero: 'Masculino' });
-      faseFinalDiv = nueva;
-    }
 
     const fechaHora = m.utcDate ? new Date(m.utcDate) : null;
     const fecha = fechaHora ? fechaHora.toISOString().split('T')[0] : null;
@@ -180,7 +235,7 @@ async function main() {
     console.log(`  ★ creado: ${homeName} vs ${awayName} — ${info.fase} (id=${nuevoPartido.id}, ${estado})`);
   }
 
-  console.log(`\nListo. ${actualizados} partido(s) actualizado(s), ${creados} partido(s) de eliminatoria creado(s)${sinEquipo ? `, ${sinEquipo} sin poder ubicar equipo` : ''}.`);
+  console.log(`\nListo. ${actualizados} partido(s) actualizado(s), ${creados} partido(s) de eliminatoria creado(s), ${migrados} migrado(s)${sinEquipo ? `, ${sinEquipo} sin poder ubicar equipo` : ''}.`);
 }
 
 main().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
