@@ -4481,13 +4481,43 @@ const _SHARE_FMTS=[
   {id:'retrato',  CW:1080, CH:1350, label:'Post retrato 4:5',  sub:'Instagram (mayor alcance)',     dims:'1080×1350', wPv:38,hPv:48},
 ];
 
+// ── Paletas de color para la imagen compartida ──────────────────────────────
+const _SHARE_PALETTES=[
+  {id:'clasico',    name:'Clásico',    hex1:'#4f8cff', hex2:'#8b5cf6'},
+  {id:'esmeralda',  name:'Esmeralda',  hex1:'#22c55e', hex2:'#0ea5e9'},
+  {id:'ambar',      name:'Ámbar',      hex1:'#f59e0b', hex2:'#ef4444'},
+  {id:'rosa',       name:'Rosa',       hex1:'#ec4899', hex2:'#8b5cf6'},
+  {id:'medianoche', name:'Medianoche', hex1:'#6366f1', hex2:'#14b8a6'},
+];
+let _shareChosenPalette='clasico';
+function _hexRgb(hex){const n=parseInt((hex||'#4f8cff').replace('#',''),16);return `${n>>16},${(n>>8)&255},${n&255}`;}
+function _hexBlend(h1,h2,t){
+  const a=parseInt((h1||'#000000').replace('#',''),16), b=parseInt((h2||'#ffffff').replace('#',''),16);
+  const ar=a>>16,ag=(a>>8)&255,ab=a&255, br=b>>16,bg=(b>>8)&255,bb=b&255;
+  const r=Math.round(ar+(br-ar)*t), g=Math.round(ag+(bg-ag)*t), bl=Math.round(ab+(bb-ab)*t);
+  return '#'+[r,g,bl].map(c=>Math.max(0,Math.min(255,c)).toString(16).padStart(2,'0')).join('');
+}
+function _hexDarkRgb(hex,amt){
+  const n=parseInt((hex||'#4f8cff').replace('#',''),16);
+  const r=Math.max(0,(n>>16)-amt), g=Math.max(0,((n>>8)&255)-amt), b=Math.max(0,(n&255)-amt);
+  return `${r},${g},${b}`;
+}
+function _pickPaletteSwatch(id){
+  _shareChosenPalette=id;
+  document.querySelectorAll('.pal-sw').forEach(el=>{el.style.outline=el.dataset.pal===id?'3px solid #fff':'3px solid transparent';});
+}
+
 function _generarImagenTabla(divId,tipo){
   const old=document.getElementById('_fmtPickerModal');if(old)old.remove();
+  _shareChosenPalette='clasico';
   const m=document.createElement('div');
   m.id='_fmtPickerModal';
   m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const swatches=_SHARE_PALETTES.map((p,i)=>`
+    <button class="pal-sw" data-pal="${p.id}" title="${p.name}" onclick="_pickPaletteSwatch('${p.id}')"
+      style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;outline:${i===0?'3px solid #fff':'3px solid transparent'};outline-offset:2px;background:linear-gradient(135deg,${p.hex1},${p.hex2})"></button>`).join('');
   const cards=_SHARE_FMTS.map(f=>`
-    <button onclick="document.getElementById('_fmtPickerModal').remove();_renderImgConFormato(${divId},'${tipo}','${f.id}').catch(e=>{console.warn('canvas share',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})"
+    <button onclick="document.getElementById('_fmtPickerModal').remove();_renderImgConFormato(${divId},'${tipo}','${f.id}',_shareChosenPalette).catch(e=>{console.warn('canvas share',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})"
       style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:inherit;width:100%;transition:border-color .15s,background .15s"
       onmouseover="this.style.borderColor='#1a6ef5';this.style.background='rgba(26,110,245,.14)'"
       onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.04)'">
@@ -4506,6 +4536,10 @@ function _generarImagenTabla(divId,tipo){
       <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
         <div style="color:#f1f5f9;font-weight:800;font-size:15px">Elegí el formato</div>
         <div style="color:#64748b;font-size:12px;margin-top:3px">Dimensiones optimizadas para cada plataforma</div>
+      </div>
+      <div style="padding:14px 14px 4px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Color de la imagen</div>
+        <div style="display:flex;gap:10px;padding-bottom:14px">${swatches}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px">${cards}</div>
       <div style="padding:0 14px 16px">
@@ -4549,7 +4583,7 @@ function _rrect(ctx,x,y,w,h,r){
   ctx.closePath();
 }
 
-async function _renderImgConFormato(divId,tipo,fmtId){
+async function _renderImgConFormato(divId,tipo,fmtId,paletteId){
   const fmt=_SHARE_FMTS.find(f=>f.id===fmtId)||_SHARE_FMTS[0];
   const esGoles=tipo==='goleadores';
   const esProxima=tipo==='proxima';
@@ -4599,6 +4633,19 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',
     border:'#1b2130',green:'#2ed573',red:'#ff4757',isLight:false
   };
+
+  // paleta elegida por quien comparte — sobrepinta los acentos azul/violeta
+  // de C y de todos los degradados/brillos del canvas de acá en más.
+  const PAL=_SHARE_PALETTES.find(p=>p.id===paletteId)||_SHARE_PALETTES[0];
+  const A1=_hexRgb(PAL.hex1), A1L=_hexDarkRgb(PAL.hex1,42), A2=_hexRgb(PAL.hex2);
+  const A3=_hexRgb(_hexBlend(PAL.hex2,'#1e1b4b',0.4));
+  const HEX1=PAL.hex1, HEX2=PAL.hex2;
+  const HEX2B=_hexBlend(PAL.hex2,'#ffffff',0.15);
+  const HEXMID=_hexBlend(PAL.hex1,PAL.hex2,0.5);
+  const HEXP2=_hexBlend(PAL.hex2,'#ffffff',0.32);
+  const HEXP3=_hexBlend(_hexBlend(PAL.hex2,'#1e1b4b',0.4),'#ffffff',0.32);
+  C.accent=isLight?_hexBlend(PAL.hex1,'#000000',0.18):PAL.hex1;
+  C.accentP=isLight?_hexBlend(PAL.hex2,'#000000',0.18):PAL.hex2;
 
   const CW=fmt.CW||800,nRows=filas.length,isAuto=!fmt.CH;
   const sT=fmt.safeTop||0,sB=fmt.safeBot||0;
@@ -4664,11 +4711,11 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     // glows — top-right blue
     const glA=isLight?0.18:0.32, glB=isLight?0.10:0.20;
     const glTR=ctx.createRadialGradient(CW*0.92,CH*0.05,0,CW*0.92,CH*0.05,CW*0.75);
-    glTR.addColorStop(0,`rgba(79,140,255,${glA})`);glTR.addColorStop(0.5,`rgba(79,140,255,${glA*0.38})`);glTR.addColorStop(1,'rgba(79,140,255,0)');
+    glTR.addColorStop(0,`rgba(${A1},${glA})`);glTR.addColorStop(0.5,`rgba(${A1},${glA*0.38})`);glTR.addColorStop(1,`rgba(${A1},0)`);
     ctx.fillStyle=glTR; ctx.fillRect(0,0,CW,CH);
     // bottom-left purple
     const glBL=ctx.createRadialGradient(CW*0.06,CH*0.95,0,CW*0.06,CH*0.95,CW*0.72);
-    glBL.addColorStop(0,`rgba(139,92,246,${glB})`);glBL.addColorStop(0.5,`rgba(139,92,246,${glB*0.36})`);glBL.addColorStop(1,'rgba(139,92,246,0)');
+    glBL.addColorStop(0,`rgba(${A2},${glB})`);glBL.addColorStop(0.5,`rgba(${A2},${glB*0.36})`);glBL.addColorStop(1,`rgba(${A2},0)`);
     ctx.fillStyle=glBL; ctx.fillRect(0,0,CW,CH);
     // center depth vignette (makes card pop)
     const vig=ctx.createRadialGradient(CW/2,CH*0.48,CW*0.18,CW/2,CH*0.48,CW*0.78);
@@ -4684,14 +4731,14 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     // mid-right bokeh glow (cinematic depth)
     const bokeh=ctx.createRadialGradient(CW*0.86,CH*0.46,0,CW*0.86,CH*0.46,CW*0.48);
     bokeh.addColorStop(0,isLight?'rgba(99,140,255,0.10)':'rgba(79,155,255,0.09)');
-    bokeh.addColorStop(1,'rgba(79,140,255,0)');
+    bokeh.addColorStop(1,`rgba(${A1},0)`);
     ctx.fillStyle=bokeh; ctx.fillRect(0,0,CW,CH);
 
     // diagonal light ray from top-right (cinematic sweep)
     if(!isLight){
       const ray=ctx.createLinearGradient(CW,0,CW*0.1,CH*0.65);
-      ray.addColorStop(0,'rgba(79,140,255,0)');ray.addColorStop(0.35,'rgba(100,165,255,0.055)');
-      ray.addColorStop(0.5,'rgba(120,180,255,0.038)');ray.addColorStop(1,'rgba(79,140,255,0)');
+      ray.addColorStop(0,`rgba(${A1},0)`);ray.addColorStop(0.35,`rgba(${A1},0.055)`);
+      ray.addColorStop(0.5,`rgba(${A1},0.038)`);ray.addColorStop(1,`rgba(${A1},0)`);
       ctx.fillStyle=ray; ctx.fillRect(0,0,CW,CH);
     }
 
@@ -4716,13 +4763,13 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   // logo circle with subtle glow ring
   if(!isLight){
     ctx.save();
-    ctx.shadowColor='rgba(79,140,255,0.35)'; ctx.shadowBlur=22;
+    ctx.shadowColor=`rgba(${A1},0.35)`; ctx.shadowBlur=22;
     ctx.beginPath();ctx.arc(logoX,logoY,logoR+2,0,Math.PI*2);ctx.fillStyle='transparent';ctx.stroke();
     ctx.restore();
   }
   ctx.fillStyle=C.card2;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=isLight?'rgba(37,99,235,0.30)':'rgba(255,255,255,0.12)'; ctx.lineWidth=1.5;
+  ctx.strokeStyle=isLight?`rgba(${A1L},0.30)`:'rgba(255,255,255,0.12)'; ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
 
   if(hdrLogo){
@@ -4736,7 +4783,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
     ctx.restore();
   } else {
     const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
-    lgG.addColorStop(0,'#4f8cff');lgG.addColorStop(1,'#a855f7');
+    lgG.addColorStop(0,HEX1);lgG.addColorStop(1,HEX2B);
     ctx.font=`900 ${Math.round(logoR*1.1)}px system-ui,sans-serif`;
     ctx.fillStyle=lgG; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('S',logoX,logoY); ctx.textBaseline='alphabetic';
@@ -4777,7 +4824,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   // glow halo behind card (accent-colored ambient light)
   {const haloG=ctx.createRadialGradient(cardX+cardW/2,cardY+CARD_H*0.35,0,cardX+cardW/2,cardY+CARD_H*0.35,cardW*0.85);
   const hA=isLight?0.12:0.14;
-  haloG.addColorStop(0,`rgba(79,140,255,${hA})`);haloG.addColorStop(0.5,`rgba(79,140,255,${hA*0.3})`);haloG.addColorStop(1,'rgba(79,140,255,0)');
+  haloG.addColorStop(0,`rgba(${A1},${hA})`);haloG.addColorStop(0.5,`rgba(${A1},${hA*0.3})`);haloG.addColorStop(1,`rgba(${A1},0)`);
   ctx.fillStyle=haloG; ctx.fillRect(0,cardY-60,CW,CARD_H+120);}
 
   // card shadow — diffuse ambient layer
@@ -4797,7 +4844,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   // card border
   {const bG=ctx.createLinearGradient(cardX,cardY,cardX,cardY+CARD_H);
   if(isLight){
-    bG.addColorStop(0,'rgba(37,99,235,0.30)');bG.addColorStop(0.3,'rgba(37,99,235,0.12)');bG.addColorStop(1,'rgba(37,99,235,0.04)');
+    bG.addColorStop(0,`rgba(${A1L},0.30)`);bG.addColorStop(0.3,`rgba(${A1L},0.12)`);bG.addColorStop(1,`rgba(${A1L},0.04)`);
   } else {
     bG.addColorStop(0,'rgba(255,255,255,0.35)');bG.addColorStop(0.15,'rgba(255,255,255,0.14)');bG.addColorStop(0.55,'rgba(255,255,255,0.05)');bG.addColorStop(1,'rgba(255,255,255,0.02)');
   }
@@ -4815,7 +4862,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   }
   // inner left accent tint (light source from left)
   {const iLG=ctx.createLinearGradient(cardX,0,cardX+cardW*0.3,0);
-  iLG.addColorStop(0,isLight?'rgba(37,99,235,0.06)':'rgba(79,140,255,0.07)');iLG.addColorStop(1,'rgba(79,140,255,0)');
+  iLG.addColorStop(0,isLight?`rgba(${A1L},0.06)`:`rgba(${A1},0.07)`);iLG.addColorStop(1,`rgba(${A1},0)`);
   ctx.fillStyle=iLG; ctx.fillRect(cardX,cardY,cardW,CARD_H);}
   // inner right dark fade (depth falloff)
   {const iRG=ctx.createLinearGradient(cardX+cardW*0.72,0,cardX+cardW,0);
@@ -4828,7 +4875,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
 
   // accent bar at card top
   {const abG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
-  abG.addColorStop(0,'#4f8cff');abG.addColorStop(0.5,'#7c5cf6');abG.addColorStop(1,'#8b5cf6');
+  abG.addColorStop(0,HEX1);abG.addColorStop(0.5,HEXMID);abG.addColorStop(1,HEX2);
   ctx.fillStyle=abG; ctx.fillRect(cardX,cardY,cardW,6);
   // glow emanating from bar
   const barGlow=ctx.createLinearGradient(cardX,cardY,cardX,cardY+28);
@@ -4846,8 +4893,8 @@ async function _renderImgConFormato(divId,tipo,fmtId){
   ctx.fillStyle=cShine; ctx.fillRect(cardX,cardY+6,cardW,COL_H*0.45);}
   // gradient separator line
   {const sepG=ctx.createLinearGradient(cardX,0,cardX+cardW,0);
-  sepG.addColorStop(0,'rgba(79,140,255,0.0)');sepG.addColorStop(0.15,'rgba(79,140,255,0.55)');
-  sepG.addColorStop(0.5,'rgba(139,92,246,0.45)');sepG.addColorStop(0.85,'rgba(79,140,255,0.3)');sepG.addColorStop(1,'rgba(79,140,255,0.0)');
+  sepG.addColorStop(0,`rgba(${A1},0.0)`);sepG.addColorStop(0.15,`rgba(${A1},0.55)`);
+  sepG.addColorStop(0.5,`rgba(${A2},0.45)`);sepG.addColorStop(0.85,`rgba(${A1},0.3)`);sepG.addColorStop(1,`rgba(${A1},0.0)`);
   ctx.fillStyle=sepG; ctx.fillRect(cardX,cardY+COL_H-1,cardW,1.5);}
 
   const iP=Math.round(cardW*0.036);
@@ -4943,7 +4990,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       const ht=r.homeTeam||{}, at=r.awayTeam||{};
       // left accent strip (uniform blue/celeste, igual que tabla y goleadores)
       {const stripW=Math.round(cardW*0.16);
-      const aR=isLight?'37,99,235':'79,140,255';
+      const aR=isLight?A1L:A1;
       const stripG=ctx.createLinearGradient(cardX,0,cardX+stripW,0);
       stripG.addColorStop(0,`rgba(${aR},0.20)`);stripG.addColorStop(0.5,`rgba(${aR},0.07)`);stripG.addColorStop(1,'rgba(0,0,0,0)');
       ctx.fillStyle=stripG; ctx.fillRect(cardX,ry,stripW,ROW_H);
@@ -5019,7 +5066,7 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       _rowBg(ry,i);
       // left accent strip (uniform blue/celeste across all rows)
       {const stripW=Math.round(cardW*0.16);
-      const aR=isLight?'37,99,235':'79,140,255';
+      const aR=isLight?A1L:A1;
       const stripG=ctx.createLinearGradient(cardX,0,cardX+stripW,0);
       stripG.addColorStop(0,`rgba(${aR},0.20)`);stripG.addColorStop(0.5,`rgba(${aR},0.07)`);stripG.addColorStop(1,'rgba(0,0,0,0)');
       ctx.fillStyle=stripG; ctx.fillRect(cardX,ry,stripW,ROW_H);
@@ -5028,14 +5075,14 @@ async function _renderImgConFormato(divId,tipo,fmtId){
       // badge
       const isPodium=!esGoles&&r.pos<=3;
       {
-        const podiumFill=[null,'rgba(79,140,255,0.22)','rgba(139,92,246,0.18)','rgba(99,102,241,0.15)'];
-        const podiumStroke=[null,'rgba(79,140,255,0.7)','rgba(139,92,246,0.6)','rgba(99,102,241,0.55)'];
+        const podiumFill=[null,`rgba(${A1},0.22)`,`rgba(${A2},0.18)`,`rgba(${A3},0.15)`];
+        const podiumStroke=[null,`rgba(${A1},0.7)`,`rgba(${A2},0.6)`,`rgba(${A3},0.55)`];
         ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);
         ctx.fillStyle=isPodium?podiumFill[r.pos]:C.card2; ctx.fill();
         ctx.strokeStyle=isPodium?podiumStroke[r.pos]:'rgba(255,255,255,0.1)'; ctx.lineWidth=isPodium?1.5:1;
         ctx.beginPath();ctx.arc(badgeX,midY,bR,0,Math.PI*2);ctx.stroke();
       }
-      ctx.fillStyle=isPodium?(r.pos===1?'#4f8cff':r.pos===2?'#a78bfa':'#818cf8'):C.text2;
+      ctx.fillStyle=isPodium?(r.pos===1?HEX1:r.pos===2?HEXP2:HEXP3):C.text2;
       ctx.font=`800 ${Math.round(bR*0.9)}px system-ui,sans-serif`;
       ctx.textAlign='center'; ctx.fillText(String(r.pos),badgeX,midY);
       // crest
@@ -5048,12 +5095,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
         ctx.fillText(_tTxt(ctx,r.teamName||'',nmMaxW),nmX,midY+nFS*0.55);
         const gc=colsRef[3],gcX=gc.x+gc.w/2,gcR=Math.round(ROW_H*0.27);
         ctx.save();
-        ctx.shadowColor='rgba(79,140,255,0.5)'; ctx.shadowBlur=12;
+        ctx.shadowColor=`rgba(${A1},0.5)`; ctx.shadowBlur=12;
         const gcFill=ctx.createRadialGradient(gcX,midY-gcR*0.35,0,gcX,midY,gcR);
-        gcFill.addColorStop(0,'rgba(79,140,255,0.3)');gcFill.addColorStop(1,'rgba(30,55,140,0.08)');
+        gcFill.addColorStop(0,`rgba(${A1},0.3)`);gcFill.addColorStop(1,`rgba(${A1L},0.08)`);
         ctx.fillStyle=gcFill;ctx.beginPath();ctx.arc(gcX,midY,gcR,0,Math.PI*2);ctx.fill();
         ctx.restore();
-        ctx.strokeStyle='rgba(79,140,255,0.35)'; ctx.lineWidth=1;
+        ctx.strokeStyle=`rgba(${A1},0.35)`; ctx.lineWidth=1;
         ctx.beginPath();ctx.arc(gcX,midY,gcR,0,Math.PI*2);ctx.stroke();
         ctx.fillStyle=C.accent;ctx.font=`800 ${pFS}px system-ui,sans-serif`;ctx.textAlign='center';
         ctx.fillText(String(r.goals),gcX,midY);
@@ -5066,12 +5113,12 @@ async function _renderImgConFormato(divId,tipo,fmtId){
             const pW=Math.round(c.w*0.72),pH=Math.round(ROW_H*0.48);
             const pPX=cx2-pW/2,pPY=midY-pH/2;
             ctx.save();
-            ctx.shadowColor='rgba(79,140,255,0.3)'; ctx.shadowBlur=8;
+            ctx.shadowColor=`rgba(${A1},0.3)`; ctx.shadowBlur=8;
             const ptsBg=ctx.createLinearGradient(pPX,pPY,pPX+pW,pPY+pH);
-            ptsBg.addColorStop(0,'rgba(79,140,255,0.22)');ptsBg.addColorStop(1,'rgba(79,140,255,0.07)');
+            ptsBg.addColorStop(0,`rgba(${A1},0.22)`);ptsBg.addColorStop(1,`rgba(${A1},0.07)`);
             ctx.fillStyle=ptsBg; _rrect(ctx,pPX,pPY,pW,pH,4); ctx.fill();
             ctx.restore();
-            ctx.strokeStyle='rgba(79,140,255,0.28)'; ctx.lineWidth=1;
+            ctx.strokeStyle=`rgba(${A1},0.28)`; ctx.lineWidth=1;
             _rrect(ctx,pPX,pPY,pW,pH,4); ctx.stroke();
             ctx.fillStyle=C.accent;ctx.font=`800 ${pFS}px system-ui,sans-serif`;
             ctx.fillText(String(stats[si]),cx2,midY);
