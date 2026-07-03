@@ -1153,6 +1153,10 @@ header .subtitle{font-size:12px;color:var(--text2);}
         </div>
         <div id="standingsList"></div>
       </div>
+      <div id="tabla-cuadro-header" style="display:none;align-items:center;justify-content:space-between;padding:0 4px 6px">
+        <div class="section-title-sm" style="margin:0">CUADRO DE ELIMINATORIA</div>
+        <button style="background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;letter-spacing:.3px" onclick="compartirCuadro(currentDivisionId)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg> Compartir</button>
+      </div>
       <div id="tabla-cuadro-wrap" class="cuadro-wrap" style="display:none"></div>
     </div>
     <div class="screen" id="screen-goles">
@@ -1718,6 +1722,9 @@ header .subtitle{font-size:12px;color:var(--text2);}
     </div>
     <!-- TAB: TABLA -->
     <div id="admin-div-tabla" style="display:none">
+      <div id="admin-cuadro-header" style="display:none;padding:12px 16px 0;justify-content:flex-end">
+        <button class="btn btn-secondary btn-sm" onclick="compartirCuadro(currentAdminDivisionId)">📤 Compartir cuadro</button>
+      </div>
       <div id="adminTablaContent" style="padding:12px 16px 24px"></div>
     </div>
   </div>
@@ -4369,11 +4376,12 @@ function switchModalTab(tab,el){
 }
 
 async function renderStandings(){
-  const headerEl=document.getElementById('tabla-posiciones-header'),cardEl=document.getElementById('tabla-posiciones-card'),cuadroEl=document.getElementById('tabla-cuadro-wrap');
+  const headerEl=document.getElementById('tabla-posiciones-header'),cardEl=document.getElementById('tabla-posiciones-card'),cuadroEl=document.getElementById('tabla-cuadro-wrap'),cuadroHdrEl=document.getElementById('tabla-cuadro-header');
   try{
     if(await _tieneFaseEliminatoria(currentDivisionId)){
       if(headerEl)headerEl.style.display='none';
       if(cardEl)cardEl.style.display='none';
+      if(cuadroHdrEl)cuadroHdrEl.style.display='flex';
       if(cuadroEl){cuadroEl.style.display='';cuadroEl.innerHTML='<div class="empty-state">Cargando...</div>';}
       const partidos=await _fetchFaseEliminatoria(currentDivisionId);
       if(cuadroEl)_renderCuadroArbol(cuadroEl,partidos);
@@ -4382,6 +4390,7 @@ async function renderStandings(){
   }catch(e){/* si falla la detección, seguimos con la tabla normal */}
   if(headerEl)headerEl.style.display='';
   if(cardEl)cardEl.style.display='';
+  if(cuadroHdrEl)cuadroHdrEl.style.display='none';
   if(cuadroEl)cuadroEl.style.display='none';
   document.getElementById('standingsList').innerHTML='<div style="padding:16px;text-align:center;color:var(--text3)">⏳ Cargando...</div>';
   try{
@@ -6774,15 +6783,18 @@ function renderTabla(tabla){
 }
 async function loadAdminTabla(){
   const el=document.getElementById('adminTablaContent');
+  const cuadroHdr=document.getElementById('admin-cuadro-header');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
     if(await _tieneFaseEliminatoria(currentAdminDivisionId)){
       const partidos=await _fetchFaseEliminatoria(currentAdminDivisionId);
       el.className='cuadro-wrap';
+      if(cuadroHdr)cuadroHdr.style.display='flex';
       _renderCuadroArbol(el,partidos);
       return;
     }
     el.className='';
+    if(cuadroHdr)cuadroHdr.style.display='none';
     if(!adminDivEquipos.length)await loadAdminEquipos();
     const {data,error}=await supa.from('partidos').select('*').eq('division_id',currentAdminDivisionId);
     if(error)throw error;
@@ -6930,16 +6942,17 @@ function _cuadroShieldHTML(equipo){
   const ab=escHtml(equipo?.abreviacion||equipo?.nombre?.slice(0,2).toUpperCase()||'?');
   return `<div class="cuadro-flag" style="background:${equipo?.color_principal||'#1a2150'}">${ab}</div>`;
 }
-function _renderCuadroArbol(el,partidos){
-  if(!partidos.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+// Arma la estructura completa del cuadro (rondas + casilleros, incluidos los
+// "Por definir" de relleno) a partir de los partidos de fase eliminatoria ya
+// cargados. La usan tanto el render HTML como el canvas de "Compartir".
+function _construirCuadroCompleto(partidos){
   const porFase={};
   partidos.forEach(p=>{if(!porFase[p.fase])porFase[p.fase]=[];porFase[p.fase].push(p);});
   const tercerPuesto=(porFase.tercer_puesto||[])[0]||null;
   delete porFase.tercer_puesto;
   let fasesPresentes=_CUADRO_FASE_ORDEN.filter(f=>porFase[f]&&porFase[f].length);
-  // Fases no reconocidas (por si algún día se agrega otra etiqueta): se agregan al final, en orden de aparición.
   Object.keys(porFase).forEach(f=>{if(!fasesPresentes.includes(f))fasesPresentes.push(f);});
-  if(!fasesPresentes.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+  if(!fasesPresentes.length)return null;
 
   // Completa el cuadro con casilleros "Por definir" para los cruces que todavía
   // no se jugaron/asignaron, partiendo del tamaño de la primera ronda presente
@@ -6964,6 +6977,13 @@ function _renderCuadroArbol(el,partidos){
       fases.push(fase);
     }
   }
+  return {fases,porFaseCompleto,tercerPuesto};
+}
+function _renderCuadroArbol(el,partidos){
+  if(!partidos.length){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+  const cuadro=_construirCuadroCompleto(partidos);
+  if(!cuadro){el.innerHTML='<div class="empty-state">Sin fase eliminatoria todavía.</div>';return;}
+  const {fases,porFaseCompleto,tercerPuesto}=cuadro;
 
   const MH=56,GAP=20,UNIT=MH+GAP,COLW=168,COLGAP=36,TITLE_H=30;
   const matchesEnRonda=fases.map(f=>porFaseCompleto[f].length);
@@ -7020,6 +7040,148 @@ function _renderCuadroArbol(el,partidos){
     </div>`;
   }
   el.innerHTML=html;
+}
+
+// — Compartir el cuadro como imagen —
+async function compartirCuadro(divId){
+  try{await _generarImagenCuadro(divId);}
+  catch(e){console.warn('canvas cuadro',e);showToast('Error al generar la imagen. Probá de nuevo.','error');}
+}
+async function _generarImagenCuadro(divId){
+  const partidos=await _fetchFaseEliminatoria(divId);
+  const cuadro=_construirCuadroCompleto(partidos);
+  if(!cuadro){showToast('Sin datos para compartir','');return;}
+  const {fases,porFaseCompleto,tercerPuesto}=cuadro;
+
+  let ligaName='Liga',torNombre='',divNombre='';
+  try{
+    const {data:d}=await supa.from('divisiones').select('nombre,categoria,torneo:torneos(nombre,liga:ligas(nombre))').eq('id',divId).single();
+    if(d){divNombre=d.categoria?d.categoria+' · '+d.nombre:d.nombre;torNombre=d.torneo?.nombre||'';ligaName=d.torneo?.liga?.nombre||'Liga';}
+  }catch(e){}
+
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const C=isLight?{bg:'#edf2ff',card:'#ffffff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
+    :{bg:'#0c1017',card:'#151b26',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
+
+  const MH=112,GAP=28,UNIT=MH+GAP,COLW=300,COLGAP=64,TITLE_H=48;
+  const matchesEnRonda=fases.map(f=>porFaseCompleto[f].length);
+  const alturaBracket=UNIT*matchesEnRonda[0];
+  const PADX=40,HDR_H=110,FTR_H=56,PADY_TOP=28,PADY_BOT=28;
+  const CW=PADX*2+fases.length*COLW+(fases.length-1)*COLGAP;
+  const bracketH=TITLE_H+alturaBracket;
+  const CH=HDR_H+PADY_TOP+bracketH+PADY_BOT+(tercerPuesto?150:0)+FTR_H;
+  const centerY=(r,j)=>UNIT*Math.pow(2,r)*(j+0.5)-UNIT/2+MH/2;
+
+  let RETINA=2;
+  while(RETINA>1&&(CW*RETINA>4096||CH*RETINA>4096))RETINA--;
+  const canvas=document.createElement('canvas');
+  canvas.width=CW*RETINA;canvas.height=CH*RETINA;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.scale(RETINA,RETINA);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+
+  // precargar escudos (si el host no manda CORS, se omite y usamos color+abreviación)
+  const imgCache={};
+  const _loadImg=async url=>{if(!url||imgCache[url])return;try{const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,3000);img.src=url;});imgCache[url]=img;}catch{}};
+  const todos=[...fases.flatMap(f=>porFaseCompleto[f]),tercerPuesto].filter(Boolean);
+  await Promise.all(todos.flatMap(p=>[_loadImg(p.local?.club?.logo_url),_loadImg(p.visita?.club?.logo_url)]));
+
+  showToast('Generando imagen…','');
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,CW,CH);
+
+  // header
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillStyle=C.text;ctx.font='800 30px system-ui,sans-serif';
+  ctx.fillText('🏆 '+_tTxt(ctx,divNombre||'Cuadro de eliminatoria',CW-PADX*2),PADX,58);
+  ctx.fillStyle=C.text3;ctx.font='600 16px system-ui,sans-serif';
+  ctx.fillText(_tTxt(ctx,[torNombre,ligaName].filter(Boolean).join(' · '),CW-PADX*2),PADX,84);
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,HDR_H);ctx.lineTo(CW,HDR_H);ctx.stroke();
+
+  const shield=(p_,x,y,d)=>{
+    const cx=x+d/2,cy=y+d/2;
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,d/2,0,Math.PI*2);ctx.clip();
+    const img=p_?.club?.logo_url&&imgCache[p_.club.logo_url];
+    if(img)_drawImgCover(ctx,img,x,y,d,d);
+    else{ctx.fillStyle=p_?.color_principal||'#1a2150';ctx.fillRect(x,y,d,d);
+      ctx.fillStyle='#fff';ctx.font='800 '+Math.round(d*0.4)+'px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText((p_?.abreviacion||p_?.nombre||'?').slice(0,3).toUpperCase(),cx,cy+1);ctx.textAlign='left';ctx.textBaseline='alphabetic';}
+    ctx.restore();
+  };
+  const drawBox=(p,x,top)=>{
+    const vacio=p.id==null;
+    ctx.save();
+    _rrect(ctx,x,top,COLW,MH,14);
+    if(vacio){ctx.setLineDash([6,5]);ctx.strokeStyle=C.border;ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([]);}
+    else{ctx.fillStyle=C.card;ctx.fill();ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.stroke();}
+    ctx.clip();
+    const rowH=MH/2;
+    [[p.local,p.goles_local],[p.visita,p.goles_visita]].forEach(([eq,goles],i)=>{
+      const ry=top+i*rowH;
+      const gl=p.goles_local,gv=p.goles_visita;
+      const win=p.estado==='finalizado'&&((i===0&&(gl??0)>(gv??0))||(i===1&&(gv??0)>(gl??0)));
+      if(win){ctx.fillStyle=isLight?'rgba(22,163,74,.08)':'rgba(46,213,115,.08)';ctx.fillRect(x,ry,COLW,rowH);}
+      if(i===0){ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,ry+rowH);ctx.lineTo(x+COLW,ry+rowH);ctx.stroke();}
+      const d=rowH*0.62,sy=ry+(rowH-d)/2;
+      shield(eq,x+14,sy,d);
+      ctx.fillStyle=win?C.green:C.text;ctx.font=(win?'800 ':'600 ')+'17px system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+      const nameMaxW=COLW-14-d-14-46;
+      ctx.fillText(_tTxt(ctx,vacio?'Por definir':(eq?.nombre||'?'),nameMaxW),x+14+d+12,ry+rowH/2+1);
+      if(!vacio&&p.estado!=='programado'){
+        ctx.textAlign='right';ctx.fillStyle=win?C.green:C.text2;ctx.font='800 18px system-ui,sans-serif';
+        ctx.fillText(String(goles??'-'),x+COLW-14,ry+rowH/2+1);ctx.textAlign='left';
+      }
+    });
+    ctx.restore();
+    if(p.estado==='en_curso'){
+      ctx.fillStyle='#ef4444';ctx.font='800 11px system-ui,sans-serif';ctx.textAlign='center';
+      ctx.fillText('🔴 EN VIVO',x+COLW/2,top-6);ctx.textAlign='left';
+    }
+  };
+
+  const bracketTop=HDR_H+PADY_TOP+TITLE_H;
+  fases.forEach((fase,r)=>{
+    const x=PADX+r*(COLW+COLGAP);
+    ctx.fillStyle=C.accent;ctx.font='800 13px system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillText((_CUADRO_FASE_LABEL[fase]||fase).toUpperCase(),x+COLW/2,HDR_H+PADY_TOP+22);ctx.textAlign='left';
+    porFaseCompleto[fase].forEach((p,j)=>{drawBox(p,x,bracketTop+centerY(r,j)-MH/2);});
+    if(r<fases.length-1){
+      const matchesSig=matchesEnRonda[r+1];
+      if(matchesEnRonda[r]===matchesSig*2){
+        ctx.strokeStyle=C.text3;ctx.lineWidth=2;
+        for(let k=0;k<matchesSig;k++){
+          const y1=bracketTop+centerY(r,2*k),y2=bracketTop+centerY(r,2*k+1),ym=(y1+y2)/2,cx1=x+COLW,half=cx1+COLGAP/2;
+          ctx.beginPath();ctx.moveTo(cx1,y1);ctx.lineTo(half,y1);ctx.lineTo(half,y2);ctx.moveTo(cx1,y2);ctx.lineTo(half,y2);
+          ctx.moveTo(half,ym);ctx.lineTo(cx1+COLGAP,ym);ctx.stroke();
+        }
+      }
+    }
+  });
+
+  if(tercerPuesto){
+    const ty=bracketTop+alturaBracket+30;
+    ctx.fillStyle=C.text2;ctx.font='800 14px system-ui,sans-serif';
+    ctx.fillText('🥉 TERCER PUESTO',PADX,ty);
+    drawBox(tercerPuesto,PADX,ty+16);
+  }
+
+  const fy=CH-FTR_H/2;
+  ctx.fillStyle=C.text3;ctx.font='14px system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}),PADX,fy);
+  ctx.fillStyle=C.accent;ctx.font='700 14px system-ui,sans-serif';ctx.textAlign='right';
+  ctx.fillText('www.sporvix.com.ar',CW-PADX,fy);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+
+  const blob=await new Promise(r=>{let done=false;const fin=b=>{if(!done){done=true;r(b);}};try{canvas.toBlob(fin,'image/png');}catch(e){fin(null);}setTimeout(()=>fin(null),10000);});
+  if(!blob){showToast('No se pudo generar la imagen en este dispositivo.','error');return;}
+  const fname='cuadro-eliminatoria-sporvix.png';
+  const file=new File([blob],fname,{type:'image/png'});
+  const titulo='🏆 Cuadro de eliminatoria — '+ligaName;
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:titulo});return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+  const previewUrl=canvas.toDataURL('image/webp',0.92)||canvas.toDataURL('image/png');
+  _showImageShareModal(previewUrl,blob,fname,titulo);
 }
 
 function openNuevoPartido(){

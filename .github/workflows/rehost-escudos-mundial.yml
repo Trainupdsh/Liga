@@ -1,0 +1,15 @@
+name: Re-hostear escudos del Mundial
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  rehost:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Re-hostear escudos en Supabase Storage
+        run: node scripts/rehost_escudos_mundial.mjs
