@@ -3835,19 +3835,21 @@ async function doAdminLogin(){
       else if(xu.role==='mesa')showMesaView(xu);
       return;
     }
-    // Check delegados desde Supabase
+    // Check delegados desde Supabase. Se busca solo por email y se compara la
+    // contraseña en memoria: mandar la contraseña como filtro (.eq) la mete en
+    // la URL de la request, que queda en logs de servidor, historial y headers.
     try{
       const {data:club}=await supa.from('clubes')
         .select('*, liga:ligas(nombre,deporte)')
-        .eq('delegado_email',email).eq('delegado_pass',pass).single();
-      if(club){showDelegadoView(club);return;}
+        .eq('delegado_email',email).single();
+      if(club&&club.delegado_pass&&club.delegado_pass===pass){showDelegadoView(club);return;}
     }catch(e){}
-    // Check árbitros desde Supabase
+    // Check árbitros desde Supabase (mismo criterio: filtrar por email, comparar en memoria)
     try{
       const {data:arb}=await supa.from('arbitros')
         .select('*, liga:liga_id(nombre)')
-        .eq('email',email).eq('password',pass).single();
-      if(arb){
+        .eq('email',email).single();
+      if(arb&&arb.password&&arb.password===pass){
         showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga?.nombre,foto:arb.foto_url});
         return;
       }
