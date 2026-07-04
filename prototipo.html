@@ -1498,6 +1498,12 @@ header .subtitle{font-size:12px;color:var(--text2);}
         </div>
       </div>
     </div>
+    <div style="padding:0 16px 4px">
+      <button onclick="compartirPartido()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Compartir resultado
+      </button>
+    </div>
     <div class="modal-tabs">
       <div class="modal-tab active" onclick="switchModalTab('eventos',this)">EVENTOS</div>
       <div class="modal-tab" onclick="switchModalTab('info',this)">INFO</div>
@@ -4328,14 +4334,22 @@ function _setModalShield(elId,logoUrl,shortTxt,bg,fg){
   if(logoUrl){el.innerHTML=`<img src="${logoUrl}" alt="">`;el.style.cssText='background:transparent';}
   else{el.textContent=shortTxt||'?';el.style.cssText=`background:${bg};color:${fg}`;}
 }
+// Etiqueta de la instancia: fase eliminatoria (16avos/Octavos/…) si el partido
+// la tiene, o "Fecha N" para la fase regular.
+function _faseOJornada(fase,jornada){
+  if(fase&&fase!=='regular')return _CUADRO_FASE_LABEL[fase]||fase;
+  return jornada?'Fecha '+jornada:'—';
+}
+let _matchShareData=null;
 async function openMatchDB(id){
   try{
     const {data:p}=await supa.from('partidos')
-      .select('id,jornada,fecha,hora,estado,goles_local,goles_visita,cancha,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
+      .select('id,jornada,fase,fecha,hora,estado,goles_local,goles_visita,cancha,local:equipo_local_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url)),visita:equipo_visita_id(nombre,abreviacion,color_principal,color_texto,club:club_id(logo_url))')
       .eq('id',id).single();
     if(!p)throw new Error('no data');
     const local=p.local,visita=p.visita;
     const isDone=p.estado==='finalizado',isLive=p.estado==='en_curso';
+    const instancia=_faseOJornada(p.fase,p.jornada);
     _setModalShield('modal-home-shield',local?.club?.logo_url,local?.abreviacion,local?.color_principal||'#1a2150',local?.color_texto||'#fff');
     document.getElementById('modal-home-name').textContent=local?.nombre||'Local';
     _setModalShield('modal-away-shield',visita?.club?.logo_url,visita?.abreviacion,visita?.color_principal||'#1a2150',visita?.color_texto||'#fff');
@@ -4344,13 +4358,20 @@ async function openMatchDB(id){
     const st=document.getElementById('modal-status-tag');
     st.textContent=isDone?'FINALIZADO':isLive?'EN VIVO':'PROGRAMADO';
     st.className='modal-status-tag'+(isLive?' live':'');
-    document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent} · Fecha ${p.jornada||'—'}`;
+    document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent} · ${instancia}`;
+    // datos para compartir la imagen del resultado
+    _matchShareData={
+      divId:p.division_id||currentDivisionId,
+      home:{nombre:local?.nombre||'Local',abrev:local?.abreviacion,color:local?.color_principal||'#1a2150',logo:local?.club?.logo_url||null},
+      away:{nombre:visita?.nombre||'Visitante',abrev:visita?.abreviacion,color:visita?.color_principal||'#1a2150',logo:visita?.club?.logo_url||null},
+      gl:p.goles_local,gv:p.goles_visita,estado:p.estado,instancia,fecha:p.fecha||null,hora:p.hora?p.hora.slice(0,5):null,
+    };
     document.getElementById('matchModal').classList.add('open');
     switchModalTab('info',document.querySelectorAll('.modal-tab')[1]);
     // Fill info tab
     document.querySelector('#pane-info').innerHTML=`
-      <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">${p.jornada?'Fecha '+p.jornada:'—'}</span></div>
-      <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${p.cancha||'—'}</span></div>
+      <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">${instancia}</span></div>
+      <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${escHtml(p.cancha||'—')}</span></div>
       <div class="info-row"><span class="info-label">Hora</span><span class="info-value">${p.hora?p.hora.slice(0,5):'—'}</span></div>
       <div class="info-row"><span class="info-label">Fecha calendario</span><span class="info-value">${p.fecha?formatFecha(p.fecha):'—'}</span></div>
       <div class="info-row"><span class="info-label">Estado</span><span class="info-value">${isDone?'✓ Finalizado':isLive?'🟢 En vivo':'⏳ Programado'}</span></div>`;
@@ -4370,15 +4391,23 @@ function openMatch(id){
   const st=document.getElementById('modal-status-tag');
   st.textContent=m.status==='done'?'FINALIZADO':m.status==='live'?'EN VIVO':'PROGRAMADO';
   st.className='modal-status-tag'+(m.status==='live'?' live':'');
-  document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent||'División'} · Fecha ${m.round}`;
+  const instancia=_faseOJornada(m.fase,m.round);
+  document.getElementById('modal-tournament').textContent=`${document.getElementById('division-header-name').textContent||'División'} · ${instancia}`;
   // Dynamic events
   document.getElementById('match-events-content').innerHTML=_renderMatchEvents(m);
   // Dynamic info tab
   document.querySelector('#pane-info').innerHTML=`
-    <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">Fecha ${m.round}</span></div>
-    <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${m.venue||'Por confirmar'}</span></div>
+    <div class="info-row"><span class="info-label">Fecha</span><span class="info-value">${instancia}</span></div>
+    <div class="info-row"><span class="info-label">Cancha</span><span class="info-value">${escHtml(m.venue||'Por confirmar')}</span></div>
     <div class="info-row"><span class="info-label">Horario</span><span class="info-value">${m.time||'Por confirmar'}</span></div>
     <div class="info-row"><span class="info-label">Estado</span><span class="info-value">${m.status==='done'?'✓ Finalizado':m.status==='live'?'🟢 En vivo':'⏳ Programado'}</span></div>`;
+  _matchShareData={
+    divId:currentDivisionId,
+    home:{nombre:home.name,abrev:home.short,color:home.color,logo:home.logoUrl||null},
+    away:{nombre:away.name,abrev:away.short,color:away.color,logo:away.logoUrl||null},
+    gl:m.homeScore,gv:m.awayScore,estado:m.status==='done'?'finalizado':m.status==='live'?'en_curso':'programado',
+    instancia,fecha:m.fecha||null,hora:m.time||null,
+  };
   document.getElementById('matchModal').classList.add('open');
   switchModalTab('eventos',document.querySelector('.modal-tab'));
 }
@@ -7095,6 +7124,219 @@ function _renderCuadroArbol(el,partidos){
 }
 
 // — Compartir el cuadro como imagen —
+// ── Compartir el resultado de un partido como imagen ──
+function compartirPartido(){
+  if(!_matchShareData){showToast('Abrí un partido primero','');return;}
+  const old=document.getElementById('_partidoPalModal');if(old)old.remove();
+  _shareChosenPalette='clasico';
+  const m=document.createElement('div');
+  m.id='_partidoPalModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  const swatches=_SHARE_PALETTES.map((p,i)=>`
+    <button class="pal-sw" data-pal="${p.id}" title="${p.name}" onclick="_pickPaletteSwatch('${p.id}')"
+      style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;outline:${i===0?'3px solid #fff':'3px solid transparent'};outline-offset:2px;background:linear-gradient(135deg,${p.hex1},${p.hex2})"></button>`).join('');
+  const cards=_SHARE_FMTS.map(f=>`
+    <button onclick="document.getElementById('_partidoPalModal').remove();_generarImagenPartido(_shareChosenPalette,'${f.id}').catch(e=>{console.warn('canvas partido',e);showToast('Error al generar la imagen. Probá de nuevo.','error');})"
+      style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:inherit;width:100%;transition:border-color .15s,background .15s"
+      onmouseover="this.style.borderColor='#1a6ef5';this.style.background='rgba(26,110,245,.14)'"
+      onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.04)'">
+      <div style="position:relative;width:${f.wPv}px;height:${f.hPv}px;background:rgba(26,110,245,.15);border:2px solid #1a6ef5;border-radius:4px;overflow:hidden;flex-shrink:0">
+        <div style="position:absolute;top:34%;left:16%;width:16%;height:26%;background:#1a6ef5;border-radius:50%"></div>
+        <div style="position:absolute;top:34%;right:16%;width:16%;height:26%;background:rgba(26,110,245,.55);border-radius:50%"></div>
+      </div>
+      <div style="color:#f1f5f9;font-weight:700;font-size:12px;text-align:center;line-height:1.3">${f.label}</div>
+      <div style="color:#64748b;font-size:10px;text-align:center;line-height:1.4">${f.sub}</div>
+      <div style="color:#1a6ef5;font-size:10px;font-weight:600">${f.dims}</div>
+    </button>`).join('');
+  m.innerHTML=`
+    <div style="background:#131d3b;border-radius:18px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.85)">
+      <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="color:#f1f5f9;font-weight:800;font-size:15px">Elegí el formato</div>
+        <div style="color:#64748b;font-size:12px;margin-top:3px">Dimensiones optimizadas para cada plataforma</div>
+      </div>
+      <div style="padding:14px 14px 4px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Color de la imagen</div>
+        <div style="display:flex;gap:10px;padding-bottom:14px">${swatches}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px">${cards}</div>
+      <div style="padding:0 14px 16px">
+        <button onclick="document.getElementById('_partidoPalModal').remove()" style="width:100%;padding:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>`;
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  document.body.appendChild(m);
+}
+async function _generarImagenPartido(paletteId,fmtId){
+  const d=_matchShareData;
+  if(!d){showToast('Sin datos para compartir','');return;}
+  const fmt=_SHARE_FMTS.find(f=>f.id===fmtId)||_SHARE_FMTS[0];
+
+  let ligaName='Liga',torNombre='',divNombre='',hdrUrl=null;
+  try{
+    const {data:dv}=await supa.from('divisiones').select('nombre,categoria,torneo:torneos(nombre,logo_url,liga:ligas(nombre,logo_url))').eq('id',d.divId).single();
+    if(dv){divNombre=dv.categoria?dv.categoria+' · '+dv.nombre:dv.nombre;torNombre=dv.torneo?.nombre||'';ligaName=dv.torneo?.liga?.nombre||'Liga';hdrUrl=dv.torneo?.logo_url||dv.torneo?.liga?.logo_url||null;}
+  }catch(e){}
+
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const C=isLight?{bg:'#edf2ff',card:'#ffffff',card2:'#f3f6ff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
+    :{bg:'#0c1017',card:'#151b26',card2:'#1c2434',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
+  const PAL=_SHARE_PALETTES.find(p=>p.id===paletteId)||_SHARE_PALETTES[0];
+  C.accent=isLight?_hexBlend(PAL.hex1,'#000000',0.18):PAL.hex1;
+
+  const CW=820,PADX=48,HDR_H=132,RESULT_H=392,FTR_H=58;
+  const CH=HDR_H+RESULT_H+FTR_H;
+
+  let RETINA=2;
+  while(RETINA>1&&(CW*RETINA>4096||CH*RETINA>4096))RETINA--;
+  const canvas=document.createElement('canvas');
+  canvas.width=CW*RETINA;canvas.height=CH*RETINA;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.scale(RETINA,RETINA);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+
+  const imgCache={};
+  const _loadImg=async url=>_safeLoadImg(url,imgCache);
+  let hdrLogo=null,sporvixLogo=null;
+  await Promise.all([
+    _loadImg(d.home.logo),_loadImg(d.away.logo),
+    (async()=>{await _loadImg(hdrUrl);hdrLogo=hdrUrl?imgCache[hdrUrl]||null:null;})(),
+    (async()=>{try{const img=new Image();await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;setTimeout(fail,4000);img.src='/sporvix-logo.png';});sporvixLogo=img;}catch{}})(),
+  ]);
+
+  showToast('Generando imagen…','');
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,CW,CH);
+
+  // ── branding (idéntico al resto de canvas compartibles) ──
+  const logoR=Math.round(HDR_H*0.28);
+  const logoX=PADX+logoR, logoY=Math.round(HDR_H*0.5);
+  if(!isLight){
+    ctx.save();ctx.shadowColor=`rgba(${_hexRgb(PAL.hex1)},0.35)`;ctx.shadowBlur=22;
+    ctx.beginPath();ctx.arc(logoX,logoY,logoR+2,0,Math.PI*2);ctx.strokeStyle='transparent';ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle=C.card2;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=isLight?`rgba(${_hexDarkRgb(PAL.hex1,42)},0.30)`:'rgba(255,255,255,0.12)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.stroke();
+  if(hdrLogo){
+    ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
+    _drawImgCover(ctx,hdrLogo,logoX-logoR,logoY-logoR,logoR*2,logoR*2);ctx.restore();
+  } else if(sporvixLogo){
+    const pad=logoR*0.12;
+    ctx.save();ctx.beginPath();ctx.arc(logoX,logoY,logoR,0,Math.PI*2);ctx.clip();
+    _drawImgCover(ctx,sporvixLogo,logoX-logoR+pad,logoY-logoR+pad,logoR*2-pad*2,logoR*2-pad*2);ctx.restore();
+  } else {
+    const lgG=ctx.createLinearGradient(logoX-logoR,logoY-logoR,logoX+logoR,logoY+logoR);
+    lgG.addColorStop(0,C.accent);lgG.addColorStop(1,PAL.hex2);
+    ctx.font=`900 ${Math.round(logoR*1.1)}px system-ui,sans-serif`;
+    ctx.fillStyle=lgG;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('S',logoX,logoY);ctx.textBaseline='alphabetic';
+  }
+  const tX=logoX+logoR+Math.round(CW*0.018);
+  const s1=Math.round(Math.min(CW*0.036,HDR_H*0.26));
+  const s2=Math.round(Math.min(CW*0.026,HDR_H*0.19));
+  const s3=Math.round(Math.min(CW*0.020,HDR_H*0.15));
+  const brandLines=[
+    {t:'SPORVIX',s:s1,c:C.text,w:900},
+    {t:ligaName,s:s2,c:C.accent,w:700},
+    ...(torNombre?[{t:torNombre,s:s3,c:C.text2,w:400}]:[]),
+    ...(divNombre?[{t:divNombre,s:s3,c:C.text3,w:400}]:[]),
+  ].filter(l=>l.t);
+  const totalBH=brandLines.reduce((a,l)=>a+l.s*1.28,0);
+  let ly=(HDR_H-totalBH)/2+brandLines[0].s;
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  for(const l of brandLines){
+    ctx.font=`${l.w} ${l.s}px system-ui,sans-serif`;ctx.fillStyle=l.c;
+    ctx.fillText(_tTxt(ctx,l.t,CW-tX-PADX),tX,ly);ly+=l.s*1.28;
+  }
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,HDR_H);ctx.lineTo(CW,HDR_H);ctx.stroke();
+
+  // ── instancia (16avos / Fecha N) centrada ──
+  const top=HDR_H;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillStyle=C.accent;ctx.font='800 20px system-ui,sans-serif';
+  ctx.fillText((d.instancia||'').toUpperCase(),CW/2,top+42);
+
+  // ── escudos + marcador ──
+  const shieldD=132, cy=top+150;
+  const homeX=CW*0.22, awayX=CW*0.78;
+  const drawShield=(eq,cx)=>{
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.clip();
+    const img=eq.logo&&imgCache[eq.logo];
+    if(img)_drawImgCover(ctx,img,cx-shieldD/2,cy-shieldD/2,shieldD,shieldD);
+    else{ctx.fillStyle=eq.color||'#1a2150';ctx.fillRect(cx-shieldD/2,cy-shieldD/2,shieldD,shieldD);
+      ctx.fillStyle='#fff';ctx.font='800 '+Math.round(shieldD*0.34)+'px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText((eq.abrev||eq.nombre||'?').slice(0,3).toUpperCase(),cx,cy+1);ctx.textBaseline='alphabetic';}
+    ctx.restore();
+    // borde
+    ctx.strokeStyle=C.border;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.stroke();
+  };
+  drawShield(d.home,homeX);
+  drawShield(d.away,awayX);
+
+  const jugado=d.estado==='finalizado'||d.estado==='en_curso';
+  const scoreTxt=jugado?`${d.gl??0}  -  ${d.gv??0}`:'-  -  -';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle=C.text;ctx.font='900 64px system-ui,sans-serif';
+  ctx.fillText(scoreTxt,CW/2,cy);
+  ctx.textBaseline='alphabetic';
+
+  // nombres bajo cada escudo
+  ctx.fillStyle=C.text;ctx.font='800 22px system-ui,sans-serif';ctx.textAlign='center';
+  ctx.fillText(_tTxt(ctx,d.home.nombre,CW*0.4),homeX,cy+shieldD/2+38);
+  ctx.fillText(_tTxt(ctx,d.away.nombre,CW*0.4),awayX,cy+shieldD/2+38);
+
+  // pill de estado bajo el marcador
+  const estadoTxt=d.estado==='finalizado'?'FINALIZADO':d.estado==='en_curso'?'● EN VIVO':'PROGRAMADO';
+  ctx.font='800 14px system-ui,sans-serif';
+  const pw=ctx.measureText(estadoTxt).width+28, ph=30, px=CW/2-pw/2, py=cy+62;
+  ctx.fillStyle=d.estado==='en_curso'?'rgba(239,68,68,.15)':(isLight?'rgba(37,99,235,.10)':'rgba(79,140,255,.14)');
+  _rrect(ctx,px,py,pw,ph,15);ctx.fill();
+  ctx.fillStyle=d.estado==='en_curso'?'#ef4444':C.accent;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(estadoTxt,CW/2,py+ph/2+1);ctx.textBaseline='alphabetic';
+
+  // ── footer ──
+  const fy=CH-FTR_H/2;
+  ctx.fillStyle=C.text3;ctx.font='14px system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  const fechaTxt=d.fecha?formatFecha(d.fecha):new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  ctx.fillText(fechaTxt+(d.hora?' · '+d.hora:''),PADX,fy);
+  ctx.fillStyle=C.accent;ctx.font='700 14px system-ui,sans-serif';ctx.textAlign='right';
+  ctx.fillText('www.sporvix.com.ar',CW-PADX,fy);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+
+  // ── empaquetar en el formato elegido (historia/cuadrado/retrato) ──
+  let finalCanvas=canvas;
+  if(fmt.CH){
+    const FCW=fmt.CW,FCH=fmt.CH,sT=fmt.safeTop||0,sB=fmt.safeBot||0;
+    const pad=Math.round(FCW*0.05);
+    const availW=FCW-pad*2,availH=(FCH-sT-sB)-pad*2;
+    const scale=Math.min(availW/CW,availH/CH);
+    const drawW=CW*scale,drawH=CH*scale;
+    const dx=(FCW-drawW)/2,dy=sT+((FCH-sT-sB)-drawH)/2;
+    let FRETINA=2;
+    while(FRETINA>1&&(FCW*FRETINA>4096||FCH*FRETINA>4096||FCW*FRETINA*FCH*FRETINA>16000000))FRETINA--;
+    const fCanvas=document.createElement('canvas');
+    fCanvas.width=FCW*FRETINA;fCanvas.height=FCH*FRETINA;
+    const fctx=fCanvas.getContext('2d',{alpha:false});
+    fctx.scale(FRETINA,FRETINA);
+    fctx.imageSmoothingEnabled=true;fctx.imageSmoothingQuality='high';
+    fctx.fillStyle=C.bg;fctx.fillRect(0,0,FCW,FCH);
+    fctx.drawImage(canvas,dx,dy,drawW,drawH);
+    finalCanvas=fCanvas;
+  }
+
+  const blob=await new Promise(r=>{let done=false;const fin=b=>{if(!done){done=true;r(b);}};try{finalCanvas.toBlob(fin,'image/png');}catch(e){fin(null);}setTimeout(()=>fin(null),10000);});
+  if(!blob){showToast('No se pudo generar la imagen en este dispositivo.','error');return;}
+  const fname='resultado-sporvix.png';
+  const file=new File([blob],fname,{type:'image/png'});
+  const titulo=`${d.home.nombre} ${jugado?(d.gl??0)+'-'+(d.gv??0):'vs'} ${d.away.nombre} — ${ligaName}`;
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:titulo});return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+  const previewUrl=finalCanvas.toDataURL('image/webp',0.92)||finalCanvas.toDataURL('image/png');
+  _showImageShareModal(previewUrl,blob,fname,titulo);
+}
 function compartirCuadro(divId){
   const old=document.getElementById('_cuadroPalModal');if(old)old.remove();
   _shareChosenPalette='clasico';
