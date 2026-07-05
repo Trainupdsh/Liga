@@ -7181,9 +7181,10 @@ async function _generarImagenPartido(paletteId,fmtId){
   const C=isLight?{bg:'#edf2ff',card:'#ffffff',card2:'#f3f6ff',text:'#0f172a',text2:'#475569',text3:'#94a3b8',border:'#dde5ff',green:'#16a34a',accent:'#2563eb'}
     :{bg:'#0c1017',card:'#151b26',card2:'#1c2434',text:'#f0f2f5',text2:'#9aa0b0',text3:'#5c6274',border:'#232c3d',green:'#2ed573',accent:'#4f8cff'};
   const PAL=_SHARE_PALETTES.find(p=>p.id===paletteId)||_SHARE_PALETTES[0];
+  const A1=_hexRgb(PAL.hex1), A1L=_hexDarkRgb(PAL.hex1,42), A2=_hexRgb(PAL.hex2);
   C.accent=isLight?_hexBlend(PAL.hex1,'#000000',0.18):PAL.hex1;
 
-  const CW=820,PADX=48,HDR_H=132,RESULT_H=392,FTR_H=58;
+  const CW=820,PADX=48,HDR_H=132,RESULT_H=344,FTR_H=58;
   const CH=HDR_H+RESULT_H+FTR_H;
 
   let RETINA=2;
@@ -7204,7 +7205,43 @@ async function _generarImagenPartido(paletteId,fmtId){
   ]);
 
   showToast('Generando imagen…','');
-  ctx.fillStyle=C.bg;ctx.fillRect(0,0,CW,CH);
+
+  // ── FONDO con profundidad (degradado + brillos + grilla + textura) ──
+  {
+    const bgG=ctx.createLinearGradient(0,0,CW*0.25,CH);
+    if(isLight){bgG.addColorStop(0,'#dce6ff');bgG.addColorStop(0.45,'#edf2ff');bgG.addColorStop(1,'#e0eaff');}
+    else{bgG.addColorStop(0,'#04071a');bgG.addColorStop(0.3,'#08102a');bgG.addColorStop(0.65,'#0c1532');bgG.addColorStop(1,'#030508');}
+    ctx.fillStyle=bgG;ctx.fillRect(0,0,CW,CH);
+    const glA=isLight?0.18:0.32, glB=isLight?0.10:0.20;
+    const glTR=ctx.createRadialGradient(CW*0.92,CH*0.05,0,CW*0.92,CH*0.05,CW*0.75);
+    glTR.addColorStop(0,`rgba(${A1},${glA})`);glTR.addColorStop(0.5,`rgba(${A1},${glA*0.38})`);glTR.addColorStop(1,`rgba(${A1},0)`);
+    ctx.fillStyle=glTR;ctx.fillRect(0,0,CW,CH);
+    const glBL=ctx.createRadialGradient(CW*0.06,CH*0.95,0,CW*0.06,CH*0.95,CW*0.72);
+    glBL.addColorStop(0,`rgba(${A2},${glB})`);glBL.addColorStop(0.5,`rgba(${A2},${glB*0.36})`);glBL.addColorStop(1,`rgba(${A2},0)`);
+    ctx.fillStyle=glBL;ctx.fillRect(0,0,CW,CH);
+    ctx.strokeStyle=isLight?'rgba(30,60,200,0.06)':'rgba(255,255,255,0.025)';ctx.lineWidth=0.5;
+    const gS=Math.round(CW*0.038);
+    for(let gx=0;gx<=CW;gx+=gS){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,CH);ctx.stroke();}
+    for(let gy=0;gy<=CH;gy+=gS){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(CW,gy);ctx.stroke();}
+    if(!isLight){
+      const ray=ctx.createLinearGradient(CW,0,CW*0.1,CH*0.65);
+      ray.addColorStop(0,`rgba(${A1},0)`);ray.addColorStop(0.35,`rgba(${A1},0.055)`);ray.addColorStop(0.5,`rgba(${A1},0.038)`);ray.addColorStop(1,`rgba(${A1},0)`);
+      ctx.fillStyle=ray;ctx.fillRect(0,0,CW,CH);
+    }
+    // marca de agua: logo grande de Sporvix, muy tenue, abajo-derecha
+    if(sporvixLogo){
+      ctx.save();ctx.globalAlpha=isLight?0.05:0.06;
+      const wm=CW*0.62;_drawImgCover(ctx,sporvixLogo,CW-wm*0.72,CH-wm*0.66,wm,wm);
+      ctx.restore();
+    }
+    // textura fina de grano
+    const nc=document.createElement('canvas');nc.width=nc.height=160;
+    const nx=nc.getContext('2d'),ni=nx.createImageData(160,160),ndd=ni.data;
+    const nv=isLight?0:255, na=isLight?10:7;
+    for(let i=0;i<ndd.length;i+=4){ndd[i]=ndd[i+1]=ndd[i+2]=nv;ndd[i+3]=Math.random()<0.45?Math.random()*na|0:0;}
+    nx.putImageData(ni,0,0);
+    ctx.fillStyle=ctx.createPattern(nc,'repeat');ctx.fillRect(0,0,CW,CH);
+  }
 
   // ── branding (idéntico al resto de canvas compartibles) ──
   const logoR=Math.round(HDR_H*0.28);
@@ -7251,16 +7288,38 @@ async function _generarImagenPartido(paletteId,fmtId){
   }
   ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,HDR_H);ctx.lineTo(CW,HDR_H);ctx.stroke();
 
-  // ── instancia (16avos / Fecha N) centrada ──
-  const top=HDR_H;
+  // ── tarjeta con profundidad que contiene el resultado ──
+  const cardX=PADX, cardY=HDR_H+16, cardW=CW-PADX*2, cardH=RESULT_H-28, CR=22;
+  const cCenterX=cardX+cardW/2;
+  // glow ambiental detrás de la tarjeta
+  {const haloG=ctx.createRadialGradient(cCenterX,cardY+cardH*0.4,0,cCenterX,cardY+cardH*0.4,cardW*0.72);
+   const hA=isLight?0.12:0.16;
+   haloG.addColorStop(0,`rgba(${A1},${hA})`);haloG.addColorStop(0.5,`rgba(${A1},${hA*0.3})`);haloG.addColorStop(1,`rgba(${A1},0)`);
+   ctx.fillStyle=haloG;ctx.fillRect(0,cardY-40,CW,cardH+80);}
+  // sombra difusa
+  ctx.save();
+  ctx.shadowColor=isLight?'rgba(20,40,160,0.18)':'rgba(0,2,20,0.92)';
+  ctx.shadowBlur=isLight?42:100;ctx.shadowOffsetY=isLight?12:34;
+  _rrect(ctx,cardX,cardY,cardW,cardH,CR);ctx.fillStyle=C.card;ctx.fill();
+  ctx.restore();
+  // borde con degradado (luz arriba)
+  {const bG=ctx.createLinearGradient(cardX,cardY,cardX,cardY+cardH);
+   if(isLight){bG.addColorStop(0,`rgba(${A1L},0.30)`);bG.addColorStop(1,`rgba(${A1L},0.05)`);}
+   else{bG.addColorStop(0,'rgba(255,255,255,0.30)');bG.addColorStop(0.5,'rgba(255,255,255,0.06)');bG.addColorStop(1,'rgba(255,255,255,0.02)');}
+   ctx.strokeStyle=bG;ctx.lineWidth=1.5;_rrect(ctx,cardX,cardY,cardW,cardH,CR);ctx.stroke();}
+
+  // instancia (16avos / Fecha N) centrada
   ctx.textAlign='center';ctx.textBaseline='alphabetic';
   ctx.fillStyle=C.accent;ctx.font='800 20px system-ui,sans-serif';
-  ctx.fillText((d.instancia||'').toUpperCase(),CW/2,top+42);
+  ctx.fillText((d.instancia||'').toUpperCase(),cCenterX,cardY+46);
 
-  // ── escudos + marcador ──
-  const shieldD=132, cy=top+150;
-  const homeX=CW*0.22, awayX=CW*0.78;
+  // escudos + marcador
+  const shieldD=132, cy=cardY+150;
+  const homeX=cardX+cardW*0.24, awayX=cardX+cardW*0.76;
   const drawShield=(eq,cx)=>{
+    // aro de brillo suave detrás del escudo
+    ctx.save();ctx.shadowColor=`rgba(${A1},${isLight?0.25:0.4})`;ctx.shadowBlur=20;
+    ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.fillStyle=C.card2;ctx.fill();ctx.restore();
     ctx.save();ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.clip();
     const img=eq.logo&&imgCache[eq.logo];
     if(img)_drawImgCover(ctx,img,cx-shieldD/2,cy-shieldD/2,shieldD,shieldD);
@@ -7268,8 +7327,7 @@ async function _generarImagenPartido(paletteId,fmtId){
       ctx.fillStyle='#fff';ctx.font='800 '+Math.round(shieldD*0.34)+'px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText((eq.abrev||eq.nombre||'?').slice(0,3).toUpperCase(),cx,cy+1);ctx.textBaseline='alphabetic';}
     ctx.restore();
-    // borde
-    ctx.strokeStyle=C.border;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle=isLight?`rgba(${A1L},0.25)`:'rgba(255,255,255,0.18)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,shieldD/2,0,Math.PI*2);ctx.stroke();
   };
   drawShield(d.home,homeX);
   drawShield(d.away,awayX);
@@ -7278,22 +7336,22 @@ async function _generarImagenPartido(paletteId,fmtId){
   const scoreTxt=jugado?`${d.gl??0}  -  ${d.gv??0}`:'-  -  -';
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillStyle=C.text;ctx.font='900 64px system-ui,sans-serif';
-  ctx.fillText(scoreTxt,CW/2,cy);
+  ctx.fillText(scoreTxt,cCenterX,cy);
   ctx.textBaseline='alphabetic';
 
   // nombres bajo cada escudo
   ctx.fillStyle=C.text;ctx.font='800 22px system-ui,sans-serif';ctx.textAlign='center';
-  ctx.fillText(_tTxt(ctx,d.home.nombre,CW*0.4),homeX,cy+shieldD/2+38);
-  ctx.fillText(_tTxt(ctx,d.away.nombre,CW*0.4),awayX,cy+shieldD/2+38);
+  ctx.fillText(_tTxt(ctx,d.home.nombre,cardW*0.42),homeX,cy+shieldD/2+38);
+  ctx.fillText(_tTxt(ctx,d.away.nombre,cardW*0.42),awayX,cy+shieldD/2+38);
 
   // pill de estado bajo el marcador
   const estadoTxt=d.estado==='finalizado'?'FINALIZADO':d.estado==='en_curso'?'● EN VIVO':'PROGRAMADO';
   ctx.font='800 14px system-ui,sans-serif';
-  const pw=ctx.measureText(estadoTxt).width+28, ph=30, px=CW/2-pw/2, py=cy+62;
+  const pw=ctx.measureText(estadoTxt).width+28, ph=30, px=cCenterX-pw/2, py=cy+58;
   ctx.fillStyle=d.estado==='en_curso'?'rgba(239,68,68,.15)':(isLight?'rgba(37,99,235,.10)':'rgba(79,140,255,.14)');
   _rrect(ctx,px,py,pw,ph,15);ctx.fill();
   ctx.fillStyle=d.estado==='en_curso'?'#ef4444':C.accent;ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(estadoTxt,CW/2,py+ph/2+1);ctx.textBaseline='alphabetic';
+  ctx.fillText(estadoTxt,cCenterX,py+ph/2+1);ctx.textBaseline='alphabetic';
 
   // ── footer ──
   const fy=CH-FTR_H/2;
@@ -7320,7 +7378,11 @@ async function _generarImagenPartido(paletteId,fmtId){
     const fctx=fCanvas.getContext('2d',{alpha:false});
     fctx.scale(FRETINA,FRETINA);
     fctx.imageSmoothingEnabled=true;fctx.imageSmoothingQuality='high';
-    fctx.fillStyle=C.bg;fctx.fillRect(0,0,FCW,FCH);
+    // fondo del formato con degradado que combina con los bordes de la base rica
+    const fg=fctx.createLinearGradient(0,0,0,FCH);
+    if(isLight){fg.addColorStop(0,'#dce6ff');fg.addColorStop(1,'#e0eaff');}
+    else{fg.addColorStop(0,'#05081c');fg.addColorStop(1,'#030508');}
+    fctx.fillStyle=fg;fctx.fillRect(0,0,FCW,FCH);
     fctx.drawImage(canvas,dx,dy,drawW,drawH);
     finalCanvas=fCanvas;
   }
