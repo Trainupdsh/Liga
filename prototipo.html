@@ -8942,7 +8942,199 @@ function shareResult(matchEl){
 }
 
 // ═══ EXPORT PDF ═══
-function exportPDF(){window.print();}
+// Arma un documento aparte, pensado para papel, en vez de imprimir la pantalla
+// (window.print() sobre la app salía como una captura: fondo oscuro, menús,
+// botones y texto cortado). Se abre en una ventana nueva con su propio HTML, y
+// desde el diálogo de impresión se elige "Guardar como PDF". El texto queda
+// seleccionable y buscable, no es una imagen.
+const _PDF_ESTILOS=`
+  @page{size:A4;margin:14mm 12mm 16mm}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#12161f;background:#fff;font-size:10.5pt;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .doc{max-width:186mm;margin:0 auto}
+  header.tapa{display:flex;align-items:center;gap:14px;border-bottom:2.5px solid #1a2150;padding-bottom:12px;margin-bottom:6px}
+  .tapa .escudo{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0}
+  .tapa .escudo-txt{width:52px;height:52px;border-radius:10px;background:#1a2150;color:#fff;display:flex;
+       align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0}
+  .tapa h1{margin:0;font-size:19pt;font-weight:800;letter-spacing:-.3px}
+  .tapa .sub{margin-top:3px;font-size:10pt;color:#48506a;font-weight:600}
+  .emitido{font-size:8.5pt;color:#6b7280;margin:0 0 16px}
+  h2.sec{font-size:12pt;font-weight:800;margin:20px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #d7dbe6;
+       text-transform:uppercase;letter-spacing:.6px;color:#1a2150;break-after:avoid}
+  .resumen{display:flex;gap:8px;margin:10px 0 4px}
+  .resumen .caja{flex:1;border:1px solid #d7dbe6;border-radius:7px;padding:8px 10px;background:#f7f8fb}
+  .resumen .n{font-size:16pt;font-weight:800;line-height:1.1;color:#1a2150}
+  .resumen .l{font-size:7.5pt;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:9.5pt}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+  th{background:#1a2150;color:#fff;font-size:8pt;text-transform:uppercase;letter-spacing:.5px;
+     padding:6px 5px;text-align:center;font-weight:700}
+  th.izq,td.izq{text-align:left}
+  td{padding:5px;border-bottom:1px solid #e6e9f0;text-align:center}
+  tbody tr:nth-child(even){background:#f7f8fb}
+  .pts{font-weight:800;color:#1a2150}
+  .pos{font-weight:700;color:#6b7280;width:22px}
+  .club{font-weight:600}
+  .jor{background:#eef0f6;font-weight:800;font-size:8.5pt;text-transform:uppercase;letter-spacing:.5px;
+       padding:5px 7px;border-left:3px solid #1a2150;margin:12px 0 5px;break-after:avoid}
+  .res{font-weight:800;white-space:nowrap}
+  .prog{color:#6b7280;font-style:italic}
+  .vacio{color:#6b7280;font-style:italic;padding:8px 0;font-size:9.5pt}
+  footer{margin-top:22px;padding-top:8px;border-top:1px solid #d7dbe6;font-size:8pt;color:#6b7280;
+         display:flex;justify-content:space-between}
+  @media print{.noprint{display:none!important}}
+  .noprint{position:fixed;top:0;left:0;right:0;background:#1a2150;color:#fff;padding:9px 14px;
+     font-size:13px;display:flex;align-items:center;justify-content:space-between;z-index:9}
+  .noprint button{background:#fff;color:#1a2150;border:0;border-radius:6px;padding:6px 14px;font-weight:700;cursor:pointer}
+  body.tiene-barra{padding-top:46px}
+`;
+
+function _pdfFecha(f){ if(!f)return '—'; try{return formatFecha(f);}catch(e){return f;} }
+
+async function exportPDF(){
+  if(!currentAdminDivisionId){
+    showToast('Entrá a una división para exportar su informe','error');
+    return;
+  }
+  showToast('Preparando informe…','');
+  try{
+    // --- Datos ---
+    const [{data:div},{data:equipos},{data:partidos}]=await Promise.all([
+      supa.from('divisiones').select('nombre,categoria,genero,torneo:torneo_id(nombre,temporada,liga:liga_id(nombre,logo_url,deporte))').eq('id',currentAdminDivisionId).single(),
+      supa.from('equipos').select('id,nombre,abreviacion,color_principal').eq('division_id',currentAdminDivisionId).order('nombre'),
+      supa.from('partidos').select('*').eq('division_id',currentAdminDivisionId).order('jornada').order('fecha').order('hora')
+    ]);
+    const eqs=equipos||[], parts=partidos||[];
+    const eqMap=Object.fromEntries(eqs.map(e=>[e.id,e]));
+    const nombreEq=id=>eqMap[id]?eqMap[id].nombre:'—';
+
+    let jugadores=[];
+    if(eqs.length){
+      const {data:js}=await supa.from('jugadores')
+        .select('nombre,numero,goles,amarillas,rojas,equipo_id').in('equipo_id',eqs.map(e=>e.id));
+      jugadores=js||[];
+    }
+
+    const torneo=div?.torneo||{}, liga=torneo.liga||{};
+    const tabla=calcularTabla(parts,eqs);
+    const jugados=parts.filter(p=>p.estado==='finalizado');
+    const golesTot=jugados.reduce((s,p)=>s+(p.goles_local??0)+(p.goles_visita??0),0);
+    const divLabel=[div?.categoria,div?.nombre].filter(Boolean).join(' ')+(div?.genero?' ('+div.genero+')':'');
+
+    // --- Posiciones ---
+    const htmlTabla=tabla.length?`<table>
+      <thead><tr><th>#</th><th class="izq">Club</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>Dif</th><th>Pts</th></tr></thead>
+      <tbody>${tabla.map((e,i)=>`<tr>
+        <td class="pos">${i+1}</td><td class="izq club">${escHtml(e.nombre)}</td>
+        <td>${e.pj}</td><td>${e.g}</td><td>${e.e}</td><td>${e.p}</td>
+        <td>${e.gf}</td><td>${e.gc}</td><td>${e.gf-e.gc>0?'+':''}${e.gf-e.gc}</td>
+        <td class="pts">${e.pts}</td></tr>`).join('')}</tbody></table>`
+      :'<p class="vacio">Todavía no hay partidos finalizados para armar la tabla.</p>';
+
+    // --- Goleadores ---
+    const gol=jugadores.filter(j=>(j.goles||0)>0).sort((a,b)=>(b.goles||0)-(a.goles||0)).slice(0,25);
+    const htmlGol=gol.length?`<table>
+      <thead><tr><th>#</th><th class="izq">Jugador</th><th class="izq">Club</th><th>N°</th><th>Goles</th></tr></thead>
+      <tbody>${gol.map((j,i)=>`<tr><td class="pos">${i+1}</td>
+        <td class="izq club">${escHtml(j.nombre)}</td><td class="izq">${escHtml(nombreEq(j.equipo_id))}</td>
+        <td>${j.numero??'—'}</td><td class="pts">${j.goles}</td></tr>`).join('')}</tbody></table>`
+      :'<p class="vacio">Sin goles registrados.</p>';
+
+    // --- Disciplina ---
+    const disc=jugadores.filter(j=>(j.amarillas||0)+(j.rojas||0)>0)
+      .sort((a,b)=>((b.rojas||0)*10+(b.amarillas||0))-((a.rojas||0)*10+(a.amarillas||0))).slice(0,25);
+    const htmlDisc=disc.length?`<table>
+      <thead><tr><th class="izq">Jugador</th><th class="izq">Club</th><th>Amarillas</th><th>Rojas</th></tr></thead>
+      <tbody>${disc.map(j=>`<tr><td class="izq club">${escHtml(j.nombre)}</td>
+        <td class="izq">${escHtml(nombreEq(j.equipo_id))}</td>
+        <td>${j.amarillas||0}</td><td>${j.rojas||0}</td></tr>`).join('')}</tbody></table>`:'';
+
+    // --- Fixture por jornada ---
+    const porJornada={};
+    parts.filter(p=>!p.fase||p.fase==='regular').forEach(p=>{(porJornada[p.jornada??0]??=[]).push(p);});
+    const filaPartido=p=>{
+      const fin=p.estado==='finalizado';
+      const marcador=fin?`${p.goles_local??0} - ${p.goles_visita??0}`
+        :(p.estado==='en_curso'?'en curso':(p.hora?p.hora.slice(0,5)+' hs':'a confirmar'));
+      return `<tr><td class="izq" style="width:34%">${escHtml(nombreEq(p.equipo_local_id))}</td>
+        <td class="${fin?'res':'prog'}" style="width:16%">${escHtml(marcador)}</td>
+        <td class="izq" style="width:34%">${escHtml(nombreEq(p.equipo_visita_id))}</td>
+        <td style="width:16%;font-size:8.5pt;color:#6b7280">${escHtml(_pdfFecha(p.fecha))}</td></tr>`;
+    };
+    const htmlFixture=Object.keys(porJornada).sort((a,b)=>a-b).map(j=>
+      `<div class="jor">Fecha ${j}</div><table><tbody>${porJornada[j].map(filaPartido).join('')}</tbody></table>`
+    ).join('')||'<p class="vacio">Sin partidos programados.</p>';
+
+    const playoffs=parts.filter(p=>p.fase&&p.fase!=='regular');
+    const rot={dieciseisavos:'16avos de final',octavos:'Octavos de final',cuartos:'Cuartos de final',
+               semis:'Semifinales',tercer_puesto:'Tercer puesto',final:'Final'};
+    const porFase={};
+    playoffs.forEach(p=>{(porFase[p.fase]??=[]).push(p);});
+    const htmlPlayoffs=playoffs.length?Object.keys(porFase).map(f=>
+      `<div class="jor">${escHtml(rot[f]||f)}</div><table><tbody>${porFase[f].map(filaPartido).join('')}</tbody></table>`).join(''):'';
+
+    const hoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    const escudo=liga.logo_url
+      ? `<img class="escudo" src="${escHtml(liga.logo_url)}" alt="">`
+      : `<div class="escudo-txt">${escHtml((liga.nombre||'L').slice(0,1).toUpperCase())}</div>`;
+
+    const doc=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<title>${escHtml(liga.nombre||'Liga')} — ${escHtml(divLabel)}</title>
+<style>${_PDF_ESTILOS}</style></head>
+<body class="tiene-barra">
+<div class="noprint">
+  <span>Elegí "Guardar como PDF" en el destino de impresión.</span>
+  <button onclick="window.print()">Imprimir / Guardar PDF</button>
+</div>
+<div class="doc">
+  <header class="tapa">
+    ${escudo}
+    <div>
+      <h1>${escHtml(liga.nombre||'Liga')}</h1>
+      <div class="sub">${escHtml(torneo.nombre||'')}${torneo.temporada?' · Temporada '+escHtml(torneo.temporada):''} · ${escHtml(divLabel)}</div>
+    </div>
+  </header>
+  <p class="emitido">Informe emitido el ${escHtml(hoy)}${liga.deporte?' · '+escHtml(liga.deporte):''}</p>
+
+  <div class="resumen">
+    <div class="caja"><div class="n">${eqs.length}</div><div class="l">Clubes</div></div>
+    <div class="caja"><div class="n">${jugados.length}</div><div class="l">Jugados</div></div>
+    <div class="caja"><div class="n">${parts.length-jugados.length}</div><div class="l">Pendientes</div></div>
+    <div class="caja"><div class="n">${golesTot}</div><div class="l">Goles</div></div>
+    <div class="caja"><div class="n">${jugados.length?(golesTot/jugados.length).toFixed(1):'—'}</div><div class="l">Promedio</div></div>
+  </div>
+
+  <h2 class="sec">Tabla de posiciones</h2>
+  ${htmlTabla}
+
+  <h2 class="sec">Goleadores</h2>
+  ${htmlGol}
+
+  ${htmlDisc?'<h2 class="sec">Disciplina</h2>'+htmlDisc:''}
+
+  <h2 class="sec">Fixture</h2>
+  ${htmlFixture}
+
+  ${htmlPlayoffs?'<h2 class="sec">Fase eliminatoria</h2>'+htmlPlayoffs:''}
+
+  <footer>
+    <span>${escHtml(liga.nombre||'')} · ${escHtml(divLabel)}</span>
+    <span>Generado con Sporvix · sporvix.com.ar</span>
+  </footer>
+</div>
+</body></html>`;
+
+    const win=window.open('','_blank');
+    if(!win){showToast('El navegador bloqueó la ventana. Permití las ventanas emergentes para este sitio.','error');return;}
+    win.document.write(doc);
+    win.document.close();
+  }catch(e){
+    console.warn('exportPDF',e);
+    showToast('No se pudo generar el informe: '+e.message,'error');
+  }
+}
 
 // ═══ COMUNICADOS ═══
 let _comunicadosScope='admin';
