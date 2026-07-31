@@ -28,6 +28,16 @@
 --
 -- Correlo entero en el SQL Editor de Supabase (Dashboard → SQL Editor).
 -- Es idempotente: se puede volver a correr sin duplicar nada.
+--
+-- *** ATENCIÓN SI VOLVÉS A CORRER ESTA MIGRACIÓN ***
+-- Las funciones verificar_login_* que se definen acá fueron REEMPLAZADAS
+-- después por la migración 005, que además de validar la contraseña abre una
+-- sesión y devuelve un token. Volver a correr este archivo las pisa con la
+-- versión vieja, que no emite token. El síntoma es engañoso: el login parece
+-- andar (entrás igual), pero después no se puede guardar nada, porque las
+-- políticas de las migraciones 006-008 dejan de reconocer al usuario.
+--
+-- Si re-corrés este archivo, CORRÉ LA 005 INMEDIATAMENTE DESPUÉS.
 -- =============================================
 
 
