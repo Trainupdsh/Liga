@@ -3417,7 +3417,7 @@ async function sincronizarPlanes(){
   finally{if(btn){btn.disabled=false;btn.textContent='↺ Sincronizar predeterminados';}}
 }
 async function deletePlan(planId,planNombre){
-  if(!confirm('¿Estás seguro de que querés eliminar el plan "'+planNombre+'"?\nEsta acción no se puede deshacer.'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar el plan "'+planNombre+'"?',detalle:'Esta acción no se puede deshacer.',textoBoton:'Eliminar plan'}))return;
   try{
     const {error}=await supa.from('planes').delete().eq('id',planId);
     if(error)throw error;
@@ -3696,7 +3696,7 @@ async function marcarConsulta(id,atendida){
   catch(e){showToast('Error: '+e.message,'error');}
 }
 async function eliminarConsulta(id){
-  if(!confirm('¿Eliminar esta consulta?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar esta consulta?',detalle:'Esta acción no se puede deshacer.'}))return;
   try{await supa.from('consultas').delete().eq('id',id);await loadSAConsultas();}
   catch(e){showToast('Error: '+e.message,'error');}
 }
@@ -4095,7 +4095,9 @@ function openLeagueAsAdmin(id){
   showAdminForLeague(leagues.find(x=>x.id===id));
 }
 async function confirmarEliminarLiga(id,nombre){
-  if(!confirm('¿Eliminar la liga "'+nombre+'"?\nEsto también eliminará sus torneos y divisiones.'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar la liga "'+nombre+'"?',
+    detalle:'Se eliminan también sus torneos, divisiones, clubes, jugadores y todos los partidos con sus resultados. No se puede deshacer.',
+    escribir:nombre,textoBoton:'Eliminar liga'}))return;
   try{
     const {error}=await supa.from('ligas').delete().eq('id',id);
     if(error)throw error;
@@ -4106,7 +4108,9 @@ async function confirmarEliminarLiga(id,nombre){
 }
 async function confirmarEliminarTorneo(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar el torneo "'+nombre+'"?\nEsto también eliminará sus divisiones.'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar el torneo "'+nombre+'"?',
+    detalle:'Se eliminan también sus divisiones y todos los partidos con sus resultados. No se puede deshacer.',
+    escribir:nombre,textoBoton:'Eliminar torneo'}))return;
   try{
     const {error}=await supa.from('torneos').delete().eq('id',id);
     if(error)throw error;
@@ -4116,7 +4120,9 @@ async function confirmarEliminarTorneo(id,nombre){
 }
 async function confirmarEliminarDivision(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar la división "'+nombre+'"?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar la división "'+nombre+'"?',
+    detalle:'Se elimina también su fixture completo, con los resultados ya cargados. No se puede deshacer.',
+    escribir:nombre,textoBoton:'Eliminar división'}))return;
   try{
     const {error}=await supa.from('divisiones').delete().eq('id',id);
     if(error)throw error;
@@ -6203,7 +6209,7 @@ async function saveDelegJugador(){
   }catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent=_editJugadorId?'Guardar cambios':'Agregar';}
 }
 async function confirmarEliminarJugadorDeleg(id,nombre){
-  if(!confirm('¿Eliminar al jugador "'+nombre+'"?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar al jugador "'+nombre+'"?',detalle:'Se borran también sus goles y tarjetas. No se puede deshacer.',textoBoton:'Eliminar jugador'}))return;
   try{
     await supa.from('jugadores').delete().eq('id',id);
     showToast('Jugador eliminado','error');
@@ -6465,7 +6471,9 @@ async function saveNuevoClub(){
 }
 async function confirmarEliminarClub(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar el club "'+nombre+'"?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar el club "'+nombre+'"?',
+    detalle:'Se eliminan también sus jugadores, su cuerpo técnico y su participación en las divisiones. No se puede deshacer.',
+    escribir:nombre,textoBoton:'Eliminar club'}))return;
   try{
     await supa.from('clubes').delete().eq('id',id);
     showToast('Club eliminado','error');
@@ -6660,7 +6668,8 @@ async function saveNuevoEquipo(){
 }
 async function confirmarEliminarEquipo(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Quitar el club "'+nombre+'" de esta división? También se eliminan sus jugadores.'))return;
+  if(!await confirmarBorrado({titulo:'¿Quitar el club "'+nombre+'" de esta división?',
+    detalle:'Se eliminan también sus jugadores en esta división. No se puede deshacer.',textoBoton:'Quitar club'}))return;
   try{
     await supa.from('equipos').delete().eq('id',id);
     showToast('Club removido','error');
@@ -6808,7 +6817,7 @@ async function saveNuevoJugador(){
 }
 async function confirmarEliminarJugador(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar al jugador "'+nombre+'"?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar al jugador "'+nombre+'"?',detalle:'Se borran también sus goles y tarjetas. No se puede deshacer.',textoBoton:'Eliminar jugador'}))return;
   try{
     await supa.from('jugadores').delete().eq('id',id);
     showToast('Jugador eliminado','error');
@@ -7807,7 +7816,7 @@ async function saveNuevoPartido(){
 }
 async function confirmarEliminarPartido(id){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar este partido?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar este partido?',detalle:'Se borra el partido junto con su resultado y sus goles. No se puede deshacer.'}))return;
   try{
     await supa.from('partidos').delete().eq('id',id);
     showToast('Partido eliminado','error');
@@ -8427,11 +8436,15 @@ async function generarFixture(){
     if(total>0){
       const jugados=(existing||[]).filter(p=>p.estado==='finalizado'||p.estado==='en_curso').length;
       if(jugados>0){
-        // Torneo en curso: doble confirmación explícita antes de destruir resultados
-        if(!confirm(`⚠️ ATENCIÓN: esta división tiene ${jugados} partido${jugados===1?'':'s'} JUGADO${jugados===1?'':'S'} con resultados cargados.\n\nRegenerar el fixture BORRA TODOS los partidos (jugados incluidos) y la tabla de posiciones vuelve a cero. Esta acción no se puede deshacer.\n\n¿Continuar igual?`))return;
-        if(!confirm(`Última confirmación: se eliminarán ${total} partidos, incluidos los ${jugados} ya jugados y sus resultados.\n\nSi lo que necesitás es sumar un club nuevo al torneo en curso, usá "Completar fixture" en su lugar.\n\n¿Borrar todo y regenerar?`))return;
+        // Torneo en curso: se pide escribir BORRAR antes de destruir resultados.
+        if(!await confirmarBorrado({
+          titulo:'Esta división tiene '+jugados+' partido'+(jugados===1?'':'s')+' ya jugado'+(jugados===1?'':'s'),
+          detalle:'Regenerar el fixture elimina los '+total+' partidos, incluidos los '+jugados+' con resultados cargados, y la tabla de posiciones vuelve a cero. Si lo que necesitás es sumar un club nuevo al torneo en curso, usá "Completar fixture" en su lugar.',
+          escribir:'BORRAR',textoBoton:'Borrar todo y regenerar'}))return;
       }else{
-        if(!confirm(`Ya hay ${total} partido${total===1?'':'s'} programado${total===1?'':'s'} (sin resultados aún).\n¿Eliminarlos y generar el fixture de nuevo?`))return;
+        if(!await confirmarBorrado({titulo:'Ya hay '+total+' partido'+(total===1?'':'s')+' programado'+(total===1?'':'s'),
+          detalle:'Todavía no tienen resultados cargados. Se eliminan y se genera el fixture de nuevo.',
+          textoBoton:'Eliminar y regenerar'}))return;
       }
       const {error:delErr}=await supa.from('partidos').delete().eq('division_id',currentAdminDivisionId);
       if(delErr)throw delErr;
@@ -9203,6 +9216,83 @@ async function loadComunicados(){
     el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';
   }
 }
+// ═══ CONFIRMACIÓN DE BORRADO ═══
+// Diálogo propio en lugar del confirm() del navegador. El nativo se puede
+// bloquear (basta que alguien marque "impedir que esta página abra más
+// diálogos") y en ese caso devuelve false o directamente no aparece, así que no
+// es de fiar para algo irreversible. Este además explica qué se borra en
+// cascada y, para lo más grave, pide escribir el nombre antes de habilitar el
+// botón.
+let _confBorrarResolve=null;
+
+function _confBorrarCerrar(ok){
+  const ov=document.getElementById('confirmBorrarModal');
+  if(ov)ov.classList.remove('open');
+  const r=_confBorrarResolve;
+  _confBorrarResolve=null;
+  if(r)r(ok);
+}
+
+function _confBorrarInput(){
+  const inp=document.getElementById('conf-borrar-input');
+  const btn=document.getElementById('conf-borrar-ok');
+  if(!inp||!btn)return;
+  btn.disabled=inp.value.trim().toLowerCase()!==(inp.dataset.esperado||'').toLowerCase();
+  btn.style.opacity=btn.disabled?'0.45':'1';
+}
+
+function confirmarBorrado(opts){
+  const o=opts||{};
+  // Si quedó una confirmación abierta, se cancela para no dejarla colgada.
+  if(_confBorrarResolve){const r=_confBorrarResolve;_confBorrarResolve=null;r(false);}
+  let ov=document.getElementById('confirmBorrarModal');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.className='modal-overlay';
+    ov.id='confirmBorrarModal';
+    ov.onclick=e=>{if(e.target===ov)_confBorrarCerrar(false);};
+    ov.innerHTML=`<div class="modal-sheet" style="padding-bottom:28px">
+      <div class="modal-handle"></div>
+      <div style="padding:18px 20px 24px">
+        <div style="font-size:34px;text-align:center;margin-bottom:10px">⚠️</div>
+        <div id="conf-borrar-titulo" style="font-size:17px;font-weight:800;text-align:center;margin-bottom:8px"></div>
+        <div id="conf-borrar-detalle" style="font-size:13px;color:var(--text2);text-align:center;line-height:1.55"></div>
+        <div id="conf-borrar-wrap" style="display:none;margin-top:18px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Para confirmar, escribí <b id="conf-borrar-eco" style="color:var(--text)"></b></div>
+          <input class="form-input" id="conf-borrar-input" autocomplete="off" oninput="_confBorrarInput()">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn" style="flex:1;background:var(--card2);color:var(--text);border:1px solid var(--border)" onclick="_confBorrarCerrar(false)">Cancelar</button>
+          <button class="btn" id="conf-borrar-ok" style="flex:1;background:var(--red);color:#fff;border:none" onclick="_confBorrarCerrar(true)"></button>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+  document.getElementById('conf-borrar-titulo').textContent=o.titulo||'¿Eliminar?';
+  document.getElementById('conf-borrar-detalle').textContent=o.detalle||'Esta acción no se puede deshacer.';
+  const btn=document.getElementById('conf-borrar-ok');
+  btn.textContent=o.textoBoton||'Eliminar';
+  const wrap=document.getElementById('conf-borrar-wrap');
+  const inp=document.getElementById('conf-borrar-input');
+  if(o.escribir){
+    wrap.style.display='';
+    document.getElementById('conf-borrar-eco').textContent=o.escribir;
+    inp.value='';
+    inp.dataset.esperado=o.escribir;
+    btn.disabled=true;
+    btn.style.opacity='0.45';
+  }else{
+    wrap.style.display='none';
+    inp.value='';
+    inp.dataset.esperado='';
+    btn.disabled=false;
+    btn.style.opacity='1';
+  }
+  ov.classList.add('open');
+  return new Promise(res=>{_confBorrarResolve=res;});
+}
+
 // Guarda una fila tolerando que la base no tenga todavía alguna columna
 // opcional. Si el servidor rechaza el guardado por una columna desconocida,
 // reintenta sin los campos opcionales, para que lo principal igual se guarde en
@@ -9478,7 +9568,8 @@ async function saveArbitro(){
 }
 async function confirmarEliminarArbitro(id,nombre){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar al árbitro "'+nombre+'"?\nSe quitará de todos los partidos asignados.'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar al árbitro "'+nombre+'"?',
+    detalle:'Se lo quita de todos los partidos que tenga asignados. No se puede deshacer.',textoBoton:'Eliminar árbitro'}))return;
   try{
     await supa.from('partidos').update({arbitro_id:null,arbitro_email:null}).eq('arbitro_id',id);
     await supa.from('arbitros').delete().eq('id',id);
@@ -9539,7 +9630,9 @@ async function eliminarPartidoDesdeModal(){
 }
 async function quitarResultadoPartido(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Quitar el resultado y volver el partido a Programado?\n\nSe borran los goles del marcador. Ojo: si al cargar el resultado sumaste goles a jugadores, esos goles quedan en sus fichas — corregilos desde Jugadores si hace falta.'))return;
+  if(!await confirmarBorrado({titulo:'¿Quitar el resultado y volver el partido a Programado?',
+    detalle:'Se borran los goles del marcador. Ojo: si al cargar el resultado sumaste goles a jugadores, esos goles quedan en sus fichas — corregilos desde Jugadores si hace falta.',
+    textoBoton:'Quitar resultado'}))return;
   try{
     await supa.from('partidos').update({estado:'programado',goles_local:null,goles_visita:null}).eq('id',_reprogramarMatchId);
     closeReprogramar(null,true);
@@ -9846,7 +9939,7 @@ async function loadCuerpoTecnico(){
 }
 async function eliminarCT(id){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
-  if(!confirm('¿Eliminar este integrante?'))return;
+  if(!await confirmarBorrado({titulo:'¿Eliminar este integrante del cuerpo técnico?',detalle:'Esta acción no se puede deshacer.'}))return;
   try{
     await supa.from('cuerpo_tecnico').delete().eq('id',id);
     showToast('Eliminado','error');
@@ -10073,7 +10166,7 @@ async function applyAccessChange(r,newEmail,newPass){
 }
 async function deleteUser(r){
   const label=r.name+' ('+r.email+')';
-  if(!confirm('¿Estás seguro de que querés borrar a "'+label+'"?\nEsta acción no se puede deshacer.'))return;
+  if(!await confirmarBorrado({titulo:'¿Borrar a "'+label+'"?',detalle:'Esta acción no se puede deshacer.',escribir:label,textoBoton:'Borrar'}))return;
   try{
     if(r.tipo==='liga'){
       const {error}=await supa.from('ligas').update({admin_email:null,admin_pass:null}).eq('id',r.ligaId);
