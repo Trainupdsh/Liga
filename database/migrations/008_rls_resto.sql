@@ -1,43 +1,30 @@
 -- =============================================
--- FASE 3, TANDA FINAL — TODAS LAS TABLAS RESTANTES
+-- FASE 3, TANDA FINAL — TODO LO QUE QUEDABA
 -- =============================================
--- Cierra el blindaje con las 11 tablas que faltaban: el plantel (equipos,
--- jugadores, cuerpo técnico, alineaciones), los partidos y todo lo que
--- cuelga de ellos (eventos, informes de árbitro, votos), y los formularios
--- públicos (solicitudes de inscripción, consultas), más el historial.
+-- Cierra el blindaje. Esta versión está escrita contra la estructura REAL
+-- de la base (relevada con information_schema), no sobre suposiciones.
+-- Al hacer ese relevamiento aparecieron dos cosas que corrigen lo anterior:
+--
+--   1) historial_temporadas cuelga de division_id, NO de liga_id (eso era
+--      lo que hacía fallar la versión anterior de este archivo).
+--
+--   2) Había 11 tablas más que no estaban en el plan, porque la app no las
+--      nombra: posiciones, lista_buena_fe, reglas_torneo, usuarios, y las
+--      siete de un backend anterior (admin_users, leagues, teams, players,
+--      matches, player_events, sports). Estaban abiertas de par en par.
+--      admin_users guarda contraseñas.
 --
 -- REQUISITO: tener aplicadas las migraciones 005, 006 y 007.
 --
--- Acá aparecen dos situaciones nuevas respecto de las tandas anteriores:
---
---   1) EL DELEGADO MANEJA SU PLANTEL. Puede dar de alta y editar los
---      jugadores y el cuerpo técnico de SU club, y solo de su club.
---
---   2) EL ÁRBITRO CARGA LO SUYO. Puede actualizar el partido que le
---      asignaron y cargar sus eventos e informe — solo de los partidos que
---      efectivamente le tocan.
---
--- Y tres tablas cambian de criterio en la LECTURA, porque contienen datos
--- que hoy son públicos y no deberían serlo:
---
---   * solicitudes_inscripcion: tiene email y teléfono de quien se quiere
---     inscribir. Pasa a leerse solo por el admin de esa liga.
---   * consultas: son los mensajes del formulario de contacto, con datos de
---     contacto de la gente. Pasa a leerse solo por el superadmin.
---   * informe_arbitro: es el informe interno del árbitro sobre el partido.
---     Pasa a leerse solo por el admin de la liga y el árbitro que lo firmó.
---     (La app hoy lo escribe pero nunca lo lee, así que esto no rompe nada.)
---
--- Al final hay un bloque de EMERGENCIA con una línea POR TABLA, para poder
--- desactivar solo la que dé problemas sin tirar abajo el resto.
+-- Al final hay un bloque de EMERGENCIA con una línea POR TABLA.
 --
 -- Correla entera en el SQL Editor de Supabase. Es idempotente.
 -- =============================================
 
 
 -- ============ AYUDANTES DE PARENTESCO ============
--- Resuelven a qué liga (o a qué club) pertenece cada cosa, subiendo por la
--- cadena equipos -> división -> torneo -> liga.
+-- Resuelven a qué liga o club pertenece cada cosa, subiendo por la cadena
+-- equipo -> división -> torneo -> liga.
 
 create or replace function public.liga_de_division(p_division_id bigint)
 returns bigint language sql stable security definer set search_path = public
@@ -72,16 +59,15 @@ as $$
   )
 $$;
 
-grant execute on function public.liga_de_division(bigint)      to anon, authenticated;
-grant execute on function public.liga_de_club(bigint)          to anon, authenticated;
-grant execute on function public.club_de_equipo(bigint)        to anon, authenticated;
-grant execute on function public.liga_de_equipo(bigint)        to anon, authenticated;
-grant execute on function public.liga_de_partido(bigint)       to anon, authenticated;
+grant execute on function public.liga_de_division(bigint)       to anon, authenticated;
+grant execute on function public.liga_de_club(bigint)           to anon, authenticated;
+grant execute on function public.club_de_equipo(bigint)         to anon, authenticated;
+grant execute on function public.liga_de_equipo(bigint)         to anon, authenticated;
+grant execute on function public.liga_de_partido(bigint)        to anon, authenticated;
 grant execute on function public.es_arbitro_del_partido(bigint) to anon, authenticated;
 
 
 -- ============ EQUIPOS ============
--- Los inscribe el admin de la liga (es quien arma las divisiones).
 alter table public.equipos enable row level security;
 
 drop policy if exists equipos_lectura_publica on public.equipos;
@@ -94,7 +80,9 @@ create policy equipos_escritura_admin on public.equipos
 
 
 -- ============ JUGADORES ============
--- El admin de la liga, o el delegado del club dueño del equipo.
+-- La tabla tiene club_id (del esquema viejo) y equipo_id (el que usa la app
+-- hoy). Se contemplan los dos: si un jugador quedó sin equipo_id asignado,
+-- se resuelve por club_id y no se bloquea a quien corresponde.
 alter table public.jugadores enable row level security;
 
 drop policy if exists jugadores_lectura_publica on public.jugadores;
@@ -103,16 +91,17 @@ create policy jugadores_lectura_publica on public.jugadores for select using (tr
 drop policy if exists jugadores_escritura on public.jugadores;
 create policy jugadores_escritura on public.jugadores
   for all using (
-        public.puede_administrar_liga(public.liga_de_equipo(equipo_id))
-     or (public.sesion_rol() = 'delegado' and public.club_de_equipo(equipo_id) = public.sesion_club_id())
+        public.puede_administrar_liga(coalesce(public.liga_de_equipo(equipo_id), public.liga_de_club(club_id)))
+     or (public.sesion_rol() = 'delegado'
+         and coalesce(public.club_de_equipo(equipo_id), club_id) = public.sesion_club_id())
   ) with check (
-        public.puede_administrar_liga(public.liga_de_equipo(equipo_id))
-     or (public.sesion_rol() = 'delegado' and public.club_de_equipo(equipo_id) = public.sesion_club_id())
+        public.puede_administrar_liga(coalesce(public.liga_de_equipo(equipo_id), public.liga_de_club(club_id)))
+     or (public.sesion_rol() = 'delegado'
+         and coalesce(public.club_de_equipo(equipo_id), club_id) = public.sesion_club_id())
   );
 
 
 -- ============ CUERPO TÉCNICO ============
--- El admin de la liga, o el delegado de ese club.
 alter table public.cuerpo_tecnico enable row level security;
 
 drop policy if exists cuerpo_lectura_publica on public.cuerpo_tecnico;
@@ -130,8 +119,6 @@ create policy cuerpo_escritura on public.cuerpo_tecnico
 
 
 -- ============ ALINEACIONES ============
--- La lista de quién juega cada partido: la carga el admin, el delegado del
--- equipo, o el árbitro designado.
 alter table public.alineaciones enable row level security;
 
 drop policy if exists alineaciones_lectura_publica on public.alineaciones;
@@ -150,9 +137,29 @@ create policy alineaciones_escritura on public.alineaciones
   );
 
 
+-- ============ LISTA DE BUENA FE ============
+-- Mismo criterio que alineaciones (la app todavía no la usa, pero está).
+alter table public.lista_buena_fe enable row level security;
+
+drop policy if exists buenafe_lectura_publica on public.lista_buena_fe;
+create policy buenafe_lectura_publica on public.lista_buena_fe for select using (true);
+
+drop policy if exists buenafe_escritura on public.lista_buena_fe;
+create policy buenafe_escritura on public.lista_buena_fe
+  for all using (
+        public.puede_administrar_liga(public.liga_de_partido(partido_id))
+     or (public.sesion_rol() = 'delegado' and public.club_de_equipo(equipo_id) = public.sesion_club_id())
+     or public.es_arbitro_del_partido(partido_id)
+  ) with check (
+        public.puede_administrar_liga(public.liga_de_partido(partido_id))
+     or (public.sesion_rol() = 'delegado' and public.club_de_equipo(equipo_id) = public.sesion_club_id())
+     or public.es_arbitro_del_partido(partido_id)
+  );
+
+
 -- ============ PARTIDOS ============
--- Crear y borrar: solo el admin de la liga (arma el fixture).
--- Editar: el admin, o el árbitro designado (para cargar resultado y estado).
+-- Crear y borrar: el admin de la liga (arma el fixture).
+-- Editar: el admin, o el árbitro designado (resultado y estado).
 alter table public.partidos enable row level security;
 
 drop policy if exists partidos_lectura_publica on public.partidos;
@@ -178,7 +185,6 @@ create policy partidos_baja_admin on public.partidos
 
 
 -- ============ EVENTOS DE PARTIDO ============
--- Goles, tarjetas, etc. Los carga el admin o el árbitro del partido.
 alter table public.eventos_partido enable row level security;
 
 drop policy if exists eventos_lectura_publica on public.eventos_partido;
@@ -195,9 +201,36 @@ create policy eventos_escritura on public.eventos_partido
   );
 
 
+-- ============ POSICIONES ============
+-- Tabla de puntajes. La app hoy las calcula sola, pero la tabla existe y
+-- estaba abierta: cualquiera podía reescribir la tabla de posiciones.
+alter table public.posiciones enable row level security;
+
+drop policy if exists posiciones_lectura_publica on public.posiciones;
+create policy posiciones_lectura_publica on public.posiciones for select using (true);
+
+drop policy if exists posiciones_escritura_admin on public.posiciones;
+create policy posiciones_escritura_admin on public.posiciones
+  for all using (public.puede_administrar_liga(public.liga_de_division(division_id)))
+      with check (public.puede_administrar_liga(public.liga_de_division(division_id)));
+
+
+-- ============ REGLAS DEL TORNEO ============
+-- Puntos por victoria, criterios de desempate, fechas de suspensión.
+alter table public.reglas_torneo enable row level security;
+
+drop policy if exists reglas_lectura_publica on public.reglas_torneo;
+create policy reglas_lectura_publica on public.reglas_torneo for select using (true);
+
+drop policy if exists reglas_escritura_admin on public.reglas_torneo;
+create policy reglas_escritura_admin on public.reglas_torneo
+  for all using (public.puede_administrar_liga(public.liga_de_torneo(torneo_id)))
+      with check (public.puede_administrar_liga(public.liga_de_torneo(torneo_id)));
+
+
 -- ============ INFORME DEL ÁRBITRO ============
--- Documento interno: lo escribe el árbitro del partido y lo leen solo el
--- admin de la liga y el propio árbitro. Deja de ser de lectura pública.
+-- Documento interno: lo escribe el árbitro del partido, y lo leen solo el
+-- admin de la liga y ese árbitro. Deja de ser de lectura pública.
 alter table public.informe_arbitro enable row level security;
 
 drop policy if exists informe_lectura on public.informe_arbitro;
@@ -219,8 +252,8 @@ create policy informe_escritura on public.informe_arbitro
 
 
 -- ============ VOTOS DE PARTIDO ============
--- Encuesta pública de pronósticos: cualquiera puede votar, por diseño.
--- Lo único que se protege es que nadie borre la votación entera.
+-- Encuesta pública de pronósticos: cualquiera vota, por diseño. Lo único
+-- que se protege es que nadie borre la votación entera.
 alter table public.votos_partido enable row level security;
 
 drop policy if exists votos_lectura_publica on public.votos_partido;
@@ -239,8 +272,8 @@ create policy votos_baja_admin on public.votos_partido
 
 
 -- ============ SOLICITUDES DE INSCRIPCIÓN ============
--- Formulario público: cualquiera manda una solicitud. Pero contiene email y
--- teléfono del solicitante, así que solo la lee el admin de esa liga.
+-- Formulario público: cualquiera manda una solicitud. Pero guarda nombre,
+-- email y teléfono del delegado, así que solo la lee el admin de esa liga.
 alter table public.solicitudes_inscripcion enable row level security;
 
 drop policy if exists solicitudes_alta_publica on public.solicitudes_inscripcion;
@@ -262,8 +295,8 @@ create policy solicitudes_baja_admin on public.solicitudes_inscripcion
 
 
 -- ============ CONSULTAS (formulario de contacto) ============
--- Cualquiera puede escribir. Solo el superadmin las lee y gestiona, que es
--- como funciona hoy el panel. No tiene liga_id para acotarlas.
+-- Cualquiera escribe; solo el superadmin lee y gestiona, que es como
+-- funciona el panel hoy. No tiene liga_id para acotarlas.
 alter table public.consultas enable row level security;
 
 drop policy if exists consultas_alta_publica on public.consultas;
@@ -285,6 +318,8 @@ create policy consultas_baja_superadmin on public.consultas
 
 
 -- ============ HISTORIAL DE TEMPORADAS ============
+-- OJO: cuelga de division_id, no de liga_id. Era el error que frenaba la
+-- versión anterior de este archivo.
 alter table public.historial_temporadas enable row level security;
 
 drop policy if exists historial_lectura_publica on public.historial_temporadas;
@@ -293,8 +328,38 @@ create policy historial_lectura_publica on public.historial_temporadas
 
 drop policy if exists historial_escritura_admin on public.historial_temporadas;
 create policy historial_escritura_admin on public.historial_temporadas
+  for all using (public.puede_administrar_liga(public.liga_de_division(division_id)))
+      with check (public.puede_administrar_liga(public.liga_de_division(division_id)));
+
+
+-- ============ USUARIOS ============
+-- Tabla con emails y roles. La app no la usa, pero está y expone datos de
+-- contacto. Lectura y escritura quedan para el admin de esa liga.
+alter table public.usuarios enable row level security;
+
+drop policy if exists usuarios_acceso_admin on public.usuarios;
+create policy usuarios_acceso_admin on public.usuarios
   for all using (public.puede_administrar_liga(liga_id))
       with check (public.puede_administrar_liga(liga_id));
+
+
+-- ============ TABLAS DE UN BACKEND ANTERIOR ============
+-- admin_users, leagues, teams, players, matches, player_events y sports son
+-- de otra versión del sistema (el backend Node del repositorio). La app que
+-- está online no las toca, pero seguían accesibles para cualquiera —
+-- admin_users incluso guarda contraseñas.
+--
+-- Se les activa RLS sin ninguna política: eso niega todo acceso por la API
+-- pública. Las conexiones directas a la base (el backend Node, si alguna vez
+-- se usa, y las herramientas de Supabase) no se ven afectadas, porque el
+-- usuario dueño de la base no está sujeto a RLS.
+alter table public.admin_users   enable row level security;
+alter table public.leagues       enable row level security;
+alter table public.teams         enable row level security;
+alter table public.players       enable row level security;
+alter table public.matches       enable row level security;
+alter table public.player_events enable row level security;
+alter table public.sports        enable row level security;
 
 
 -- =============================================
@@ -308,10 +373,14 @@ create policy historial_escritura_admin on public.historial_temporadas
 --     alter table public.jugadores               disable row level security;
 --     alter table public.cuerpo_tecnico          disable row level security;
 --     alter table public.alineaciones            disable row level security;
+--     alter table public.lista_buena_fe          disable row level security;
 --     alter table public.partidos                disable row level security;
 --     alter table public.eventos_partido         disable row level security;
+--     alter table public.posiciones              disable row level security;
+--     alter table public.reglas_torneo           disable row level security;
 --     alter table public.informe_arbitro         disable row level security;
 --     alter table public.votos_partido           disable row level security;
 --     alter table public.solicitudes_inscripcion disable row level security;
 --     alter table public.consultas               disable row level security;
 --     alter table public.historial_temporadas    disable row level security;
+--     alter table public.usuarios                disable row level security;
