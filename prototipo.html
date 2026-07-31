@@ -8410,7 +8410,15 @@ async function generarFixture(){
   if(!currentAdminDivisionId){showToast('Primero seleccioná una división','error');return;}
   if(!currentAdminTorneoId){showToast('No hay torneo seleccionado','error');return;}
   if(!adminDivEquipos.length)await loadAdminEquipos();
-  if(adminDivEquipos.length<2){showToast('Se necesitan al menos 2 clubes','error');return;}
+  // Ojo: acá cuentan los clubes INSCRIPTOS EN ESTA DIVISIÓN (tabla equipos), no
+  // los de la liga. Tener el club creado no alcanza, y el mensaje anterior
+  // ("Se necesitan al menos 2 clubes") hacía pensar que el sistema no los veía.
+  if(adminDivEquipos.length<2){
+    showToast(adminDivEquipos.length===0
+      ? 'Esta división no tiene clubes inscriptos. Entrá a Clubes y tocá "+ Agregar club" para sumarlos a la división; crearlos en la liga no alcanza.'
+      : 'Hay 1 solo club inscripto en esta división. Se necesitan al menos 2 para armar el fixture.','error');
+    return;
+  }
   if(btn){btn.disabled=true;btn.textContent='Verificando…';}
   try{
     // Verificar si ya existen partidos — evitar duplicados y proteger resultados
