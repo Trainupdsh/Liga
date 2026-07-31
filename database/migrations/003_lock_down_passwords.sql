@@ -5,28 +5,33 @@
 -- la clave publishable (pública, embebida en el HTML). Hoy admin_pass
 -- (ligas), delegado_pass (clubes) y password (arbitros) se guardan en texto
 -- plano y se leen con select('*') desde el navegador para comparar contra lo
--- que tipea el usuario. Eso significa que CUALQUIERA con la clave pública
--- (o sea cualquiera que abra la página) puede leer esas columnas directo
--- por la REST API de Supabase, sin loguearse, y obtener todas las
--- contraseñas en texto plano.
+-- que tipea el usuario — incluso la carga inicial de la home pública trae
+-- admin_pass de TODAS las ligas a cualquier visitante, sin login. Eso
+-- significa que cualquiera con la clave pública (o sea cualquiera que abra
+-- la página) puede leer esas columnas directo por la REST API de Supabase,
+-- sin loguearse, y obtener todas las contraseñas en texto plano.
 --
--- Esta migración se aplica en DOS ETAPAS separadas a propósito:
+-- Esta migración se aplica en DOS ETAPAS:
 --
---   ETAPA A (segura, no rompe nada): hashea las contraseñas existentes y
---   crea funciones RPC que validan login del lado del servidor sin exponer
---   la contraseña/hash al cliente. Se puede correr ya mismo.
+--   ETAPA A (segura, no rompe nada): hashea las contraseñas existentes,
+--   agrega triggers que hashean automáticamente cualquier contraseña nueva
+--   que se escriba (así el código de alta/edición de liga/club/árbitro no
+--   necesita cambiar: sigue mandando la contraseña en texto plano en el
+--   UPDATE/INSERT, el trigger la hashea antes de guardarla), y crea
+--   funciones RPC que validan login del lado del servidor sin exponer la
+--   contraseña/hash al cliente. Se puede correr ya mismo.
 --
---   ETAPA B (rompe el login actual si no se actualiza el front antes):
---   revoca el acceso directo (SELECT/UPDATE) a las columnas de contraseña
---   para anon/authenticated. Una vez aplicada, el código de prototipo.html
---   que hoy hace `.select('*')` o `.eq('...pass',...)` sobre estas columnas,
---   o `.update({admin_pass:...})` etc., empieza a fallar. NO correr la
---   Etapa B hasta que el front esté migrado a usar las funciones RPC de la
---   Etapa A (login) y a funciones RPC equivalentes para cambiar contraseña
---   (pendiente, no incluidas en este archivo).
+--   ETAPA B (requiere el front actualizado primero): revoca la LECTURA
+--   directa de las columnas de contraseña para anon/authenticated. Una vez
+--   aplicada, cualquier `.select('*')` (u otro select explícito de esa
+--   columna) sobre ligas/clubes/arbitros empieza a fallar. El front
+--   (prototipo.html) ya fue migrado en este mismo cambio para no depender
+--   de leer esas columnas — ver el commit correspondiente. La escritura
+--   (UPDATE/INSERT) NO se revoca a propósito: sigue funcionando igual que
+--   hoy, protegida por el trigger de hash de la Etapa A.
 --
--- Correlo en el SQL Editor de Supabase (Dashboard → SQL Editor). Es
--- idempotente: se puede volver a correr sin duplicar nada.
+-- Correlo en el SQL Editor de Supabase (Dashboard → SQL Editor), en orden.
+-- Es idempotente: se puede volver a correr sin duplicar nada.
 -- =============================================
 
 
@@ -52,7 +57,56 @@ update public.arbitros
  where password is not null
    and password !~ '^\$2[aby]\$';
 
--- 2) Funciones de verificación: reciben email + contraseña en texto plano
+-- 2) Triggers: cualquier valor nuevo que llegue a estas columnas y no tenga
+--    ya forma de hash bcrypt se hashea automáticamente antes de guardarse.
+--    Esto es lo que permite dejar el código de alta/edición sin tocar.
+
+create or replace function public.hash_admin_pass() returns trigger
+language plpgsql as $$
+begin
+  if new.admin_pass is not null and new.admin_pass !~ '^\$2[aby]\$' then
+    new.admin_pass := crypt(new.admin_pass, gen_salt('bf'));
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.hash_delegado_pass() returns trigger
+language plpgsql as $$
+begin
+  if new.delegado_pass is not null and new.delegado_pass !~ '^\$2[aby]\$' then
+    new.delegado_pass := crypt(new.delegado_pass, gen_salt('bf'));
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.hash_arbitro_password() returns trigger
+language plpgsql as $$
+begin
+  if new.password is not null and new.password !~ '^\$2[aby]\$' then
+    new.password := crypt(new.password, gen_salt('bf'));
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_hash_admin_pass on public.ligas;
+create trigger trg_hash_admin_pass
+  before insert or update of admin_pass on public.ligas
+  for each row execute function public.hash_admin_pass();
+
+drop trigger if exists trg_hash_delegado_pass on public.clubes;
+create trigger trg_hash_delegado_pass
+  before insert or update of delegado_pass on public.clubes
+  for each row execute function public.hash_delegado_pass();
+
+drop trigger if exists trg_hash_arbitro_password on public.arbitros;
+create trigger trg_hash_arbitro_password
+  before insert or update of password on public.arbitros
+  for each row execute function public.hash_arbitro_password();
+
+-- 3) Funciones de verificación: reciben email + contraseña en texto plano
 --    (viajan por HTTPS, eso está bien), comparan el hash del lado del
 --    servidor y devuelven la fila SIN la columna de contraseña. Devuelven
 --    jsonb para no depender de conocer el tipo exacto de cada columna.
@@ -80,8 +134,10 @@ language sql
 security definer
 set search_path = public
 as $$
-  select to_jsonb(c) - 'delegado_pass'
+  select (to_jsonb(c) - 'delegado_pass')
+         || jsonb_build_object('liga', jsonb_build_object('nombre', l.nombre, 'deporte', l.deporte))
   from public.clubes c
+  left join public.ligas l on l.id = c.liga_id
   where c.delegado_email = p_email
     and c.delegado_pass is not null
     and c.delegado_pass = crypt(p_pass, c.delegado_pass)
@@ -111,22 +167,16 @@ grant execute on function public.verificar_login_delegado(text, text) to anon, a
 grant execute on function public.verificar_login_arbitro(text, text) to anon, authenticated;
 
 
--- ============ ETAPA B — NO correr todavía ============
--- Recién después de migrar prototipo.html para que:
---   • el login llame a verificar_login_liga / _delegado / _arbitro (RPC)
---     en vez de comparar en el cliente,
---   • ninguna pantalla haga select('*') (u otro select explícito de la
---     columna de contraseña) sobre ligas/clubes/arbitros,
---   • el cambio/blanqueo de contraseña use una función RPC nueva
---     (set_password_*, todavía por crear) en vez de
---     supabase.from(...).update({admin_pass:...}) directo.
+-- ============ ETAPA B — correr después de desplegar el nuevo prototipo.html ============
+-- El front en este mismo cambio ya dejó de hacer select('*') (o cualquier
+-- select explícito de la columna de contraseña) sobre ligas/clubes/arbitros,
+-- y el login ahora usa las funciones RPC de arriba. Recién con eso
+-- desplegado tiene sentido correr esto — si lo corrés antes, cualquier
+-- pantalla que todavía pida esa columna empieza a tirar error.
 --
--- descomentar y correr:
---
--- revoke select (admin_pass)    on public.ligas    from anon, authenticated;
--- revoke select (delegado_pass) on public.clubes   from anon, authenticated;
--- revoke select (password)      on public.arbitros from anon, authenticated;
---
--- revoke update (admin_pass)    on public.ligas    from anon, authenticated;
--- revoke update (delegado_pass) on public.clubes   from anon, authenticated;
--- revoke update (password)      on public.arbitros from anon, authenticated;
+-- Solo se revoca SELECT, no UPDATE/INSERT: la escritura sigue igual que hoy
+-- (los triggers de arriba se encargan de hashear).
+
+revoke select (admin_pass)    on public.ligas    from anon, authenticated;
+revoke select (delegado_pass) on public.clubes   from anon, authenticated;
+revoke select (password)      on public.arbitros from anon, authenticated;

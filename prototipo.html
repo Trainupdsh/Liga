@@ -3667,7 +3667,7 @@ async function openLeague(id){
   document.getElementById('league-divs-list').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
   try{
     const [{data:liga,error:e1},{data:ts,error:e2}]=await Promise.all([
-      supa.from('ligas').select('*').eq('id',id).single(),
+      supa.from('ligas').select('id,nombre,deporte,icon,color,color_texto,activa,admin_email,max_equipos,max_jugadores_por_equipo,plan_id,plan_vencimiento,logo_url').eq('id',id).single(),
       supa.from('torneos').select('*').eq('liga_id',id).order('id',{ascending:false})
     ]);
     if(e1||e2)throw e1||e2;
@@ -3814,7 +3814,7 @@ async function _restoreSession(){
     if(s.role==='arbitro'&&s.user){showArbitroView(s.user);return true;}
     if(s.role==='mesa'&&s.user){showMesaView(s.user);return true;}
     if(s.role==='delegado'&&s.clubId&&supa){
-      const {data:club}=await supa.from('clubes').select('*, liga:ligas(nombre,deporte)').eq('id',s.clubId).single();
+      const {data:club}=await supa.from('clubes').select('id,liga_id,nombre,abreviacion,color_principal,color_texto,direccion,logo_url,delegado_email, liga:ligas(nombre,deporte)').eq('id',s.clubId).single();
       if(club){showDelegadoView(club);return true;}
     }
   }catch(e){console.warn('No se pudo restaurar la sesión',e);}
@@ -3831,9 +3831,6 @@ async function doAdminLogin(){
     if(email===SUPERADMIN.email&&pass===SUPERADMIN.pass){
       showSuperAdminDash();return;
     }
-    // Check league admin
-    const league=leagues.find(l=>l.adminEmail===email&&l.adminPass===pass);
-    if(league){showAdminForLeague(league);return;}
     // Check extra roles hardcodeados (árbitro, mesa)
     const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
     if(xu){
@@ -3841,25 +3838,32 @@ async function doAdminLogin(){
       else if(xu.role==='mesa')showMesaView(xu);
       return;
     }
-    // Check delegados desde Supabase. Se busca solo por email y se compara la
-    // contraseña en memoria: mandar la contraseña como filtro (.eq) la mete en
-    // la URL de la request, que queda en logs de servidor, historial y headers.
-    try{
-      const {data:club}=await supa.from('clubes')
-        .select('*, liga:ligas(nombre,deporte)')
-        .eq('delegado_email',email).single();
-      if(club&&club.delegado_pass&&club.delegado_pass===pass){showDelegadoView(club);return;}
-    }catch(e){}
-    // Check árbitros desde Supabase (mismo criterio: filtrar por email, comparar en memoria)
-    try{
-      const {data:arb}=await supa.from('arbitros')
-        .select('*, liga:liga_id(nombre)')
-        .eq('email',email).single();
-      if(arb&&arb.password&&arb.password===pass){
-        showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga?.nombre,foto:arb.foto_url});
-        return;
-      }
-    }catch(e){}
+    // Todo lo demás valida del lado del servidor (funciones RPC en Supabase):
+    // la contraseña nunca se lee al cliente, solo se manda para que Postgres
+    // la compare contra el hash guardado. Ver database/migrations/003_lock_down_passwords.sql
+    if(supa){
+      // Admin de liga
+      try{
+        const {data:ligaMatch}=await supa.rpc('verificar_login_liga',{p_email:email,p_pass:pass});
+        if(ligaMatch){
+          const league=leagues.find(l=>l.id===ligaMatch.id);
+          if(league){showAdminForLeague(league);return;}
+        }
+      }catch(e){}
+      // Delegado de club
+      try{
+        const {data:club}=await supa.rpc('verificar_login_delegado',{p_email:email,p_pass:pass});
+        if(club){showDelegadoView(club);return;}
+      }catch(e){}
+      // Árbitro
+      try{
+        const {data:arb}=await supa.rpc('verificar_login_arbitro',{p_email:email,p_pass:pass});
+        if(arb){
+          showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga_nombre,foto:arb.foto_url});
+          return;
+        }
+      }catch(e){}
+    }
     // Wrong credentials
     document.getElementById('login-error').style.display='block';
   }finally{hideGlobalLoading();}
@@ -3947,14 +3951,14 @@ async function loadSuperLeagues(){
   document.getElementById('superLeaguesList').innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">⏳ Cargando...</div>';
   try{
     const [{data:ls},{data:ts}]=await Promise.all([
-      supa.from('ligas').select('*, plan:plan_id(nombre,color)').order('id'),
+      supa.from('ligas').select('id,nombre,deporte,icon,color,color_texto,activa,admin_email,max_equipos,max_jugadores_por_equipo,plan_id,plan_vencimiento,logo_url, plan:plan_id(nombre,color)').order('id'),
       supa.from('torneos').select('id,liga_id,estado')
     ]);
     if(ls){
       leagues=ls.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
-        teams:0,active:l.activa,adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
+        teams:0,active:l.activa,adminEmail:l.admin_email||'—',
         maxEquipos:l.max_equipos||null,maxJugadores:l.max_jugadores_por_equipo||null,
         planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null
       }));
@@ -4162,7 +4166,7 @@ async function saveNuevaLiga(){
       admin_email:email||null,
       admin_pass:pass||null,
       plan_id:planId?parseInt(planId):null
-    }).select().single();
+    });
     if(error)throw error;
     closeNuevaLiga(null,true);
     showToast('Liga "'+nombre+'"'+(esOculta?' creada (oculta del público) ✓':' creada ✓'),'success');
@@ -6219,7 +6223,7 @@ async function loadAdminClubes(){
   const el=document.getElementById('adminClubesList');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
-    const {data,error}=await supa.from('clubes').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    const {data,error}=await supa.from('clubes').select('id,liga_id,nombre,abreviacion,color_principal,color_texto,direccion,logo_url,delegado_email').eq('liga_id',currentAdminLeagueId).order('nombre');
     if(error)throw error;
     adminLigaClubes=data||[];
     if(!adminLigaClubes.length){
@@ -6278,7 +6282,9 @@ function openAdminEditClub(c){
   document.getElementById('nc-nombre').value=c.nombre||'';
   document.getElementById('nc-abrev').value=c.abreviacion||'';
   document.getElementById('nc-email').value=c.delegado_email||'';
-  document.getElementById('nc-pass').value=c.delegado_pass||'';
+  // La contraseña actual no se trae del servidor (ver migración 003):
+  // se deja vacío y solo se pisa si el admin tipea una nueva (ver saveNuevoClub).
+  document.getElementById('nc-pass').value='';
   document.getElementById('nc-dir').value=c.direccion||'';
   document.getElementById('nc-error').style.display='none';
   document.getElementById('nc-preview-nombre').textContent=c.nombre||'Sin nombre';
@@ -6349,7 +6355,13 @@ async function saveNuevoClub(){
     }
     if(isEdit){
       const updates={nombre, abreviacion:abrev||null, color_principal:ncColorSel,
-        delegado_email:email||null, delegado_pass:pass||null, direccion:dir||null};
+        delegado_email:email||null, direccion:dir||null};
+      // El campo de contraseña ya no viene precargado con la actual (ver
+      // openAdminEditClub): si quedó vacío, no tocar delegado_pass — si no,
+      // se pisaría con null y se le rompería el acceso al delegado. Excepto
+      // si el plan ya no permite delegados: ahí sí se limpia a propósito.
+      if(pass)updates.delegado_pass=pass;
+      else if(!delegadosOk)updates.delegado_pass=null;
       if(logoUrl)updates.logo_url=logoUrl;
       const {error}=await supa.from('clubes').update(updates).eq('id',_editingClubId);
       if(error)throw error;
@@ -6468,7 +6480,7 @@ async function neCrearClubInline(){
       liga_id:currentAdminLeagueId,nombre,abreviacion:abrev||nombre.slice(0,3).toUpperCase(),
       color_principal:color,color_texto:'#ffffff',
       delegado_email:email,delegado_pass:pass
-    }).select().single();
+    }).select('id,liga_id,nombre,abreviacion,color_principal,color_texto,direccion,logo_url,delegado_email').single();
     if(error)throw error;
     adminLigaClubes.push(newClub);
     neRefreshClubSelect();
@@ -6483,7 +6495,7 @@ async function neCrearClubInline(){
 }
 async function loadAdminClubesQuiet(){
   try{
-    const {data}=await supa.from('clubes').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    const {data}=await supa.from('clubes').select('id,liga_id,nombre,abreviacion,color_principal,color_texto,direccion,logo_url,delegado_email').eq('liga_id',currentAdminLeagueId).order('nombre');
     adminLigaClubes=data||[];
   }catch(e){}
 }
@@ -8510,14 +8522,14 @@ const _ligasReadyPromise=new Promise(res=>{_resolveLigasReady=res;});
   const _bootShowsLoading=_landingEntered()||!!_getSession();
   if(_bootShowsLoading)showGlobalLoading();
   try{
-    const {data,error}=await supa.from('ligas').select('*, plan:plan_id(nombre,color)').order('id');
+    const {data,error}=await supa.from('ligas').select('id,nombre,deporte,icon,color,color_texto,activa,admin_email,max_equipos,max_jugadores_por_equipo,plan_id,plan_vencimiento,logo_url, plan:plan_id(nombre,color)').order('id');
     if(error)throw error;
     if(data&&data.length){
       const supaLeagues=data.map(l=>({
         id:l.id,name:l.nombre,slug:l.nombre.toLowerCase().replace(/ /g,'-'),
         sport:l.deporte,season:'2025',icon:l.icon||'🏆',color:l.color||'#1a2150',text:l.color_texto||'#5b6ef5',
         teams:0,active:l.activa,
-        adminEmail:l.admin_email||'—',adminPass:l.admin_pass||'ligabaires2025',
+        adminEmail:l.admin_email||'—',
         planId:l.plan_id||null,planNombre:l.plan?.nombre||null,planColor:l.plan?.color||null,planVencimiento:l.plan_vencimiento||null,logoUrl:l.logo_url||null,
         _real:true
       }));
@@ -8676,7 +8688,10 @@ function clearFoto(prefix){
 
 // ═══ COMPLETENESS ═══
 function calcClubCompleteness(c){
-  const fields=[c.nombre,c.abreviacion,c.color_principal,c.logo_url,c.delegado_email,c.delegado_pass];
+  // No incluye delegado_pass: esa columna ya no se lee al cliente (ver
+  // database/migrations/003_lock_down_passwords.sql), así que no hay forma
+  // de saber desde acá si está seteada.
+  const fields=[c.nombre,c.abreviacion,c.color_principal,c.logo_url,c.delegado_email];
   return Math.round(fields.filter(Boolean).length/fields.length*100);
 }
 function renderCompletenessRing(pct){
@@ -8997,7 +9012,7 @@ async function loadAdminArbitros(){
   const el=document.getElementById('adminArbitrosList');
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ Cargando...</div>';
   try{
-    const {data,error}=await supa.from('arbitros').select('*').eq('liga_id',currentAdminLeagueId).order('nombre');
+    const {data,error}=await supa.from('arbitros').select('id,liga_id,nombre,email,telefono,foto_url').eq('liga_id',currentAdminLeagueId).order('nombre');
     if(error)throw error;
     ligaArbitros=data||[];
     if(!ligaArbitros.length){
@@ -9576,21 +9591,21 @@ async function loadSAUsuarios(){
   el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">⏳ Cargando…</div>';
   saAllRows=[];
   leagues.forEach(l=>{
-    saAllRows.push({key:'liga_'+l.id,role:'Liga Admin',name:l.name,email:l.adminEmail,pass:l.adminPass,tipo:'liga',ligaId:l.id});
+    saAllRows.push({key:'liga_'+l.id,role:'Liga Admin',name:l.name,email:l.adminEmail,pass:null,tipo:'liga',ligaId:l.id});
   });
   extraUsers.forEach(u=>{
     saAllRows.push({key:'extra_'+u.email,role:roleName(u.role),name:u.name,email:u.email,pass:u.pass,tipo:'extra'});
   });
   try{
-    const {data}=await supa.from('clubes').select('id,nombre,delegado_email,delegado_pass').not('delegado_email','is',null).order('nombre');
+    const {data}=await supa.from('clubes').select('id,nombre,delegado_email').not('delegado_email','is',null).order('nombre');
     (data||[]).forEach(c=>{
-      saAllRows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:c.delegado_pass||'—',tipo:'club',clubId:c.id});
+      saAllRows.push({key:'club_'+c.id,role:'Delegado',name:c.nombre,email:c.delegado_email||'—',pass:null,tipo:'club',clubId:c.id});
     });
   }catch(e){console.warn('loadSAUsuarios clubes error',e);}
   try{
-    const {data}=await supa.from('arbitros').select('id,nombre,email,password').not('email','is',null).order('nombre');
+    const {data}=await supa.from('arbitros').select('id,nombre,email').not('email','is',null).order('nombre');
     (data||[]).forEach(a=>{
-      saAllRows.push({key:'arb_'+a.id,role:'Árbitro',name:a.nombre,email:a.email||'—',pass:a.password||'—',tipo:'arbitro',arbitroId:a.id});
+      saAllRows.push({key:'arb_'+a.id,role:'Árbitro',name:a.nombre,email:a.email||'—',pass:null,tipo:'arbitro',arbitroId:a.id});
     });
   }catch(e){console.warn('loadSAUsuarios arbitros error',e);}
   document.getElementById('saUsuariosBuscar').value='';
@@ -9613,8 +9628,8 @@ function renderSARows(rows,q){
           <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.name)}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${escHtml(r.email)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-            <span style="font-family:monospace;font-size:12px;background:var(--card2);padding:2px 7px;border-radius:6px;border:1px solid var(--border)">${escHtml(String(r.pass||'—'))}</span>
-            <span style="font-size:10px;color:var(--text3)">contraseña</span>
+            <span style="font-family:monospace;font-size:12px;background:var(--card2);padding:2px 7px;border-radius:6px;border:1px solid var(--border)">🔒 oculta</span>
+            <span style="font-size:10px;color:var(--text3)">no se puede ver, solo cambiar o blanquear</span>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
@@ -9676,7 +9691,7 @@ async function applyAccessChange(r,newEmail,newPass){
     const {error}=await supa.from('ligas').update(updates).eq('id',r.ligaId);
     if(error)throw error;
     const liga=leagues.find(l=>l.id===r.ligaId);
-    if(liga){liga.adminPass=passStr;if(newEmail)liga.adminEmail=newEmail;}
+    if(liga&&newEmail){liga.adminEmail=newEmail;}
   } else if(r.tipo==='extra'){
     const u=extraUsers.find(u=>u.email===r.email);
     if(u)u.pass=passStr;
@@ -9700,7 +9715,7 @@ async function deleteUser(r){
       const {error}=await supa.from('ligas').update({admin_email:null,admin_pass:null}).eq('id',r.ligaId);
       if(error)throw error;
       const liga=leagues.find(l=>l.id===r.ligaId);
-      if(liga){liga.adminEmail='—';liga.adminPass=null;}
+      if(liga){liga.adminEmail='—';}
     } else if(r.tipo==='extra'){
       const idx=extraUsers.findIndex(u=>u.email===r.email);
       if(idx!==-1)extraUsers.splice(idx,1);
