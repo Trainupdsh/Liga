@@ -2986,6 +2986,20 @@ function _aplicarSesion(token){
   if(!token)return;
   _setSessionToken(token);
   supa=_makeSupaClient(token);
+  _verificarSesion();
+}
+// DIAGNÓSTICO TEMPORAL — sacar cuando esté confirmada la fase 3.
+// Le pregunta al servidor si reconoce la sesión recién abierta y lo avisa en
+// pantalla. Existe para comprobar, antes de activar cualquier bloqueo, que el
+// token efectivamente viaja del navegador hasta la base. Si esto dijera que
+// no se reconoce, activar las políticas RLS dejaría la app inutilizable.
+async function _verificarSesion(){
+  try{
+    const {data,error}=await supa.rpc('mi_sesion');
+    if(error){showToast('Sesión: error al verificar ('+error.message+')','error');return;}
+    if(data&&data.reconocida)showToast('Sesión reconocida por el servidor ✔ ('+data.rol+')','success');
+    else showToast('Sesión NO reconocida por el servidor ✘','error');
+  }catch(e){showToast('Sesión: no se pudo verificar ('+e.message+')','error');}
 }
 /*
 ── SQL: ejecutar en Supabase SQL Editor ──
