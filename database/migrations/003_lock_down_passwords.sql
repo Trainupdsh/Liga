@@ -62,7 +62,9 @@ update public.arbitros
 --    Esto es lo que permite dejar el código de alta/edición sin tocar.
 
 create or replace function public.hash_admin_pass() returns trigger
-language plpgsql as $$
+language plpgsql
+set search_path = public, extensions
+as $$
 begin
   if new.admin_pass is not null and new.admin_pass !~ '^\$2[aby]\$' then
     new.admin_pass := crypt(new.admin_pass, gen_salt('bf'));
@@ -72,7 +74,9 @@ end;
 $$;
 
 create or replace function public.hash_delegado_pass() returns trigger
-language plpgsql as $$
+language plpgsql
+set search_path = public, extensions
+as $$
 begin
   if new.delegado_pass is not null and new.delegado_pass !~ '^\$2[aby]\$' then
     new.delegado_pass := crypt(new.delegado_pass, gen_salt('bf'));
@@ -82,7 +86,9 @@ end;
 $$;
 
 create or replace function public.hash_arbitro_password() returns trigger
-language plpgsql as $$
+language plpgsql
+set search_path = public, extensions
+as $$
 begin
   if new.password is not null and new.password !~ '^\$2[aby]\$' then
     new.password := crypt(new.password, gen_salt('bf'));
@@ -118,7 +124,7 @@ create or replace function public.verificar_login_liga(p_email text, p_pass text
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select to_jsonb(l) - 'admin_pass'
   from public.ligas l
@@ -132,7 +138,7 @@ create or replace function public.verificar_login_delegado(p_email text, p_pass 
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select (to_jsonb(c) - 'delegado_pass')
          || jsonb_build_object('liga', jsonb_build_object('nombre', l.nombre, 'deporte', l.deporte))
@@ -148,7 +154,7 @@ create or replace function public.verificar_login_arbitro(p_email text, p_pass t
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select (to_jsonb(a) - 'password') || jsonb_build_object('liga_nombre', l.nombre)
   from public.arbitros a
