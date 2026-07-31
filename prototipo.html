@@ -3739,7 +3739,7 @@ function renderLeagueTorneosDB(liga,ts,divs){
     document.getElementById('league-torneo-banner').innerHTML=`
       <div class="torneo-banner" style="background:linear-gradient(135deg,${liga.color},${liga.color}bb)">
         <div class="torneo-banner-label">Torneo activo</div>
-        <div class="torneo-banner-name">${activo.nombre}</div>
+        <div class="torneo-banner-name">${escHtml(activo.nombre)}</div>
         <div class="torneo-banner-sub">${divs.length} divisiones · Desde ${formatFecha(activo.fecha_inicio)}</div>
       </div>`;
     document.getElementById('league-divs-title').textContent='DIVISIONES — '+activo.nombre;
@@ -5712,7 +5712,7 @@ function addEventToLog(type,side,min,isAnulado,motivo,dbId,jugador){
   entry.className='mesa-event'+(isAnulado?' anulado':'');
   if(dbId)entry.dataset.id=dbId;
   if(isAnulado){
-    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="mesa-event-gol" style="text-decoration:line-through">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}<span class="mesa-event-anulado-tag">ANULADO</span>${motivo?`<span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${motivo}</span>`:''}`;
+    entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="mesa-event-gol" style="text-decoration:line-through">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}<span class="mesa-event-anulado-tag">ANULADO</span>${motivo?`<span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${escHtml(motivo)}</span>`:''}`;
   } else {
     entry.innerHTML=`<span class="mesa-event-time">${min}'</span><span class="${isGol?'mesa-event-gol':''}">${evtLabels[type]||type}</span>${sideLabel?`<span style="font-size:11px;color:var(--text2)"> — ${sideLabel}</span>`:''}${jugadorSpan}`;
     if(isGol)entry.onclick=()=>openAnular(entry,type,side,min);
@@ -5767,7 +5767,7 @@ async function confirmAnular(){
   const anulMin=Math.floor(mesaSecs/60);
   const evAnul=document.createElement('div');
   evAnul.className='mesa-event';
-  evAnul.innerHTML=`<span class="mesa-event-time">${anulMin}'</span><span style="color:var(--red)">❌ GOL ANULADO${sideLabel?' '+sideLabel:''}</span><span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${motivo}</span>`;
+  evAnul.innerHTML=`<span class="mesa-event-time">${anulMin}'</span><span style="color:var(--red)">❌ GOL ANULADO${sideLabel?' '+sideLabel:''}</span><span style="font-size:10px;color:var(--text3);display:block;margin-top:2px;padding-left:28px">${escHtml(motivo)}</span>`;
   document.getElementById('mesa-events').prepend(evAnul);
   showToast('Gol anulado — '+motivo,'error');
   // Guardar en Supabase
@@ -8127,7 +8127,7 @@ async function saveAdminResult(){
     for(const sc of scorersWithId){
       if(sc.jugador_id){
         const {data:j}=await supa.from('jugadores').select('goles').eq('id',sc.jugador_id).single();
-        await supa.from('jugadores').update({goles:(j?.goles||0)+1}).eq('id',sc.jugador_id);
+        {const {error:eG}=await supa.from('jugadores').update({goles:(j?.goles||0)+1}).eq('id',sc.jugador_id);if(eG)throw eG;}
       }
     }
     closeModal('resultModal');
@@ -8564,7 +8564,7 @@ async function saveEditClub(){
         window._ecLogoBlob=null;
       }catch(imgErr){console.warn('Logo upload failed:',imgErr);}
     }
-    await supa.from('clubes').update(updates).eq('id',delegadoClub.id);
+    {const {error:eC}=await supa.from('clubes').update(updates).eq('id',delegadoClub.id);if(eC)throw eC;}
     delegadoClub.nombre=nombre;
     delegadoClub.abreviacion=abreviacion||null;
     delegadoClub.color_principal=ecColor;
@@ -9197,19 +9197,42 @@ async function loadComunicados(){
           <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent)">${escHtml(c.tipo||'general')}</span>
           <span style="font-size:11px;color:var(--text3)">${new Date(c.created_at).toLocaleDateString('es-AR')}</span>
         </div>
-        <div style="font-size:14px">${escHtml(c.texto||'')}</div>
+        <div style="font-size:14px">${escHtml(c.cuerpo||c.texto||'')}</div>
       </div>`).join('');
   }catch(e){
     el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';
   }
 }
+// Guarda una fila tolerando que la base no tenga todavía alguna columna
+// opcional. Si el servidor rechaza el guardado por una columna desconocida,
+// reintenta sin los campos opcionales, para que lo principal igual se guarde en
+// vez de perderse. Las columnas se agregan con database/migrations/009_columnas_faltantes.sql
+async function _guardarTolerante(tabla,fila,opcionales,opts){
+  const enviar=(f)=>opts&&opts.upsert
+    ? supa.from(tabla).upsert(f,{onConflict:opts.onConflict})
+    : supa.from(tabla).insert(f);
+  let {error}=await enviar(fila);
+  if(error&&/column|PGRST204|schema cache/i.test(error.message||'')&&opcionales.some(k=>k in fila)){
+    const copia={...fila};
+    opcionales.forEach(k=>delete copia[k]);
+    ({error}=await enviar(copia));
+    if(!error)console.warn(tabla+': guardado sin '+opcionales.join(', ')+' — falta correr la migración 009');
+  }
+  if(error)throw error;
+}
+
 async function saveComunicado(){
   if(isDemo()){showToast('Modo Demo — Solo lectura','');return;}
   const texto=document.getElementById('comunicado-texto').value.trim();
   const tipo=document.getElementById('comunicado-tipo').value;
   if(!texto){showToast('Escribí el comunicado','error');return;}
   try{
-    await supa.from('comunicados').insert({texto,tipo,liga_id:currentAdminLeagueId||null});
+    // La tabla guarda titulo y cuerpo; el formulario tiene un solo campo de
+    // texto. El cuerpo lleva el mensaje completo y el título un extracto, para
+    // que el listado tenga un encabezado legible.
+    const titulo=texto.length>60?texto.slice(0,57).trim()+'…':texto;
+    const {error}=await supa.from('comunicados').insert({titulo,cuerpo:texto,tipo,liga_id:currentAdminLeagueId||null});
+    if(error)throw error;
     document.getElementById('comunicado-texto').value='';
     showNuevoComunicado();
     showToast('Comunicado enviado ✓','success');
@@ -9239,18 +9262,21 @@ async function loadMultas(){
       .select('*').eq('liga_id',currentAdminLeagueId||0).order('created_at',{ascending:false});
     if(error)throw error;
     if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin multas registradas.</div>';return;}
-    el.innerHTML=data.map(m=>`
+    // La tabla usa estado ('pagada'/'pendiente'), no un booleano pagada.
+    el.innerHTML=data.map(m=>{
+      const pagada=(m.estado||'').toLowerCase()==='pagada';
+      return `
       <div class="multa-item" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <div style="font-size:14px;font-weight:700">${escHtml(m.destinatario||'—')}</div>
-          <span class="multa-estado-badge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${m.pagada?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'};color:${m.pagada?'var(--green)':'var(--red)'}">${m.pagada?'Pagada':'Pendiente'}</span>
+          <span class="multa-estado-badge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${pagada?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'};color:${pagada?'var(--green)':'var(--red)'}">${pagada?'Pagada':'Pendiente'}</span>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${escHtml(m.motivo||'')}</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="font-size:15px;font-weight:900">$${m.monto||0}</div>
-          ${!m.pagada?`<button class="btn btn-sm" style="font-size:11px;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3)" onclick="marcarMultaPagada(${m.id})">Marcar pagada</button>`:''}
+          ${!pagada?`<button class="btn btn-sm" style="font-size:11px;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3)" onclick="marcarMultaPagada(${m.id})">Marcar pagada</button>`:''}
         </div>
-      </div>`).join('');
+      </div>`;}).join('');
   }catch(e){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:24px">Sin conexión.</div>';}
 }
 async function saveMulta(){
@@ -9260,7 +9286,12 @@ async function saveMulta(){
   const monto=parseFloat(document.getElementById('multa-monto').value)||0;
   if(!dest||!motivo){showToast('Completá destinatario y motivo','error');return;}
   try{
-    await supa.from('multas').insert({destinatario:dest,motivo,monto,liga_id:currentAdminLeagueId||null,pagada:false});
+    // La tabla usa estado ('pendiente'/'pagada'), no un booleano pagada.
+    // destinatario es texto libre ("club o jugador"), así que va como columna
+    // opcional: si todavía no existe, la multa se guarda igual sin ese dato.
+    await _guardarTolerante('multas',
+      {destinatario:dest,motivo,monto,liga_id:currentAdminLeagueId||null,estado:'pendiente'},
+      ['destinatario']);
     ['multa-dest','multa-motivo','multa-monto','multa-vence'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     showNuevaMulta();showToast('Multa registrada ✓','success');
     await loadMultas();
@@ -9268,7 +9299,8 @@ async function saveMulta(){
 }
 async function marcarMultaPagada(id){
   try{
-    await supa.from('multas').update({pagada:true}).eq('id',id);
+    const {error}=await supa.from('multas').update({estado:'pagada'}).eq('id',id);
+    if(error)throw error;
     showToast('Multa marcada como pagada ✓','success');
     await loadMultas();
   }catch(e){showToast('Error: '+e.message,'error');}
@@ -9318,11 +9350,13 @@ async function saveInformeArbitro(){
   const cal=document.getElementById('informe-calificacion').value;
   const arbitroEmail=arbitroCurrentUser?.email||null;
   try{
-    await supa.from('informe_arbitro').upsert({
+    // La columna se llama incidentes, no incidencias. calificacion todavía no
+    // existe en la tabla: va como opcional para no perder el informe entero.
+    await _guardarTolerante('informe_arbitro',{
       partido_id:_informeMatchId,arbitro_email:arbitroEmail,
       observaciones:obs,calificacion:cal,
-      incidencias:JSON.stringify(_informeIncidents)
-    },{onConflict:'partido_id,arbitro_email'});
+      incidentes:JSON.stringify(_informeIncidents)
+    },['calificacion'],{upsert:true,onConflict:'partido_id,arbitro_email'});
     closeInformeArbitro(null,true);
     showToast('Informe guardado ✓','success');
   }catch(e){showToast('Error: '+e.message,'error');}
@@ -9538,7 +9572,7 @@ async function saveReprogramacion(){
         if(cur){updates.goles_local=cur.goles_visita;updates.goles_visita=cur.goles_local;}
       }
     }
-    await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);
+    {const {error:eR}=await supa.from('partidos').update(updates).eq('id',_reprogramarMatchId);if(eR)throw eR;}
     closeReprogramar(null,true);
     showToast('Partido actualizado ✓','success');
     await loadAdminPartidos();
@@ -9633,7 +9667,11 @@ async function saveCancha(){
   const cap=parseInt(document.getElementById('cancha-capacidad').value)||null;
   if(!nombre){showToast('El nombre es obligatorio','error');return;}
   try{
-    await supa.from('canchas').insert({nombre,direccion:dir||null,capacidad:cap,liga_id:currentAdminLeagueId||null});
+    // capacidad todavía no existe en la tabla: opcional para que la cancha se
+    // registre igual aunque falte esa columna.
+    await _guardarTolerante('canchas',
+      {nombre,direccion:dir||null,capacidad:cap,liga_id:currentAdminLeagueId||null},
+      ['capacidad']);
     ['cancha-nombre','cancha-direccion','cancha-capacidad'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     showNuevaCancha();showToast('Cancha registrada ✓','success');
     await loadCanchas();
@@ -9706,11 +9744,14 @@ async function saveInscripcion(){
   const msg=document.getElementById('insc-msg').value.trim();
   if(!club||!email){showToast('Completá nombre del club y email','error');return;}
   try{
-    await supa.from('solicitudes_inscripcion').insert({
+    // Los nombres reales de las columnas son delegado_nombre / delegado_email /
+    // delegado_telefono. mensaje todavía no existe: va como opcional para que la
+    // solicitud no se pierda entera si falta esa columna.
+    await _guardarTolerante('solicitudes_inscripcion',{
       liga_id:_inscripcionLigaId,nombre_club:club,
-      nombre_delegado:delegado||null,email_contacto:email,
-      telefono:tel||null,mensaje:msg||null,estado:'pendiente'
-    });
+      delegado_nombre:delegado||null,delegado_email:email,
+      delegado_telefono:tel||null,mensaje:msg||null,estado:'pendiente'
+    },['mensaje']);
     closeInscripcion(null,true);
     showToast('Solicitud enviada ✓ — La liga se pondrá en contacto','success');
   }catch(e){showToast('Error: '+e.message,'error');}
@@ -9779,7 +9820,7 @@ async function saveCT(){
   const clubId=delegadoClub?.id;
   if(!clubId){showToast('Error: sin club','error');return;}
   try{
-    await supa.from('cuerpo_tecnico').insert({club_id:clubId,nombre,rol});
+    {const {error:eCT}=await supa.from('cuerpo_tecnico').insert({club_id:clubId,nombre,rol});if(eCT)throw eCT;}
     document.getElementById('ct-form').style.display='none';
     showToast(nombre+' agregado ✓','success');
     await loadCuerpoTecnico();
