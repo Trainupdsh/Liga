@@ -8957,8 +8957,14 @@ const _PDF_ESTILOS=`
   .tapa .escudo{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0}
   .tapa .escudo-txt{width:52px;height:52px;border-radius:10px;background:#1a2150;color:#fff;display:flex;
        align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0}
+  .tapa .titulos{flex:1;min-width:0}
   .tapa h1{margin:0;font-size:19pt;font-weight:800;letter-spacing:-.3px}
   .tapa .sub{margin-top:3px;font-size:10pt;color:#48506a;font-weight:600}
+  .marca{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .marca img{width:22px;height:22px;object-fit:contain}
+  .marca span{font-size:11pt;font-weight:800;letter-spacing:1.4px;color:#1a2150}
+  footer .marca img{width:14px;height:14px}
+  footer .marca span{font-size:8.5pt;letter-spacing:.8px;color:#6b7280}
   .emitido{font-size:8.5pt;color:#6b7280;margin:0 0 16px}
   h2.sec{font-size:12pt;font-weight:800;margin:20px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #d7dbe6;
        text-transform:uppercase;letter-spacing:.6px;color:#1a2150;break-after:avoid}
@@ -8992,6 +8998,27 @@ const _PDF_ESTILOS=`
 `;
 
 function _pdfFecha(f){ if(!f)return '—'; try{return formatFecha(f);}catch(e){return f;} }
+
+// El logo de Sporvix se embebe como data URI en vez de enlazarlo: el informe se
+// abre en una ventana en blanco (sin URL base, así que una ruta relativa no
+// resolvería) y además se imprime enseguida, sin tiempo de esperar una descarga.
+// Embebido queda dentro del PDF y se ve aunque el archivo se abra sin conexión.
+let _logoSporvixCache=null;
+async function _logoSporvixDataURL(){
+  if(_logoSporvixCache!==null)return _logoSporvixCache;
+  try{
+    const res=await fetch('/sporvix-logo.png');
+    if(!res.ok)throw new Error('no disponible');
+    const blob=await res.blob();
+    _logoSporvixCache=await new Promise((ok)=>{
+      const fr=new FileReader();
+      fr.onload=()=>ok(fr.result);
+      fr.onerror=()=>ok('');
+      fr.readAsDataURL(blob);
+    });
+  }catch(e){ _logoSporvixCache=''; }
+  return _logoSporvixCache;
+}
 
 async function exportPDF(){
   if(!currentAdminDivisionId){
@@ -9079,6 +9106,8 @@ async function exportPDF(){
     const escudo=liga.logo_url
       ? `<img class="escudo" src="${escHtml(liga.logo_url)}" alt="">`
       : `<div class="escudo-txt">${escHtml((liga.nombre||'L').slice(0,1).toUpperCase())}</div>`;
+    const logoSpx=await _logoSporvixDataURL();
+    const marca=(cls)=>`<div class="marca">${logoSpx?`<img src="${logoSpx}" alt="Sporvix">`:''}<span>SPORVIX</span></div>`;
 
     const doc=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <title>${escHtml(liga.nombre||'Liga')} — ${escHtml(divLabel)}</title>
@@ -9091,10 +9120,11 @@ async function exportPDF(){
 <div class="doc">
   <header class="tapa">
     ${escudo}
-    <div>
+    <div class="titulos">
       <h1>${escHtml(liga.nombre||'Liga')}</h1>
       <div class="sub">${escHtml(torneo.nombre||'')}${torneo.temporada?' · Temporada '+escHtml(torneo.temporada):''} · ${escHtml(divLabel)}</div>
     </div>
+    ${marca()}
   </header>
   <p class="emitido">Informe emitido el ${escHtml(hoy)}${liga.deporte?' · '+escHtml(liga.deporte):''}</p>
 
@@ -9121,7 +9151,7 @@ async function exportPDF(){
 
   <footer>
     <span>${escHtml(liga.nombre||'')} · ${escHtml(divLabel)}</span>
-    <span>Generado con Sporvix · sporvix.com.ar</span>
+    <span style="display:flex;align-items:center;gap:6px">${marca()} · sporvix.com.ar</span>
   </footer>
 </div>
 </body></html>`;
