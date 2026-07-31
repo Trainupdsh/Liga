@@ -13,90 +13,179 @@
 --
 -- Esta migración se aplica en DOS ETAPAS:
 --
---   ETAPA A (segura, no rompe nada): hashea las contraseñas existentes,
---   agrega triggers que hashean automáticamente cualquier contraseña nueva
---   que se escriba (así el código de alta/edición de liga/club/árbitro no
---   necesita cambiar: sigue mandando la contraseña en texto plano en el
---   UPDATE/INSERT, el trigger la hashea antes de guardarla), y crea
---   funciones RPC que validan login del lado del servidor sin exponer la
---   contraseña/hash al cliente. Se puede correr ya mismo.
+--   ETAPA A: hashea las contraseñas existentes, agrega triggers que hashean
+--   automáticamente cualquier contraseña nueva que se escriba (así el código
+--   de alta/edición de liga/club/árbitro no necesita cambiar: sigue mandando
+--   la contraseña en texto plano en el UPDATE/INSERT, el trigger la hashea
+--   antes de guardarla), y crea funciones RPC que validan login del lado del
+--   servidor sin exponer la contraseña/hash al cliente.
 --
---   ETAPA B (requiere el front actualizado primero): revoca la LECTURA
---   directa de las columnas de contraseña para anon/authenticated. Una vez
---   aplicada, cualquier `.select('*')` (u otro select explícito de esa
---   columna) sobre ligas/clubes/arbitros empieza a fallar. El front
---   (prototipo.html) ya fue migrado en este mismo cambio para no depender
---   de leer esas columnas — ver el commit correspondiente. La escritura
---   (UPDATE/INSERT) NO se revoca a propósito: sigue funcionando igual que
---   hoy, protegida por el trigger de hash de la Etapa A.
+--   ETAPA B: revoca la LECTURA directa de las columnas de contraseña para
+--   anon/authenticated. Requiere que el front ya no las pida — prototipo.html
+--   fue migrado para eso en este mismo cambio. La escritura (UPDATE/INSERT)
+--   NO se revoca a propósito: sigue funcionando igual que hoy, protegida por
+--   el trigger de hash de la Etapa A.
 --
--- Correlo en el SQL Editor de Supabase (Dashboard → SQL Editor), en orden.
+-- Correlo entero en el SQL Editor de Supabase (Dashboard → SQL Editor).
 -- Es idempotente: se puede volver a correr sin duplicar nada.
 -- =============================================
 
 
--- ============ ETAPA A — segura, correr ahora ============
+-- ============ ETAPA A ============
 
 create extension if not exists pgcrypto;
 
--- 1) Hashear lo que hoy está en texto plano. El filtro `!~ '^\$2[aby]\$'`
---    evita re-hashear algo que ya tiene forma de hash bcrypt (para poder
---    correr esto más de una vez sin romper contraseñas ya migradas).
-update public.ligas
-   set admin_pass = crypt(admin_pass, gen_salt('bf'))
- where admin_pass is not null
-   and admin_pass !~ '^\$2[aby]\$';
-
-update public.clubes
-   set delegado_pass = crypt(delegado_pass, gen_salt('bf'))
- where delegado_pass is not null
-   and delegado_pass !~ '^\$2[aby]\$';
-
-update public.arbitros
-   set password = crypt(password, gen_salt('bf'))
- where password is not null
-   and password !~ '^\$2[aby]\$';
-
--- 2) Triggers: cualquier valor nuevo que llegue a estas columnas y no tenga
---    ya forma de hash bcrypt se hashea automáticamente antes de guardarse.
---    Esto es lo que permite dejar el código de alta/edición sin tocar.
-
-create or replace function public.hash_admin_pass() returns trigger
-language plpgsql
-set search_path = public, extensions
-as $$
+-- Todo lo que usa crypt()/gen_salt() se arma dentro de este bloque, que
+-- primero averigua en qué esquema quedó instalada pgcrypto: Supabase la pone
+-- en "extensions", otras instalaciones en "public". Después escribe cada
+-- llamada calificada con ese esquema (extensions.crypt(...)), así no depende
+-- del search_path ni de adivinar dónde está.
+do $migration$
+declare
+  ext_schema text;
 begin
-  if new.admin_pass is not null and new.admin_pass !~ '^\$2[aby]\$' then
-    new.admin_pass := crypt(new.admin_pass, gen_salt('bf'));
-  end if;
-  return new;
-end;
-$$;
+  select n.nspname into ext_schema
+  from pg_extension e
+  join pg_namespace n on n.oid = e.extnamespace
+  where e.extname = 'pgcrypto';
 
-create or replace function public.hash_delegado_pass() returns trigger
-language plpgsql
-set search_path = public, extensions
-as $$
-begin
-  if new.delegado_pass is not null and new.delegado_pass !~ '^\$2[aby]\$' then
-    new.delegado_pass := crypt(new.delegado_pass, gen_salt('bf'));
+  if ext_schema is null then
+    raise exception 'pgcrypto no quedó instalada, no puedo continuar';
   end if;
-  return new;
-end;
-$$;
 
-create or replace function public.hash_arbitro_password() returns trigger
-language plpgsql
-set search_path = public, extensions
-as $$
-begin
-  if new.password is not null and new.password !~ '^\$2[aby]\$' then
-    new.password := crypt(new.password, gen_salt('bf'));
-  end if;
-  return new;
-end;
-$$;
+  raise notice 'pgcrypto encontrada en el esquema: %', ext_schema;
 
+  -- 1) Hashear lo que hoy está en texto plano. El filtro `!~ '^\$2[aby]\$'`
+  --    evita re-hashear algo que ya tiene forma de hash bcrypt (para poder
+  --    correr esto más de una vez sin romper contraseñas ya migradas).
+  execute format($tpl$
+    update public.ligas
+       set admin_pass = %I.crypt(admin_pass, %I.gen_salt('bf'))
+     where admin_pass is not null
+       and admin_pass !~ '^\$2[aby]\$'
+  $tpl$, ext_schema, ext_schema);
+
+  execute format($tpl$
+    update public.clubes
+       set delegado_pass = %I.crypt(delegado_pass, %I.gen_salt('bf'))
+     where delegado_pass is not null
+       and delegado_pass !~ '^\$2[aby]\$'
+  $tpl$, ext_schema, ext_schema);
+
+  execute format($tpl$
+    update public.arbitros
+       set password = %I.crypt(password, %I.gen_salt('bf'))
+     where password is not null
+       and password !~ '^\$2[aby]\$'
+  $tpl$, ext_schema, ext_schema);
+
+  -- 2) Triggers: cualquier valor nuevo que llegue a estas columnas y no
+  --    tenga ya forma de hash bcrypt se hashea automáticamente antes de
+  --    guardarse. Esto es lo que permite dejar el código de alta/edición
+  --    de la app sin tocar.
+  execute format($tpl$
+    create or replace function public.hash_admin_pass() returns trigger
+    language plpgsql
+    set search_path = public
+    as $fn$
+    begin
+      if new.admin_pass is not null and new.admin_pass !~ '^\$2[aby]\$' then
+        new.admin_pass := %I.crypt(new.admin_pass, %I.gen_salt('bf'));
+      end if;
+      return new;
+    end;
+    $fn$
+  $tpl$, ext_schema, ext_schema);
+
+  execute format($tpl$
+    create or replace function public.hash_delegado_pass() returns trigger
+    language plpgsql
+    set search_path = public
+    as $fn$
+    begin
+      if new.delegado_pass is not null and new.delegado_pass !~ '^\$2[aby]\$' then
+        new.delegado_pass := %I.crypt(new.delegado_pass, %I.gen_salt('bf'));
+      end if;
+      return new;
+    end;
+    $fn$
+  $tpl$, ext_schema, ext_schema);
+
+  execute format($tpl$
+    create or replace function public.hash_arbitro_password() returns trigger
+    language plpgsql
+    set search_path = public
+    as $fn$
+    begin
+      if new.password is not null and new.password !~ '^\$2[aby]\$' then
+        new.password := %I.crypt(new.password, %I.gen_salt('bf'));
+      end if;
+      return new;
+    end;
+    $fn$
+  $tpl$, ext_schema, ext_schema);
+
+  -- 3) Funciones de verificación de login: reciben email + contraseña en
+  --    texto plano (viajan por HTTPS, eso está bien), comparan contra el
+  --    hash del lado del servidor y devuelven la fila SIN la columna de
+  --    contraseña. Devuelven jsonb para no depender del tipo exacto de cada
+  --    columna. security definer + search_path fijo: corren con los permisos
+  --    del dueño de la función (que sí puede leer la columna de contraseña)
+  --    aunque quien las llama sea anon (que, tras la Etapa B, ya no puede).
+  execute format($tpl$
+    create or replace function public.verificar_login_liga(p_email text, p_pass text)
+    returns jsonb
+    language sql
+    security definer
+    set search_path = public
+    as $fn$
+      select to_jsonb(l) - 'admin_pass'
+      from public.ligas l
+      where l.admin_email = p_email
+        and l.admin_pass is not null
+        and l.admin_pass = %I.crypt(p_pass, l.admin_pass)
+      limit 1
+    $fn$
+  $tpl$, ext_schema);
+
+  execute format($tpl$
+    create or replace function public.verificar_login_delegado(p_email text, p_pass text)
+    returns jsonb
+    language sql
+    security definer
+    set search_path = public
+    as $fn$
+      select (to_jsonb(c) - 'delegado_pass')
+             || jsonb_build_object('liga', jsonb_build_object('nombre', l.nombre, 'deporte', l.deporte))
+      from public.clubes c
+      left join public.ligas l on l.id = c.liga_id
+      where c.delegado_email = p_email
+        and c.delegado_pass is not null
+        and c.delegado_pass = %I.crypt(p_pass, c.delegado_pass)
+      limit 1
+    $fn$
+  $tpl$, ext_schema);
+
+  execute format($tpl$
+    create or replace function public.verificar_login_arbitro(p_email text, p_pass text)
+    returns jsonb
+    language sql
+    security definer
+    set search_path = public
+    as $fn$
+      select (to_jsonb(a) - 'password') || jsonb_build_object('liga_nombre', l.nombre)
+      from public.arbitros a
+      left join public.ligas l on l.id = a.liga_id
+      where a.email = p_email
+        and a.password is not null
+        and a.password = %I.crypt(p_pass, a.password)
+      limit 1
+    $fn$
+  $tpl$, ext_schema);
+end
+$migration$;
+
+-- Enganchar los triggers a las tablas.
 drop trigger if exists trg_hash_admin_pass on public.ligas;
 create trigger trg_hash_admin_pass
   before insert or update of admin_pass on public.ligas
@@ -112,77 +201,58 @@ create trigger trg_hash_arbitro_password
   before insert or update of password on public.arbitros
   for each row execute function public.hash_arbitro_password();
 
--- 3) Funciones de verificación: reciben email + contraseña en texto plano
---    (viajan por HTTPS, eso está bien), comparan el hash del lado del
---    servidor y devuelven la fila SIN la columna de contraseña. Devuelven
---    jsonb para no depender de conocer el tipo exacto de cada columna.
---    security definer + search_path fijo: corren con los permisos del
---    dueño de la función (puede leer la columna de contraseña) aunque quien
---    las llama sea anon (que, después de la Etapa B, ya no puede).
-
-create or replace function public.verificar_login_liga(p_email text, p_pass text)
-returns jsonb
-language sql
-security definer
-set search_path = public, extensions
-as $$
-  select to_jsonb(l) - 'admin_pass'
-  from public.ligas l
-  where l.admin_email = p_email
-    and l.admin_pass is not null
-    and l.admin_pass = crypt(p_pass, l.admin_pass)
-  limit 1
-$$;
-
-create or replace function public.verificar_login_delegado(p_email text, p_pass text)
-returns jsonb
-language sql
-security definer
-set search_path = public, extensions
-as $$
-  select (to_jsonb(c) - 'delegado_pass')
-         || jsonb_build_object('liga', jsonb_build_object('nombre', l.nombre, 'deporte', l.deporte))
-  from public.clubes c
-  left join public.ligas l on l.id = c.liga_id
-  where c.delegado_email = p_email
-    and c.delegado_pass is not null
-    and c.delegado_pass = crypt(p_pass, c.delegado_pass)
-  limit 1
-$$;
-
-create or replace function public.verificar_login_arbitro(p_email text, p_pass text)
-returns jsonb
-language sql
-security definer
-set search_path = public, extensions
-as $$
-  select (to_jsonb(a) - 'password') || jsonb_build_object('liga_nombre', l.nombre)
-  from public.arbitros a
-  left join public.ligas l on l.id = a.liga_id
-  where a.email = p_email
-    and a.password is not null
-    and a.password = crypt(p_pass, a.password)
-  limit 1
-$$;
-
--- Cualquiera puede *ejecutar* la función (como cualquiera puede intentar
--- loguearse), pero la función sólo devuelve datos si el hash matchea, y
--- nunca devuelve la contraseña/hash.
+-- Cualquiera puede *ejecutar* las funciones de login (como cualquiera puede
+-- intentar loguearse), pero solo devuelven datos si la contraseña matchea, y
+-- nunca devuelven la contraseña/hash.
 grant execute on function public.verificar_login_liga(text, text) to anon, authenticated;
 grant execute on function public.verificar_login_delegado(text, text) to anon, authenticated;
 grant execute on function public.verificar_login_arbitro(text, text) to anon, authenticated;
 
 
--- ============ ETAPA B — correr después de desplegar el nuevo prototipo.html ============
+-- ============ ETAPA B ============
 -- El front en este mismo cambio ya dejó de hacer select('*') (o cualquier
 -- select explícito de la columna de contraseña) sobre ligas/clubes/arbitros,
--- y el login ahora usa las funciones RPC de arriba. Recién con eso
--- desplegado tiene sentido correr esto — si lo corrés antes, cualquier
--- pantalla que todavía pida esa columna empieza a tirar error.
+-- y el login ahora usa las funciones RPC de arriba. Si por algún motivo
+-- todavía no desplegaste ese prototipo.html, comentá estas tres líneas y
+-- corrélas después: si no, las pantallas que aún pidan esa columna fallan.
 --
--- Solo se revoca SELECT, no UPDATE/INSERT: la escritura sigue igual que hoy
+-- Solo se toca SELECT, no UPDATE/INSERT: la escritura sigue igual que hoy
 -- (los triggers de arriba se encargan de hashear).
+--
+-- OJO con un detalle que hace fallar esto en silencio: un `revoke select
+-- (columna)` NO surte efecto si el rol además tiene un GRANT SELECT sobre la
+-- tabla entera — que es justo como Supabase configura anon/authenticated por
+-- defecto. El permiso de tabla le gana al de columna y la contraseña sigue
+-- siendo legible. Por eso hay que revocar el SELECT de la tabla y volver a
+-- otorgarlo columna por columna, salteando la de contraseña.
+do $lockdown$
+declare
+  t record;
+  cols text;
+begin
+  for t in
+    select * from (values
+      ('ligas',    'admin_pass'),
+      ('clubes',   'delegado_pass'),
+      ('arbitros', 'password')
+    ) as x(tabla, col_secreta)
+  loop
+    select string_agg(quote_ident(column_name), ', ' order by ordinal_position)
+      into cols
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = t.tabla
+      and column_name <> t.col_secreta;
 
-revoke select (admin_pass)    on public.ligas    from anon, authenticated;
-revoke select (delegado_pass) on public.clubes   from anon, authenticated;
-revoke select (password)      on public.arbitros from anon, authenticated;
+    execute format('revoke select on public.%I from anon, authenticated', t.tabla);
+    execute format('grant select (%s) on public.%I to anon, authenticated', cols, t.tabla);
+
+    raise notice 'public.% : SELECT limitado a todas las columnas menos %', t.tabla, t.col_secreta;
+  end loop;
+end
+$lockdown$;
+
+-- NOTA DE MANTENIMIENTO: como el SELECT quedó otorgado columna por columna,
+-- si más adelante agregás una columna nueva a ligas/clubes/arbitros, anon no
+-- va a poder leerla hasta que le des permiso (o vuelvas a correr este bloque,
+-- que la toma automáticamente).
