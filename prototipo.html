@@ -3950,8 +3950,13 @@ function showAdminForLeague(l){
 }
 async function loadAdminDashStats(ligaId){
   try{
+    // El !inner es imprescindible: sin él, PostgREST NO descarta las
+    // divisiones de otras ligas. El filtro se aplica al embed (torneo viene
+    // null si no coincide) pero igual devuelve TODAS las filas, así que el
+    // dashboard terminaba contando los clubes, partidos y goles de todas las
+    // ligas juntas. Con !inner la fila entera se descarta si no matchea.
     const {data:divs}=await supa.from('divisiones')
-      .select('id,torneo:torneo_id(liga_id)')
+      .select('id,torneo:torneos!inner(liga_id)')
       .eq('torneo.liga_id',ligaId);
     const divIds=(divs||[]).map(d=>d.id);
     if(!divIds.length){
