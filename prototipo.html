@@ -2963,7 +2963,30 @@ header .subtitle{font-size:12px;color:var(--text2);}
 // ═══ SUPABASE ═══
 const SUPA_URL='https://qksdonfcqikcvmjztpwf.supabase.co';
 const SUPA_KEY='sb_publishable_JZ3V17H60UYA33u0mdD4kw_vKtt-F-o';
-const supa=window.supabase?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
+
+// ── Sesión: el token que prueba quién sos ──
+// La clave de arriba es pública: la tiene cualquier visitante. Por eso, al
+// loguearse, el servidor emite un token de sesión que el navegador manda en
+// cada pedido; es eso lo que le permite a la base distinguir a un admin
+// logueado de cualquiera. Ver database/migrations/005_sesiones.sql
+const SESSION_HEADER='x-sporvix-session';
+function _getSessionToken(){try{return sessionStorage.getItem('sporvix_token')||null;}catch(e){return null;}}
+function _setSessionToken(t){try{t?sessionStorage.setItem('sporvix_token',t):sessionStorage.removeItem('sporvix_token');}catch(e){}}
+function _makeSupaClient(token){
+  if(!window.supabase)return null;
+  const opts=token?{global:{headers:{[SESSION_HEADER]:token}}}:undefined;
+  return window.supabase.createClient(SUPA_URL,SUPA_KEY,opts);
+}
+// `let` y no `const`: el cliente se recrea al entrar y al salir, para que
+// empiece (o deje) de mandar el token.
+let supa=_makeSupaClient(_getSessionToken());
+// Guarda el token que devolvió el login y recrea el cliente para que los
+// pedidos siguientes viajen ya identificados.
+function _aplicarSesion(token){
+  if(!token)return;
+  _setSessionToken(token);
+  supa=_makeSupaClient(token);
+}
 /*
 ── SQL: ejecutar en Supabase SQL Editor ──
 CREATE TABLE IF NOT EXISTS planes (
@@ -3804,7 +3827,16 @@ function showAdminLogin(){
 function _hidePublicChrome(){document.body.classList.add('role-session');}
 function _showPublicChrome(){document.body.classList.remove('role-session');}
 function _saveSession(sess){try{sessionStorage.setItem('liga_session',JSON.stringify(sess));}catch(e){}}
-function _clearSession(){try{sessionStorage.removeItem('liga_session');}catch(e){}}
+function _clearSession(){
+  try{sessionStorage.removeItem('liga_session');}catch(e){}
+  // Invalidar el token también del lado del servidor, no solo en el
+  // navegador: si solo lo borráramos acá, seguiría siendo válido para
+  // cualquiera que lo hubiera copiado.
+  const tok=_getSessionToken();
+  if(tok&&supa){try{supa.rpc('cerrar_sesion',{p_token:tok});}catch(e){}}
+  _setSessionToken(null);
+  supa=_makeSupaClient(null);
+}
 function _getSession(){try{return JSON.parse(sessionStorage.getItem('liga_session')||'null');}catch(e){return null;}}
 async function _restoreSession(){
   const s=_getSession();if(!s)return false;
@@ -3842,28 +3874,31 @@ async function doAdminLogin(){
     // Postgres la compare contra el hash guardado. Ver las migraciones
     // database/migrations/003_lock_down_passwords.sql y 004_superadmin_login.sql
     if(supa){
+      // Cada login exitoso trae un sesion_token: se guarda y se empieza a
+      // mandar en cada pedido antes de entrar a la vista correspondiente.
       // Superadmin
       try{
         const {data:sa}=await supa.rpc('verificar_login_superadmin',{p_email:email,p_pass:pass});
-        if(sa){showSuperAdminDash();return;}
+        if(sa){_aplicarSesion(sa.sesion_token);showSuperAdminDash();return;}
       }catch(e){}
       // Admin de liga
       try{
         const {data:ligaMatch}=await supa.rpc('verificar_login_liga',{p_email:email,p_pass:pass});
         if(ligaMatch){
           const league=leagues.find(l=>l.id===ligaMatch.id);
-          if(league){showAdminForLeague(league);return;}
+          if(league){_aplicarSesion(ligaMatch.sesion_token);showAdminForLeague(league);return;}
         }
       }catch(e){}
       // Delegado de club
       try{
         const {data:club}=await supa.rpc('verificar_login_delegado',{p_email:email,p_pass:pass});
-        if(club){showDelegadoView(club);return;}
+        if(club){_aplicarSesion(club.sesion_token);showDelegadoView(club);return;}
       }catch(e){}
       // Árbitro
       try{
         const {data:arb}=await supa.rpc('verificar_login_arbitro',{p_email:email,p_pass:pass});
         if(arb){
+          _aplicarSesion(arb.sesion_token);
           showArbitroView({name:arb.nombre,email:arb.email,role:'arbitro',league:arb.liga_nombre,foto:arb.foto_url});
           return;
         }
