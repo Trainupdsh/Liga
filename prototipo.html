@@ -283,7 +283,11 @@ header .subtitle{font-size:12px;color:var(--text2);}
 .btn-primary:active{opacity:0.9;}
 .btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
 .btn-sm{padding:8px 16px;width:auto;font-size:13px;border-radius:10px;}
-.admin-header-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+/* La cabecera se fija debajo de la barra de superadmin cuando esa barra está
+   visible. Sin esto las dos quedan pegadas a top:0 y la violeta, que está en
+   una capa superior, tapa los botones de la cabecera. --sa-bar-h vale 0 salvo
+   que se esté gestionando una liga desde el superadmin. */
+.admin-header-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:var(--sa-bar-h,0px);z-index:50;}
 .admin-header-bar h2{font-size:17px;font-weight:700;flex:1;}
 .dashboard-grid{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;}
@@ -1547,7 +1551,7 @@ header .subtitle{font-size:12px;color:var(--text2);}
 
 <!-- ADMIN PANEL -->
 <div id="view-admin" style="display:none;">
-  <div id="sa-impersonation-bar" style="display:none;background:#7c3aed;color:#fff;padding:8px 16px;display:none;align-items:center;gap:10px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:200">
+  <div id="sa-impersonation-bar" style="display:none;background:#7c3aed;color:#fff;padding:8px 16px;align-items:center;gap:10px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:200">
     <span>👑 Superadmin — Gestionando liga</span>
     <button onclick="logoutAdmin()" style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 14px;border-radius:20px;font-weight:800;cursor:pointer;font-size:12px">← Volver al Superadmin</button>
   </div>
@@ -3922,11 +3926,27 @@ async function doAdminLogin(){
     document.getElementById('login-error').style.display='block';
   }finally{hideGlobalLoading();}
 }
+// Muestra u oculta la barra violeta de "estás gestionando una liga como
+// superadmin", y le avisa al CSS cuánto mide para que la cabecera del panel se
+// fije justo debajo en vez de quedar tapada. Se mide la altura real en lugar
+// de escribirla a mano, porque cambia si el texto se parte en dos líneas.
+function _mostrarBarraSuperadmin(visible){
+  const saBar=document.getElementById('sa-impersonation-bar');
+  if(!saBar)return;
+  saBar.style.display=visible?'flex':'none';
+  const alto=visible?saBar.offsetHeight:0;
+  document.documentElement.style.setProperty('--sa-bar-h',alto+'px');
+}
+// Si cambia el ancho, la barra puede pasar a ocupar otra altura.
+window.addEventListener('resize',()=>{
+  const saBar=document.getElementById('sa-impersonation-bar');
+  if(saBar&&saBar.style.display!=='none')_mostrarBarraSuperadmin(true);
+});
+
 function showAdminForLeague(l){
   if(!_saImpersonating){_saveSession({role:'liga',leagueId:l.id});}
   _hidePublicChrome();
-  const saBar=document.getElementById('sa-impersonation-bar');
-  if(saBar)saBar.style.display=_saImpersonating?'flex':'none';
+  _mostrarBarraSuperadmin(_saImpersonating);
   currentAdminLeagueId=l.id;
   currentLigaPlan=null;
   currentLeagueLimits={maxEquipos:l.maxEquipos||null,maxJugadores:l.maxJugadores||null};
@@ -3950,6 +3970,14 @@ function showAdminForLeague(l){
 }
 async function loadAdminDashStats(ligaId){
   try{
+    // Los clubes se cuentan directo sobre la tabla clubes: son los de la liga,
+    // haya o no torneos y divisiones armados. Antes se deducían de los equipos
+    // inscriptos en alguna división, así que un club recién creado no figuraba
+    // hasta tener equipo compitiendo — en una liga nueva el contador decía 0
+    // aunque ya hubiera clubes cargados.
+    const {count:cClubes}=await supa.from('clubes')
+      .select('id',{count:'exact',head:true}).eq('liga_id',ligaId);
+    document.getElementById('dash-stat-equipos').textContent=cClubes??0;
     // El !inner es imprescindible: sin él, PostgREST NO descarta las
     // divisiones de otras ligas. El filtro se aplica al embed (torneo viene
     // null si no coincide) pero igual devuelve TODAS las filas, así que el
@@ -3960,16 +3988,13 @@ async function loadAdminDashStats(ligaId){
       .eq('torneo.liga_id',ligaId);
     const divIds=(divs||[]).map(d=>d.id);
     if(!divIds.length){
-      ['equipos','jugadores','partidos','goles'].forEach(k=>document.getElementById('dash-stat-'+k).textContent='0');
+      ['jugadores','partidos','goles'].forEach(k=>document.getElementById('dash-stat-'+k).textContent='0');
       return;
     }
     const[{data:eqRows},{count:cPart}]=await Promise.all([
       supa.from('equipos').select('id,club_id').in('division_id',divIds),
       supa.from('partidos').select('id',{count:'exact',head:true}).in('division_id',divIds),
     ]);
-    // Clubes únicos: un club inscripto en varias divisiones cuenta una sola vez
-    const cEq=new Set((eqRows||[]).map(e=>e.club_id??('eq'+e.id))).size;
-    document.getElementById('dash-stat-equipos').textContent=cEq;
     document.getElementById('dash-stat-partidos').textContent=cPart??0;
     // jugadores únicos: por DNI si está cargado; si no, club + nombre
     // (un jugador cargado en dos divisiones son dos filas en la tabla)
@@ -3987,8 +4012,7 @@ async function loadAdminDashStats(ligaId){
 function logoutAdmin(){
   if(_saImpersonating){
     _saImpersonating=false;
-    const saBar=document.getElementById('sa-impersonation-bar');
-    if(saBar)saBar.style.display='none';
+    _mostrarBarraSuperadmin(false);
     document.getElementById('view-admin').style.display='none';
     showSuperAdminDash();
     return;
