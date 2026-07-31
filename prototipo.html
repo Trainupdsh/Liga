@@ -3787,7 +3787,10 @@ function showView(id){
   setTimeout(()=>v.classList.remove('slide'),300);
 }
 
-const SUPERADMIN={email:'lucasmoreno260110@gmail.com',pass:'Lolilla2010.'};
+// El superadmin ya no se valida acá: sus credenciales vivían en este archivo,
+// que se sirve tal cual a cualquier visitante. Ahora la contraseña está
+// hasheada en la tabla superadmins (que anon no puede leer) y se verifica del
+// lado del servidor. Ver database/migrations/004_superadmin_login.sql
 const extraUsers=[];
 function showAdminLogin(){
   document.getElementById('login-email').value='';
@@ -3827,10 +3830,6 @@ async function doAdminLogin(){
   document.getElementById('login-error').style.display='none';
   showGlobalLoading();
   try{
-    // Check super admin
-    if(email===SUPERADMIN.email&&pass===SUPERADMIN.pass){
-      showSuperAdminDash();return;
-    }
     // Check extra roles hardcodeados (árbitro, mesa)
     const xu=extraUsers.find(u=>u.email===email&&u.pass===pass);
     if(xu){
@@ -3838,10 +3837,16 @@ async function doAdminLogin(){
       else if(xu.role==='mesa')showMesaView(xu);
       return;
     }
-    // Todo lo demás valida del lado del servidor (funciones RPC en Supabase):
-    // la contraseña nunca se lee al cliente, solo se manda para que Postgres
-    // la compare contra el hash guardado. Ver database/migrations/003_lock_down_passwords.sql
+    // Todos los roles se validan del lado del servidor (funciones RPC en
+    // Supabase): la contraseña nunca se lee al cliente, solo se manda para que
+    // Postgres la compare contra el hash guardado. Ver las migraciones
+    // database/migrations/003_lock_down_passwords.sql y 004_superadmin_login.sql
     if(supa){
+      // Superadmin
+      try{
+        const {data:sa}=await supa.rpc('verificar_login_superadmin',{p_email:email,p_pass:pass});
+        if(sa){showSuperAdminDash();return;}
+      }catch(e){}
       // Admin de liga
       try{
         const {data:ligaMatch}=await supa.rpc('verificar_login_liga',{p_email:email,p_pass:pass});
