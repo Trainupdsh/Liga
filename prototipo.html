@@ -8488,7 +8488,17 @@ async function generarFixture(){
     showToast('Fixture generado: '+partidos.length+' partidos ✓','success');
     goAdmin('division');
     await loadAdminPartidos();
-  }catch(e){showToast('Error: '+e.message,'error');}
+  }catch(e){
+    // El error se muestra en una ventana modal y no en un cartelito: si algo
+    // rechaza el guardado del fixture hay que poder LEER el motivo, y el toast
+    // se desvanece antes de alcanzar a copiarlo.
+    const detalle=[e.message,e.details,e.hint,e.code&&('código '+e.code)].filter(Boolean).join('\n');
+    const esPermiso=/row-level security|violates row|permission denied|42501/i.test(detalle);
+    alert('No se pudo generar el fixture.\n\n'+detalle+(esPermiso
+      ? '\n\n— El servidor no te reconoce como administrador de esta liga. Suele pasar cuando la sesión venció (duran 12 horas): cerrá sesión, volvé a entrar y probá de nuevo.'
+      : ''));
+    showToast('Error: '+e.message,'error');
+  }
   finally{if(btn){btn.disabled=false;btn.textContent='⚡ Generar Fixture Automático';}}
 }
 
